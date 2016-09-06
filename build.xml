@@ -67,6 +67,8 @@
 
   <target name="compile.test" depends="compile">
     <javac srcdir="${src.test}" destdir="${build}" classpathref="classpath.test" debug="true" debuglevel="lines,vars,source" includeantruntime="false" />
+    <copy file="${version.file}" todir="${build}" />
+    <copy file="${logging.file}" todir="${build}" />
   </target>
 
   <macrodef name="build.jar" description="Compiles the source then creates an executable jar for the given platform">
@@ -133,20 +135,6 @@
     <sequential>
       <build.jar platform="@{platform}" />
 
-      <bundleapp
-        jvmrequired="1.8"
-        jrepreferred="true"
-        outputdirectory="${build}/@{platform}"
-        name="${rel.name}"
-        displayname="${rel.name}"
-        identifier="org.tvrenamer"
-        version="${version}"
-        icon="${res}/icons/tvrenamer.icns"
-        mainclassname="${jar.mainClass}">
-        <classpath file="${build}/@{platform}/tvrenamer.jar" />
-        <option value="-XstartOnFirstThread" />
-      </bundleapp>
-
       <delete file="${build}/@{platform}/tvrenamer.jar" />
       <zip destfile="${build}/@{platform}/${rel.name}-@{platform}.zip">
         <zipfileset dir="${build}/@{platform}" filemode="755" />
@@ -185,7 +173,7 @@
 
   <target name="init-checkstyle">
     <path id="checkstyle.lib.path">
-      <fileset dir="${lib.test}">
+      <fileset dir="${lib.dl}">
         <include name="checkstyle-7.1.1.jar" />
         <include name="guava-19.0.jar" />
         <include name="commons-beanutils-1.9.2.jar" />
@@ -225,9 +213,6 @@
   </target>
 
   <target name="test" depends="clean, compile.test, proxy">
-    <copy file="${version.file}" todir="${build}" />
-    <copy file="${logging.file}" todir="${build}" />
-
     <junit haltonerror="true" haltonfailure="true" printsummary="true" fork="no" forkmode="once">
       <formatter type="plain" usefile="false" />
 
