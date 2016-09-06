@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# In johnv02139/tvrenamer/master, config files live in a directory called ~/.tvrenamer
+# This mini-script reverts that setup to the older one.
+
+# This script lives in <project-root>/etc/run-scripts; so, if we know where the script is,
+# and go up two levels, that's the project root.
+proj=`dirname $0`/../..
+
+/bin/mv -i ~/.tvrenamer .
+/bin/mv -i ./.tvrenamer/prefs.xml ~/.tvrenamer
+/bin/mv -i ./.tvrenamer/thetvdb ./res/
+
+/bin/mv ./.tvrenamer/overrides.xml ~/.tvrenameroverrides
+
+/bin/rmdir ./.tvrenamer
