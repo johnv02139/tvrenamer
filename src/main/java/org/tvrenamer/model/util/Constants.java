@@ -8,12 +8,6 @@ public class Constants {
 
     public static final String VERSION_NUMBER = Environment.readVersionNumber();
 
-    public static final String TVRENAMER_PROJECT_URL = "http://tvrenamer.org";
-    public static final String TVRENAMER_DOWNLOAD_URL = TVRENAMER_PROJECT_URL + "/downloads";
-
-    public static final String UNKNOWN_EXCEPTION = "An error occurred, please check "
-        + "your internet connection, java version or run from the command line to show errors";
-
     public static final String DEFAULT_REPLACEMENT_MASK = "%S [%sx%0e] %t";
     public static final String DEFAULT_SEASON_PREFIX = "Season ";
 
