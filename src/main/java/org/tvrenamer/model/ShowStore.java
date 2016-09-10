@@ -3,7 +3,6 @@ package org.tvrenamer.model;
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.TheTVDBProvider;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -74,7 +73,7 @@ public class ShowStore {
             public Boolean call() throws InterruptedException {
                 Show thisShow;
                 try {
-                    ArrayList<Show> options = TheTVDBProvider.getShowOptions(showName);
+                    List<Show> options = TheTVDBProvider.getShowOptions(showName);
                     thisShow = options.get(0);
 
                     TheTVDBProvider.getShowListing(thisShow);

@@ -3,7 +3,6 @@ package org.tvrenamer.model;
 import org.tvrenamer.controller.GlobalOverridesPersistence;
 import org.tvrenamer.model.util.Constants;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -11,19 +10,12 @@ import java.util.logging.Logger;
 public class GlobalOverrides {
     private static Logger logger = Logger.getLogger(UserPreferences.class.getName());
 
-    public static File overridesFile =
-        new File(Constants.USER_HOME_DIR,
-                 Constants.OVERRIDES_FILE);
-
     private static final GlobalOverrides INSTANCE = load();
 
     private Map<String, String> showNames;
 
     private GlobalOverrides() {
         showNames = new HashMap<>();
-        showNames.put("Archer (2009)", "Archer");
-        showNames.put("The Newsroom (2012)", "The Newsroom");
-        showNames.put("House of Cards (2013)", "House of Cards");
     }
 
     public static GlobalOverrides getInstance() {
@@ -31,10 +23,10 @@ public class GlobalOverrides {
     }
 
     private static GlobalOverrides load() {
-        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(overridesFile);
+        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(Constants.OVERRIDES_FILE);
 
         if (overrides != null) {
-            logger.finer("Sucessfully read overrides from: " + overridesFile.getAbsolutePath());
+            logger.finer("Sucessfully read overrides from: " + Constants.OVERRIDES_FILE.getAbsolutePath());
             logger.info("Sucessfully read overrides: " + overrides.toString());
         } else {
             overrides = new GlobalOverrides();
@@ -45,7 +37,7 @@ public class GlobalOverrides {
     }
 
     public static void store(GlobalOverrides overrides) {
-        GlobalOverridesPersistence.persist(overrides, overridesFile);
+        GlobalOverridesPersistence.persist(overrides, Constants.OVERRIDES_FILE);
         logger.fine("Sucessfully saved/updated overrides");
     }
 

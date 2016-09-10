@@ -8,6 +8,8 @@ import org.tvrenamer.model.util.Constants;
 import org.tvrenamer.view.UIUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -15,10 +17,6 @@ import java.util.logging.Logger;
 
 public class UserPreferences extends Observable {
     private static Logger logger = Logger.getLogger(UserPreferences.class.getName());
-
-    public static File prefsFile =
-        new File(Constants.USER_HOME_DIR,
-                 Constants.PREFERENCES_FILE);
 
     private File destDir;
     private String seasonPrefix;
@@ -59,37 +57,82 @@ public class UserPreferences extends Observable {
     }
 
     /**
+     * Deal with legacy files and set up
+     */
+    public static void initialize() {
+        File temp = null;
+        if (Constants.CONFIGURATION_DIRECTORY.exists()) {
+            // Older versions used the same name as a preferences file
+            if (!Constants.CONFIGURATION_DIRECTORY.isDirectory()) {
+                try {
+                    temp = File.createTempFile(Constants.APPLICATION_NAME, null, null);
+                } catch (IOException ioe) {
+                    temp = null;
+                }
+                if ((temp == null) || !temp.exists()) {
+                    throw new RuntimeException("Could not create temp file");
+                }
+                temp.delete();
+                Constants.CONFIGURATION_DIRECTORY.renameTo(temp);
+            }
+        }
+        if (!Constants.CONFIGURATION_DIRECTORY.exists()) {
+            boolean success = Constants.CONFIGURATION_DIRECTORY.mkdir();
+            if (!success) {
+                throw new RuntimeException("Could not create configuration directory");
+            }
+        }
+        if (temp != null) {
+            boolean success = temp.renameTo(Constants.PREFERENCES_FILE);
+            if (!success) {
+                throw new RuntimeException("Could not rename old prefs file from "
+                                           + temp.getPath()
+                                           + " to " + Constants.PREFERENCES_FILE.getPath());
+            }
+        }
+        if (Constants.PREFERENCES_FILE_LEGACY.exists()) {
+            if (Constants.PREFERENCES_FILE.exists()) {
+                throw new RuntimeException("Found two legacy preferences files!!");
+            } else {
+                Constants.PREFERENCES_FILE_LEGACY.renameTo(Constants.PREFERENCES_FILE);
+            }
+        }
+        if (Constants.OVERRIDES_FILE_LEGACY.exists()) {
+            Constants.OVERRIDES_FILE_LEGACY.renameTo(Constants.OVERRIDES_FILE);
+        } else if (!Constants.OVERRIDES_FILE.exists()) {
+            // Previously the GlobalOverrides class was hard-coded to write some
+            // overrides to the file.  I don't think that's right, but to try to
+            // preserve the default behavior, if the user doesn't have any other
+            // overrides file, we'll try to copy one from the source code into
+            // place.  If it doesn't work, so be it.
+            File defOver = new File(Constants.DEVELOPER_DEFAULT_OVERRIDES_FILENAME);
+            if (defOver.exists()) {
+                try {
+                    Files.copy(defOver.toPath(), Constants.OVERRIDES_FILE.toPath());
+                } catch (IOException ioe) {
+                    logger.info("unable to copy default overrides file.");
+                }
+            }
+        }
+        if (!Constants.THETVDB_CACHE.exists()) {
+            Constants.THETVDB_CACHE.mkdir();
+        }
+    }
+
+    /**
      * Load preferences from xml file
      */
     public static UserPreferences load() {
+        initialize();
+
         // retrieve from file and update in-memory copy
-        UserPreferences prefs = UserPreferencesPersistence.retrieve(prefsFile);
+        UserPreferences prefs = UserPreferencesPersistence.retrieve(Constants.PREFERENCES_FILE);
 
         if (prefs != null) {
-            logger.finer("Sucessfully read preferences from: " + prefsFile.getAbsolutePath());
+            logger.finer("Sucessfully read preferences from: " + Constants.PREFERENCES_FILE.getAbsolutePath());
             logger.info("Sucessfully read preferences: " + prefs.toString());
         } else {
-
-            // Look in the legacy location, if not, create new
-            File legacyPrefsFile =
-                new File(Constants.USER_HOME_DIR,
-                         Constants.PREFERENCES_FILE_LEGACY);
-
-            prefs = UserPreferencesPersistence.retrieve(legacyPrefsFile);
-
-            if ( prefs != null ) {
-                logger.finer("Sucessfully read legacy preferences from: " + prefsFile.getAbsolutePath());
-                logger.info("Sucessfully read legacy preferences: " + prefs.toString());
-
-                // Delete the old file, then store into the new file
-                legacyPrefsFile.delete();
-                store(prefs);
-
-                logger.info("Deleted legacy prefs file in favour of the new file");
-
-            } else {
-                prefs = new UserPreferences();
-            }
+            prefs = new UserPreferences();
         }
 
         // apply the proxy configuration
@@ -106,20 +149,18 @@ public class UserPreferences extends Observable {
     }
 
     public static void store(UserPreferences prefs) {
-        UserPreferencesPersistence.persist(prefs, prefsFile);
+        UserPreferencesPersistence.persist(prefs, Constants.PREFERENCES_FILE);
         logger.fine("Sucessfully saved/updated preferences");
     }
 
     /**
-     * Sets the directory to move renamed files to. Must be an absolute path, and the entire path will be created if it
-     * doesn't exist.
+     * Sets the directory to move renamed files to. The entire path will be created if it doesn't exist.
      *
-     * @param dir
-     * @return True if the path was created successfully, false otherwise.
+     * @param dir the directory to use as destination
      */
-    public void setDestinationDirectory(String dir) throws TVRenamerIOException {
-        if (hasChanged(this.destDir.getAbsolutePath(), dir)) {
-            this.destDir = new File(dir);
+    public void setDestinationDirectory(File dir) throws TVRenamerIOException {
+        if (hasChanged(this.destDir, dir)) {
+            this.destDir = dir;
             ensurePath();
 
             setChanged();
@@ -128,14 +169,14 @@ public class UserPreferences extends Observable {
     }
 
     /**
-     * Sets the directory to move renamed files to. The entire path will be created if it doesn't exist.
+     * Sets the directory to move renamed files to. Must be an absolute path, and the entire path will be created if it
+     * doesn't exist.
      *
-     * @param dir
-     * @return True if the path was created successfully, false otherwise.
+     * @param dir the path to the directory
      */
-    public void setDestinationDirectory(File dir) throws TVRenamerIOException {
-        if (hasChanged(this.destDir, dir)) {
-            this.destDir = dir;
+    public void setDestinationDirectory(String dir) throws TVRenamerIOException {
+        if (hasChanged(this.destDir.getAbsolutePath(), dir)) {
+            this.destDir = new File(dir);
             ensurePath();
 
             setChanged();
