@@ -11,8 +11,9 @@ import java.util.logging.Logger;
 public class GlobalOverrides {
     private static Logger logger = Logger.getLogger(UserPreferences.class.getName());
 
-    public static File overridesFile = new File(System.getProperty("user.home") + File.separatorChar
-        + Constants.OVERRIDES_FILE);
+    public static File overridesFile =
+        new File(Constants.USER_HOME_DIR,
+                 Constants.OVERRIDES_FILE);
 
     private static final GlobalOverrides INSTANCE = load();
 

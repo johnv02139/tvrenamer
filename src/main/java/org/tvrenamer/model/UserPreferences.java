@@ -16,8 +16,9 @@ import java.util.logging.Logger;
 public class UserPreferences extends Observable {
     private static Logger logger = Logger.getLogger(UserPreferences.class.getName());
 
-    public static File prefsFile = new File(System.getProperty("user.home") + File.separatorChar
-                                            + Constants.PREFERENCES_FILE);
+    public static File prefsFile =
+        new File(Constants.USER_HOME_DIR,
+                 Constants.PREFERENCES_FILE);
 
     private File destDir;
     private String seasonPrefix;
@@ -38,7 +39,7 @@ public class UserPreferences extends Observable {
     private UserPreferences() {
         super();
 
-        this.destDir = new File(Constants.DEFAULT_DESTINATION_DIRECTORY);
+        this.destDir = Constants.DEFAULT_DESTINATION_DIRECTORY;
         this.seasonPrefix = Constants.DEFAULT_SEASON_PREFIX;
         this.seasonPrefixLeadingZero = false;
         this.moveEnabled = false;
@@ -70,8 +71,9 @@ public class UserPreferences extends Observable {
         } else {
 
             // Look in the legacy location, if not, create new
-            File legacyPrefsFile = new File(System.getProperty("user.home") + File.separatorChar
-                                            + Constants.PREFERENCES_FILE_LEGACY);
+            File legacyPrefsFile =
+                new File(Constants.USER_HOME_DIR,
+                         Constants.PREFERENCES_FILE_LEGACY);
 
             prefs = UserPreferencesPersistence.retrieve(legacyPrefsFile);
 
