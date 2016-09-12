@@ -24,10 +24,10 @@ then
 fi
 
 # local libraries -- hard-coded.  The first one is platform-specific.
-loclibs="swt-win64-4.3.jar jedit-4.3.2-IOUtilities.jar xstream-1.3.1.jar"
+loclibs="swt-win64-4.3.jar jedit-4.3.2-IOUtilities.jar"
 
 # downloaded libraries -- may need to run "ant resolve" to get...
-dllibs="commons-codec-1.4.jar xpp3_min-1.1.4c.jar"
+dllibs="commons-codec-1.4.jar xstream-1.4.9.jar xmlpull-1.1.3.1.jar xpp3_min-1.1.4c.jar"
 
 # Other Windows Bourne shells, like Cygwin, provide specific functionality
 # for going between Unix-style and Windows-style paths.  I don't find any
