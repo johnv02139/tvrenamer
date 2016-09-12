@@ -27,14 +27,6 @@
   <property name="jar.builtBy" value="https://github.com/tvrenamer/tvrenamer" />
   <property name="jar.mainClass" value="org.tvrenamer.view.UIStarter" />
 
-  <!-- To build, get launch4j, update the path in build.properties -->
-  <taskdef name="launch4j"
-      classname="net.sf.launch4j.ant.Launch4jTask"
-      classpath="${launch4j.path}/launch4j.jar:${launch4j.path}/lib/xstream.jar" onerror="report" />
-
-  <!-- for creating OS X app bundles -->
-  <taskdef name="bundleapp" classpath="appbundler-1.0ea.jar" classname="com.oracle.appbundler.AppBundlerTask" />
-
   <path id="classpath">
     <fileset dir="${lib.main}">
       <!-- We can compile against any swt version-->
@@ -168,21 +160,7 @@
   <macrodef name="build.win">
     <attribute name="platform" />
     <sequential>
-      <fail unless="launch4j.path" message="You must set the 'launch4j.path' property in build.properties. Copy, rename build.properties.template and enter the launch4j location" />
-
       <build.jar platform="@{platform}" />
-      <!-- Create the .exe with launch4j, but first you must uncomment the ant task import above -->
-      <launch4j>
-        <config headerType="gui"
-                outfile="${dist}/${rel.name}-@{platform}.exe"
-                dontWrapJar="false"
-                jar="${build}/@{platform}/tvrenamer.jar"
-                icon="${res}\icons\oldschool-tv-icon.ico"
-                chdir=".">
-          <jre minVersion="1.7.0" />
-        </config>
-      </launch4j>
-
       <delete dir="${build}/@{platform}/" failonerror="false" />
     </sequential>
   </macrodef>
