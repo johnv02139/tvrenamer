@@ -300,7 +300,7 @@ public class ShowName {
      *     ShowName to.
      */
     synchronized void notifyListeners(Show show) {
-        if (show instanceof FailedShow) {
+        if (show.isFailedShow()) {
             downloadStatus = DownloadStatus.FAILURE;
             for (ShowInformationListener listener : registrations) {
                 listener.downloadFailed(show);
