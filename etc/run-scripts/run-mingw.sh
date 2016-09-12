@@ -23,8 +23,11 @@ then
   exit 1
 fi
 
-# libraries -- hard-coded.  The first one is platform-specific.
-libraries="swt-win64-4.3.jar commons-codec-1.4.jar jedit-4.3.2-IOUtilities.jar xpp3_min-1.1.4.jar xstream-1.3.1.jar"
+# local libraries -- hard-coded.  The first one is platform-specific.
+loclibs="swt-win64-4.3.jar jedit-4.3.2-IOUtilities.jar xstream-1.3.1.jar"
+
+# downloaded libraries -- may need to run "ant resolve" to get...
+dllibs="commons-codec-1.4.jar xpp3_min-1.1.4c.jar"
 
 # Other Windows Bourne shells, like Cygwin, provide specific functionality
 # for going between Unix-style and Windows-style paths.  I don't find any
@@ -52,6 +55,15 @@ proj=`dirname $0`
 cd ${proj}/../..
 pdir=`pwd`
 proj=`windowsize $pdir`
+dllibloc=${pdir}/lib
+
+for lib in ${dllibs}
+do
+  if [ ! -f ${dllibloc}/${lib} ]
+  then
+    ant resolve
+  fi
+done
 
 if [ -n "$1" ]
 then
@@ -72,12 +84,16 @@ fi
 cd $startdir
 
 # Library files are checked in here
-libdir=${pdir}/jars/main
+loclibdir=${pdir}/jars/main
 
 CLASSPATH=${proj}/out
-for lib in ${libraries}
+for lib in ${loclibs}
 do
-  CLASSPATH=${CLASSPATH}';'`windowsize ${libdir}/${lib}`
+  CLASSPATH=${CLASSPATH}';'`windowsize ${loclibdir}/${lib}`
+done
+for lib in ${dllibs}
+do
+  CLASSPATH=${CLASSPATH}';'`windowsize ${dllibloc}/${lib}`
 done
 export CLASSPATH
 
