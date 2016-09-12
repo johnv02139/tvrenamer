@@ -17,8 +17,11 @@ then
   exit 1
 fi
 
-# libraries -- hard-coded.  The first one is platform-specific.
-libraries="swt-osx64-4.3.jar commons-codec-1.4.jar jedit-4.3.2-IOUtilities.jar xpp3_min-1.1.4.jar xstream-1.3.1.jar"
+# local libraries -- hard-coded.  The first one is platform-specific.
+loclibs="swt-osx64-4.3.jar jedit-4.3.2-IOUtilities.jar xpp3_min-1.1.4.jar xstream-1.3.1.jar"
+
+# downloaded libraries -- may need to run "ant resolve" to get...
+dllibs="commons-codec-1.4.jar"
 
 usage ()
 {
@@ -56,12 +59,16 @@ fi
 cd $startdir
 
 # Library files are checked in here
-libdir=${pdir}/jars/main
+loclibdir=${pdir}/jars/main
 
 CLASSPATH=${proj}/out
-for lib in ${libraries}
+for lib in ${loclibs}
 do
-  CLASSPATH=${CLASSPATH}':'${libdir}/${lib}
+  CLASSPATH=${CLASSPATH}':'${loclibdir}/${lib}
+done
+for lib in ${dllibs}
+do
+  CLASSPATH=${CLASSPATH}':'${pdir}/lib/${lib}
 done
 export CLASSPATH
 
