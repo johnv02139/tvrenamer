@@ -7,7 +7,6 @@
   <property name="build" value="out" />
   <property name="lib.dl" value="lib" />
   <property name="lib.main" value="jars/main" />
-  <property name="lib.test" value="jars/test" />
   <property name="res" value="res" />
   <property name="rel" value="release" />
 
@@ -54,12 +53,12 @@
 
   <path id="classpath.test">
     <path refid="classpath" />
-    <fileset dir="${lib.test}" />
+    <fileset dir="${lib.dl}" />
 
     <pathelement location="${build}" />
   </path>
 
-  <target name="resolve" description="retreive dependencies with ivy">
+  <target name="resolve" description="retrieve dependencies with ivy">
     <ivy:retrieve/>
   </target>
 
