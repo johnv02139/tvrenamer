@@ -137,7 +137,6 @@ public class FileEpisode {
                 String episodeNumberWithLeadingZeros = new DecimalFormat("#00").format(this.episodeNumber);
                 String episodeTitleNoSpaces = titleString.replaceAll(" ", ".");
                 String seasonNumberWithLeadingZero = new DecimalFormat("00").format(this.seasonNumber);
-                String episodeResolution = this.episodeResolution;
 
                 newFilename = newFilename.replaceAll(ReplacementToken.SHOW_NAME.getToken(), showName);
                 newFilename = newFilename.replaceAll(ReplacementToken.SEASON_NUM.getToken(), seasonNum);
@@ -176,8 +175,8 @@ public class FileEpisode {
     }
 
     private String formatDate(Calendar cal, String format) {
-        SimpleDateFormat date_format = new SimpleDateFormat(format);
-        return date_format.format(cal.getTime());
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+        return dateFormat.format(cal.getTime());
     }
 
     /**
