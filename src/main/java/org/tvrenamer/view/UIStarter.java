@@ -46,7 +46,7 @@ public class UIUtils {
     }
 
     public static void showMessageBox(final SWTMessageBoxType type, final String title, final String message, final Exception exception) {
-        if(shell == null) {
+        if (shell == null) {
             // Shell not established yet, try using JOPtionPane instead
             try {
                 JOptionPane.showMessageDialog(null, message);
@@ -63,7 +63,7 @@ public class UIUtils {
                 MessageBox msgBox = new MessageBox(shell, type.swtIconValue);
                 msgBox.setText(title);
 
-                if(exception == null) {
+                if (exception == null) {
                     msgBox.setMessage(message);
                 } else {
                     msgBox.setMessage(message + "/n" + exception.getLocalizedMessage());

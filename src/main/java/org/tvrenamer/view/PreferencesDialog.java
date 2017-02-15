@@ -313,7 +313,7 @@ public class PreferencesDialog extends Dialog {
                 String token;
 
                 Matcher tokenMatcher =  Pattern.compile(REPLACEMENT_OPTIONS_LIST_ENTRY_REGEX).matcher(listEntry);
-                if(tokenMatcher.matches()) {
+                if (tokenMatcher.matches()) {
                     token = tokenMatcher.group(1);
                     event.data = token;
                 }
@@ -432,7 +432,7 @@ public class PreferencesDialog extends Dialog {
         proxyEnabledCheckbox.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                if(proxyEnabledCheckbox.getSelection()) {
+                if (proxyEnabledCheckbox.getSelection()) {
                     toggleEnableControls(proxyEnabledCheckbox, proxyHostText, proxyPortText, proxyAuthenticationRequiredCheckbox);
                 } else {
                     toggleEnableControls(proxyEnabledCheckbox, proxyHostText, proxyPortText, proxyAuthenticationRequiredCheckbox, proxyUsernameText, proxyPasswordText);
