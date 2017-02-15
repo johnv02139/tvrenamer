@@ -51,7 +51,7 @@ public class UIUtils {
             try {
                 JOptionPane.showMessageDialog(null, message);
                 return;
-            } catch(HeadlessException he) {
+            } catch (HeadlessException he) {
                 logger.warning("Could not show message graphically: " + message);
                 return;
             }
