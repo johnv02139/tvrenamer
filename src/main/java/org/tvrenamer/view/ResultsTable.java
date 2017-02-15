@@ -428,8 +428,7 @@ public class UIStarter {
     }
 
     private void setupSelectionListener() {
-        resultsTable.addListener
-            (SWT.Selection,
+        resultsTable.addListener(SWT.Selection,
              new Listener() {
                  public void handleEvent(Event event) {
                      if (event.detail == SWT.CHECK) {
