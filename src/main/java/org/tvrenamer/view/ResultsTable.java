@@ -490,7 +490,7 @@ public class UIStarter {
             public void keyReleased(KeyEvent e) {
                 super.keyReleased(e);
 
-                switch(e.keyCode) {
+                switch (e.keyCode) {
 
                     // backspace
                     case '\u0008':
