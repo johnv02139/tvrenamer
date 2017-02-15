@@ -491,7 +491,7 @@ public class UIStarter {
             public void keyReleased(KeyEvent e) {
                 super.keyReleased(e);
 
-                switch(e.keyCode){
+                switch(e.keyCode) {
 
                     // backspace
                     case '\u0008':
@@ -615,7 +615,7 @@ public class UIStarter {
 
             @Override
             public void drop(DropTargetEvent e) {
-                String fileList[] = null;
+                String[] fileList = null;
                 FileTransfer ft = FileTransfer.getInstance();
                 if (ft.isSupportedType(e.currentDataType)) {
                     fileList = (String[]) e.data;
@@ -758,7 +758,7 @@ public class UIStarter {
                         display.asyncExec(new Runnable() {
                             @Override
                             public void run() {
-                                if( tableContainsTableItem(item) ){
+                                if( tableContainsTableItem(item) ) {
                                     item.setText(NEW_FILENAME_COLUMN, DOWNLOADING_FAILED_MESSAGE);
                                     item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
                                     item.setChecked(false);
