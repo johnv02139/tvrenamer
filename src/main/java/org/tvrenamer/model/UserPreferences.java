@@ -1,9 +1,10 @@
 package org.tvrenamer.model;
 
+import static org.tvrenamer.model.util.Constants.*;
+
 import org.tvrenamer.controller.UserPreferencesChangeListener;
 import org.tvrenamer.controller.UserPreferencesPersistence;
 import org.tvrenamer.controller.util.StringUtils;
-import org.tvrenamer.model.util.Constants;
 import org.tvrenamer.view.UIUtils;
 
 import java.io.File;
@@ -36,12 +37,12 @@ public class UserPreferences extends Observable {
     private UserPreferences() {
         super();
 
-        this.destDir = Constants.DEFAULT_DESTINATION_DIRECTORY;
-        this.seasonPrefix = Constants.DEFAULT_SEASON_PREFIX;
+        this.destDir = DEFAULT_DESTINATION_DIRECTORY;
+        this.seasonPrefix = DEFAULT_SEASON_PREFIX;
         this.seasonPrefixLeadingZero = false;
         this.moveEnabled = false;
         this.renameEnabled = true;
-        this.renameReplacementMask = Constants.DEFAULT_REPLACEMENT_MASK;
+        this.renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
         this.proxy = new ProxySettings();
         this.checkForUpdates = true;
         this.recursivelyAddFolders = true;
@@ -60,11 +61,11 @@ public class UserPreferences extends Observable {
      */
     public static void initialize() {
         File temp = null;
-        if (Constants.CONFIGURATION_DIRECTORY.exists()) {
+        if (CONFIGURATION_DIRECTORY.exists()) {
             // Older versions used the same name as a preferences file
-            if (!Constants.CONFIGURATION_DIRECTORY.isDirectory()) {
+            if (!CONFIGURATION_DIRECTORY.isDirectory()) {
                 try {
-                    temp = File.createTempFile(Constants.APPLICATION_NAME, null, null);
+                    temp = File.createTempFile(APPLICATION_NAME, null, null);
                 } catch (IOException ioe) {
                     temp = null;
                 }
@@ -72,49 +73,49 @@ public class UserPreferences extends Observable {
                     throw new RuntimeException("Could not create temp file");
                 }
                 temp.delete();
-                Constants.CONFIGURATION_DIRECTORY.renameTo(temp);
+                CONFIGURATION_DIRECTORY.renameTo(temp);
             }
         }
-        if (!Constants.CONFIGURATION_DIRECTORY.exists()) {
-            boolean success = Constants.CONFIGURATION_DIRECTORY.mkdir();
+        if (!CONFIGURATION_DIRECTORY.exists()) {
+            boolean success = CONFIGURATION_DIRECTORY.mkdir();
             if (!success) {
                 throw new RuntimeException("Could not create configuration directory");
             }
         }
         if (temp != null) {
-            boolean success = temp.renameTo(Constants.PREFERENCES_FILE);
+            boolean success = temp.renameTo(PREFERENCES_FILE);
             if (!success) {
                 throw new RuntimeException("Could not rename old prefs file from "
                                            + temp.getPath()
-                                           + " to " + Constants.PREFERENCES_FILE.getPath());
+                                           + " to " + PREFERENCES_FILE.getPath());
             }
         }
-        if (Constants.PREFERENCES_FILE_LEGACY.exists()) {
-            if (Constants.PREFERENCES_FILE.exists()) {
+        if (PREFERENCES_FILE_LEGACY.exists()) {
+            if (PREFERENCES_FILE.exists()) {
                 throw new RuntimeException("Found two legacy preferences files!!");
             } else {
-                Constants.PREFERENCES_FILE_LEGACY.renameTo(Constants.PREFERENCES_FILE);
+                PREFERENCES_FILE_LEGACY.renameTo(PREFERENCES_FILE);
             }
         }
-        if (Constants.OVERRIDES_FILE_LEGACY.exists()) {
-            Constants.OVERRIDES_FILE_LEGACY.renameTo(Constants.OVERRIDES_FILE);
-        } else if (!Constants.OVERRIDES_FILE.exists()) {
+        if (OVERRIDES_FILE_LEGACY.exists()) {
+            OVERRIDES_FILE_LEGACY.renameTo(OVERRIDES_FILE);
+        } else if (!OVERRIDES_FILE.exists()) {
             // Previously the GlobalOverrides class was hard-coded to write some
             // overrides to the file.  I don't think that's right, but to try to
             // preserve the default behavior, if the user doesn't have any other
             // overrides file, we'll try to copy one from the source code into
             // place.  If it doesn't work, so be it.
-            File defOver = new File(Constants.DEVELOPER_DEFAULT_OVERRIDES_FILENAME);
+            File defOver = new File(DEVELOPER_DEFAULT_OVERRIDES_FILENAME);
             if (defOver.exists()) {
                 try {
-                    Files.copy(defOver.toPath(), Constants.OVERRIDES_FILE.toPath());
+                    Files.copy(defOver.toPath(), OVERRIDES_FILE.toPath());
                 } catch (IOException ioe) {
                     logger.info("unable to copy default overrides file.");
                 }
             }
         }
-        if (!Constants.THETVDB_CACHE.exists()) {
-            Constants.THETVDB_CACHE.mkdir();
+        if (!THETVDB_CACHE.exists()) {
+            THETVDB_CACHE.mkdir();
         }
     }
 
@@ -125,10 +126,10 @@ public class UserPreferences extends Observable {
         initialize();
 
         // retrieve from file and update in-memory copy
-        UserPreferences prefs = UserPreferencesPersistence.retrieve(Constants.PREFERENCES_FILE);
+        UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE);
 
         if (prefs != null) {
-            logger.finer("Sucessfully read preferences from: " + Constants.PREFERENCES_FILE.getAbsolutePath());
+            logger.finer("Sucessfully read preferences from: " + PREFERENCES_FILE.getAbsolutePath());
             logger.info("Sucessfully read preferences: " + prefs.toString());
         } else {
             prefs = new UserPreferences();
@@ -148,7 +149,7 @@ public class UserPreferences extends Observable {
     }
 
     public static void store(UserPreferences prefs) {
-        UserPreferencesPersistence.persist(prefs, Constants.PREFERENCES_FILE);
+        UserPreferencesPersistence.persist(prefs, PREFERENCES_FILE);
         logger.fine("Sucessfully saved/updated preferences");
     }
 

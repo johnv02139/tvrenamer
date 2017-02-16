@@ -1,5 +1,6 @@
 package org.tvrenamer.view;
 
+import static org.tvrenamer.model.util.Constants.*;
 import static org.tvrenamer.view.UIUtils.getDefaultSystemFont;
 
 import org.eclipse.swt.SWT;
@@ -19,7 +20,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.model.SWTMessageBoxType;
-import org.tvrenamer.model.util.Constants;
 
 import java.io.InputStream;
 import java.util.logging.Logger;
@@ -96,13 +96,13 @@ public class AboutDialog extends Dialog {
         Label applicationLabel = new Label(aboutShell, SWT.NONE);
         applicationLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(),
             getDefaultSystemFont().getHeight() + 4, SWT.BOLD));
-        applicationLabel.setText(Constants.APPLICATION_NAME);
+        applicationLabel.setText(APPLICATION_NAME);
         applicationLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         Label versionLabel = new Label(aboutShell, SWT.NONE);
         versionLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(), getDefaultSystemFont()
             .getHeight() + 2, SWT.BOLD));
-        versionLabel.setText("Version: " + Constants.VERSION_NUMBER);
+        versionLabel.setText("Version: " + VERSION_NUMBER);
         versionLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         Label descriptionLabel = new Label(aboutShell, SWT.NONE);
@@ -182,7 +182,7 @@ public class AboutDialog extends Dialog {
                     StringBuilder messageBuilder = new StringBuilder();
                     messageBuilder.append("There is a new version available!\n\n");
                     messageBuilder.append("You are currently running ");
-                    messageBuilder.append(Constants.VERSION_NUMBER);
+                    messageBuilder.append(VERSION_NUMBER);
                     messageBuilder.append(", but there is an update available\n\n");
                     messageBuilder.append("Please visit ");
                     messageBuilder.append(TVRENAMER_PROJECT_URL);

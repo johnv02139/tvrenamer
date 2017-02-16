@@ -1,5 +1,6 @@
 package org.tvrenamer.view;
 
+import static org.tvrenamer.model.util.Constants.*;
 import static org.tvrenamer.view.UIUtils.showMessageBox;
 
 import org.eclipse.swt.SWT;
@@ -58,7 +59,6 @@ import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
-import org.tvrenamer.model.util.Constants;
 import org.tvrenamer.model.util.Environment;
 
 import java.io.File;
@@ -140,12 +140,12 @@ public class UIStarter implements Observer {
 
         // Setup display and shell
         GridLayout shellGridLayout = new GridLayout(3, false);
-        Display.setAppName(Constants.APPLICATION_NAME);
+        Display.setAppName(APPLICATION_NAME);
         display = new Display();
 
         shell = new Shell(display);
 
-        shell.setText(Constants.APPLICATION_NAME);
+        shell.setText(APPLICATION_NAME);
         shell.setLayout(shellGridLayout);
 
         // Setup the util class
@@ -297,7 +297,7 @@ public class UIStarter implements Observer {
 
         if (Environment.IS_MAC_OSX) {
             // Add the special Mac OSX Preferences, About and Quit menus.
-            CocoaUIEnhancer enhancer = new CocoaUIEnhancer(Constants.APPLICATION_NAME);
+            CocoaUIEnhancer enhancer = new CocoaUIEnhancer(APPLICATION_NAME);
             enhancer.hookApplicationMenu(display, quitListener, aboutListener, preferencesListener);
 
             setupHelpMenuBar(menuBarMenu);
@@ -1025,12 +1025,15 @@ public class UIStarter implements Observer {
     private void updateUserPreferences(UserPreferences observed, UserPreference upref) {
         logger.info("Preference change event: " + upref);
 
-        if (upref == UserPreference.MOVE_ENABLED) {
+        if ((upref == UserPreference.MOVE_ENABLED)
+            || (upref == UserPreference.RENAME_ENABLED))
+        {
             setColumnDestText();
             setRenameButtonText();
         }
         if ((upref == UserPreference.REPLACEMENT_MASK)
             || (upref == UserPreference.MOVE_ENABLED)
+            || (upref == UserPreference.RENAME_ENABLED)
             || (upref == UserPreference.DEST_DIR)
             || (upref == UserPreference.SEASON_PREFIX)
             || (upref == UserPreference.LEADING_ZERO))

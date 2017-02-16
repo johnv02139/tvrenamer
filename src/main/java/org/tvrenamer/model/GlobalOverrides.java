@@ -1,7 +1,8 @@
 package org.tvrenamer.model;
 
+import static org.tvrenamer.model.util.Constants.*;
+
 import org.tvrenamer.controller.GlobalOverridesPersistence;
-import org.tvrenamer.model.util.Constants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,10 +24,10 @@ public class GlobalOverrides {
     }
 
     private static GlobalOverrides load() {
-        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(Constants.OVERRIDES_FILE);
+        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE);
 
         if (overrides != null) {
-            logger.finer("Sucessfully read overrides from: " + Constants.OVERRIDES_FILE.getAbsolutePath());
+            logger.finer("Sucessfully read overrides from: " + OVERRIDES_FILE.getAbsolutePath());
             logger.info("Sucessfully read overrides: " + overrides.toString());
         } else {
             overrides = new GlobalOverrides();
@@ -37,7 +38,7 @@ public class GlobalOverrides {
     }
 
     public static void store(GlobalOverrides overrides) {
-        GlobalOverridesPersistence.persist(overrides, Constants.OVERRIDES_FILE);
+        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE);
         logger.fine("Sucessfully saved/updated overrides");
     }
 

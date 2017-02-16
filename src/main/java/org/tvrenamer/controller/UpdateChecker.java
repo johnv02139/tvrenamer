@@ -1,7 +1,8 @@
 package org.tvrenamer.controller;
 
+import static org.tvrenamer.model.util.Constants.*;
+
 import org.tvrenamer.model.TVRenamerIOException;
-import org.tvrenamer.model.util.Constants;
 import org.tvrenamer.view.AboutDialog;
 
 import java.util.logging.Level;
@@ -28,10 +29,10 @@ public class UpdateChecker {
             return false;
         }
 
-        boolean newVersionAvailable = latestVersion.compareToIgnoreCase(Constants.VERSION_NUMBER) > 0;
+        boolean newVersionAvailable = latestVersion.compareToIgnoreCase(VERSION_NUMBER) > 0;
 
         if (newVersionAvailable) {
-            logger.info("There is a new version available, running " + Constants.VERSION_NUMBER + ", new version is "
+            logger.info("There is a new version available, running " + VERSION_NUMBER + ", new version is "
                 + latestVersion);
             return true;
         }
