@@ -1,38 +1,17 @@
-package org.tvrenamer.controller;
+package org.tvrenamer.model;
 
-/**
- * Represents a change event of user preferences
- * @author Dave Harris
- */
-public class UserPreferencesChangeEvent {
-    /** The preference field that has changed */
-    private String preference;
-    /** The new value of the preference */
-    private Object newValue;
+public enum UserPreference {
+    PROXY,
+    REPLACEMENT_MASK,
+    MOVE_ENABLED,
+    RENAME_ENABLED,
+    DEST_DIR,
+    SEASON_PREFIX,
+    LEADING_ZERO,
+    ADD_SUBDIRS,
+    IGNORE_REGEX,
 
-    public UserPreferencesChangeEvent(String preference, Object newValue) {
-        this.preference = preference;
-        this.newValue = newValue;
-    }
-
-    public String getPreference() {
-        return preference;
-    }
-
-    public void setPreference(String preference) {
-        this.preference = preference;
-    }
-
-    public Object getNewValue() {
-        return newValue;
-    }
-
-    public void setNewValue(Object newValue) {
-        this.newValue = newValue;
-    }
-
-    @Override
-    public String toString() {
-        return "UserPreferencesChangeEvent [preference=" + preference + ", newValue=" + newValue + "]";
-    }
+    // Since these are only meaningful at startup, they probably should not be watched
+    UPDATE_CHECK,
+    PRELOAD_FOLDER
 }

@@ -1,6 +1,5 @@
 package org.tvrenamer.model;
 
-import org.tvrenamer.controller.UserPreferencesChangeEvent;
 import org.tvrenamer.controller.UserPreferencesChangeListener;
 import org.tvrenamer.controller.UserPreferencesPersistence;
 import org.tvrenamer.controller.util.StringUtils;
@@ -153,6 +152,11 @@ public class UserPreferences extends Observable {
         logger.fine("Sucessfully saved/updated preferences");
     }
 
+    private void preferenceChanged(UserPreference preference, Object newValue) {
+        setChanged();
+        notifyObservers(preference);
+    }
+
     /**
      * Sets the directory to move renamed files to. The entire path will be created if it doesn't exist.
      *
@@ -163,8 +167,7 @@ public class UserPreferences extends Observable {
             this.destDir = dir;
             ensurePath();
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("destDir", dir));
+            preferenceChanged(UserPreference.DEST_DIR, dir);
         }
     }
 
@@ -179,8 +182,7 @@ public class UserPreferences extends Observable {
             this.destDir = new File(dir);
             ensurePath();
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("destDir", dir));
+            preferenceChanged(UserPreference.DEST_DIR, dir);
         }
     }
 
@@ -197,8 +199,7 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.moveEnabled, moveEnabled)) {
             this.moveEnabled = moveEnabled;
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("moveEnabled", moveEnabled));
+            preferenceChanged(UserPreference.MOVE_ENABLED, moveEnabled);
         }
     }
 
@@ -215,8 +216,7 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.renameEnabled, renameEnabled)) {
             this.renameEnabled = renameEnabled;
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("renameEnabled", renameEnabled));
+            preferenceChanged(UserPreference.RENAME_ENABLED, renameEnabled);
         }
     }
 
@@ -233,8 +233,7 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.recursivelyAddFolders, recursivelyAddFolders)) {
             this.recursivelyAddFolders = recursivelyAddFolders;
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("recursivelyAddFolders", recursivelyAddFolders));
+            preferenceChanged(UserPreference.ADD_SUBDIRS, recursivelyAddFolders);
         }
     }
 
@@ -261,8 +260,7 @@ public class UserPreferences extends Observable {
                 }
             }
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("ignoreKeywordsRegex", ignoreKeywords));
+            preferenceChanged(UserPreference.IGNORE_REGEX, ignoreKeywords);
         }
     }
 
@@ -277,8 +275,7 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.seasonPrefix, prefix)) {
             this.seasonPrefix = StringUtils.sanitiseTitle(prefix);
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("prefix", prefix));
+            preferenceChanged(UserPreference.SEASON_PREFIX, prefix);
         }
     }
 
@@ -298,8 +295,8 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.seasonPrefixLeadingZero, seasonPrefixLeadingZero)) {
             this.seasonPrefixLeadingZero = seasonPrefixLeadingZero;
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("seasonPrefixLeadingZero", seasonPrefixLeadingZero));
+            preferenceChanged(UserPreference.LEADING_ZERO, seasonPrefixLeadingZero);
+
         }
     }
 
@@ -307,8 +304,7 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.renameReplacementMask, renameReplacementMask)) {
             this.renameReplacementMask = renameReplacementMask;
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("renameReplacementMask", renameReplacementMask));
+            preferenceChanged(UserPreference.REPLACEMENT_MASK, renameReplacementMask);
         }
     }
 
@@ -325,8 +321,7 @@ public class UserPreferences extends Observable {
             this.proxy = proxy;
             proxy.apply();
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("proxy", proxy));
+            preferenceChanged(UserPreference.PROXY, proxy);
         }
     }
 
@@ -344,8 +339,7 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.checkForUpdates, checkForUpdates)) {
             this.checkForUpdates = checkForUpdates;
 
-            setChanged();
-            notifyObservers(new UserPreferencesChangeEvent("checkForUpdates", checkForUpdates));
+            preferenceChanged(UserPreference.UPDATE_CHECK, checkForUpdates);
         }
     }
 
