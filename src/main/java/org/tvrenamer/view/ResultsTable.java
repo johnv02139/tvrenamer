@@ -667,6 +667,13 @@ public class UIStarter implements Observer {
             shell.pack();
             shell.open();
 
+            File preloadFolder = prefs.getPreloadFolder();
+            if (preloadFolder != null) {
+                String[] preload = new String[1];
+                preload[0] = preloadFolder.getAbsolutePath();
+                initiateRenamer(preload);
+            }
+
             while (!shell.isDisposed()) {
                 if (!display.readAndDispatch()) {
                     display.sleep();
