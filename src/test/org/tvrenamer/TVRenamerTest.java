@@ -103,7 +103,7 @@ public class TVRenamerTest {
         for (TestInput testInput : values) {
             FileEpisode retval = TVRenamer.parseFilename(testInput.input);
             assertNotNull(retval);
-            assertEquals(testInput.input, testInput.show, retval.getShowName());
+            assertEquals(testInput.input, testInput.queryString, retval.getShowName());
             assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getSeasonNumber());
             assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getEpisodeNumber());
             assertEquals(testInput.input, testInput.episodeResolution, retval.getEpisodeResolution());
@@ -152,16 +152,37 @@ public class TVRenamerTest {
 
     private static class TestInput {
         public final String input;
-        public final String show;
+        public final String queryString;
+        public final String actualShowName;
         public final String season;
         public final String episode;
 
         public final String episodeTitle;
         public final String episodeResolution;
 
-        public TestInput(String input, String show, String season, String episode, String episodeTitle, String episodeResolution) {
+        public TestInput(String input, String queryString, String season, String episode, String episodeTitle, String episodeResolution) {
+            this(input, queryString, null, season, episode, episodeTitle, episodeResolution);
+        }
+
+        public TestInput(String input, String maybeQueryString, String showName,
+                         String season, String episode, String episodeTitle, String episodeResolution)
+        {
+            String queryString = maybeQueryString;
+            String actualShowName = showName;
+            if (maybeQueryString == null) {
+                if (showName != null) {
+                    queryString = showName.toLowerCase();
+                }
+            } else {
+                queryString = maybeQueryString.toLowerCase();
+                if (showName == null) {
+                    actualShowName = maybeQueryString;
+                }
+            }
+
             this.input = input;
-            this.show = show.toLowerCase();
+            this.queryString = queryString;
+            this.actualShowName = actualShowName;
             this.season = season;
             this.episode = episode;
             this.episodeTitle = episodeTitle;
