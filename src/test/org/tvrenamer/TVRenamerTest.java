@@ -158,6 +158,19 @@ public class TVRenamerTest {
         assertEquals(4, episode.getEpisodeNumber());
     }
 
+
+    // Once we have a CompletableFuture, we need to complete it.  There are a few ways, but
+    // obviously the simplest is to call complete().  If we simply call the JUnit method
+    // fail(), the future thread does not die and the test never exits.  The same appears
+    // to happen with an uncaught exception.  So, be very careful to make sure, one way or
+    // other, we call complete.
+
+    // Of course, none of this matters when everything works.  But if we want failure cases
+    // to actually stop and report failure, we need to complete the future, one way or another.
+
+    // We use a brief failure message as the show title in cases where we detect failure.
+    // Just make sure to not add a test case where the actual episode's title is one of
+    // the failure messages.  :)
     @Test
     public void testDownloadAndRename() {
         try {
@@ -180,7 +193,7 @@ public class TVRenamerTest {
 
                         @Override
                         public void downloadFailed(Show show) {
-                            fail();
+                            future.complete("downloadFailed");
                         }
                     });
 
