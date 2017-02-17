@@ -22,7 +22,7 @@ public class ShowStore {
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    public static Show getShow(String showName) {
+    public static Show mapStringToShow(String showName) {
         Show s = _shows.get(showName.toLowerCase());
         if (s == null) {
             String message = "Show not found for show name: '" + showName + "'";
@@ -50,7 +50,7 @@ public class ShowStore {
      * @param listener
      *            the listener to notify or register
      */
-    public static void getShow(String showName, ShowInformationListener listener) {
+    public static void mapStringToShow(String showName, ShowInformationListener listener) {
         Show show = _shows.get(showName.toLowerCase());
         if (show != null) {
             listener.downloaded(show);

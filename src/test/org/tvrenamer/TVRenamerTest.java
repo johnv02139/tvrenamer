@@ -181,7 +181,7 @@ public class TVRenamerTest {
                     String showName = fileEpisode.getShowName();
 
                     final CompletableFuture<String> future = new CompletableFuture<>();
-                    ShowStore.getShow(showName, new ShowInformationListener() {
+                    ShowStore.mapStringToShow(showName, new ShowInformationListener() {
                         @Override
                         public void downloaded(Show show) {
                             String actualShowName = show.getName();
