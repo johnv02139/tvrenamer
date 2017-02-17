@@ -40,13 +40,13 @@ public class FileEpisodeTest {
      */
     @Test
     public void testGetNewFilenameSpecialRegexChars() throws Exception {
+        String filename = "the.simpsons.5.10.avi";
         String showName = "The Simpsons";
         String title = "$pringfield";
         int seasonNum = 5;
         int episodeNum = 10;
         String resolution = "";
-        File file = new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator")
-                + "the.simpsons.5.10.avi");
+        File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
         createFile(file);
 
         Show show = new Show("1", showName, "http://thetvdb.com/?tab=series&id=71663");
@@ -69,13 +69,13 @@ public class FileEpisodeTest {
      */
     @Test
     public void testColon() throws Exception {
+        String filename = "steven.segal.lawman.1.01.avi";
         String showName = "Steven Seagal: Lawman";
         String title = "The Way of the Gun";
         int seasonNum = 1;
         int episodeNum = 1;
         String resolution = "";
-        File file = new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator")
-                + "steven.segal.lawman.1.01.avi");
+        File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
         createFile(file);
 
         Show show = new Show("1", showName, "http://thetvdb.com/?tab=series&id=126841&lid=7");
