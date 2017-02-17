@@ -1,15 +1,36 @@
 package org.tvrenamer.model.util;
 
 import java.io.File;
+import java.util.Locale;
 
 public class Constants {
+
+    public static final Locale THIS_LOCALE = Locale.getDefault();
 
     public static final String APPLICATION_NAME = "TVRenamer";
 
     public static final String VERSION_NUMBER = Environment.readVersionNumber();
 
+    public static final String TVRENAMER_PROJECT_URL = "http://tvrenamer.org";
+    public static final String TVRENAMER_DOWNLOAD_URL = TVRENAMER_PROJECT_URL + "/downloads";
+
+    public static final String NO_SUCH_SHOW_MESSAGE = "No such show found: ";
+    public static final String DOWNLOADING_FAILED_MESSAGE =
+            "Downloading show listings failed.  Check internet connection";
+    public static final String ADDED_PLACEHOLDER_FILENAME = "Downloading ...";
+    public static final String BROKEN_PLACEHOLDER_FILENAME = "Unable to download show information";
+
+    public static final String NO_DND = "Drag and Drop is not currently supported "
+        + "on your operating system, please use the 'Browse Files' option above";
+
+    public static final String UNKNOWN_EXCEPTION = "An error occurred, please check "
+        + "your internet connection, java version or run from the command line to show errors";
+
+
     public static final String DEFAULT_REPLACEMENT_MASK = "%S [%sx%0e] %t";
     public static final String DEFAULT_SEASON_PREFIX = "Season ";
+
+    public static final String ICON_PARENT_DIRECTORY = "res";
 
     private static final String CONFIGURATION_DIRECTORY_NAME = ".tvrenamer";
     private static final String PREFERENCES_FILENAME = "prefs.xml";
