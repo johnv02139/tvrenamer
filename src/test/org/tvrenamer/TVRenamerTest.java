@@ -106,6 +106,7 @@ public class TVRenamerTest {
             assertEquals(testInput.input, testInput.show, retval.getShowName());
             assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getSeasonNumber());
             assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getEpisodeNumber());
+            assertEquals(testInput.input, testInput.episodeResolution, retval.getEpisodeResolution());
         }
     }
 
@@ -167,5 +168,4 @@ public class TVRenamerTest {
             this.episodeResolution = episodeResolution;
         }
     }
-
 }

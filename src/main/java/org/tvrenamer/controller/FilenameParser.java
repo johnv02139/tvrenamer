@@ -39,7 +39,7 @@ public class TVRenamer {
         File f = new File(fileName);
         String fName = stripJunk(insertShowNameIfNeeded(f));
         int idx = 0;
-        Matcher matcher = null;
+        Matcher matcher;
         while (idx < COMPILED_REGEX.length) {
             matcher = COMPILED_REGEX[idx++].matcher(fName);
             if (matcher.matches() && matcher.groupCount() == 4) {
@@ -73,13 +73,12 @@ public class TVRenamer {
         output = removeLast(output, "hdtv");
         output = removeLast(output, "dvdrip");
         return output;
-
     }
 
     private static String removeLast(String input, String match) {
         int idx = input.toLowerCase().lastIndexOf(match);
         if (idx > 0) {
-            input = input.substring(0, idx);
+            input = input.substring(0, idx) + input.substring(idx + match.length(), input.length());
         }
         return input;
     }
