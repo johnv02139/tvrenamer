@@ -1,6 +1,5 @@
 package org.tvrenamer.controller;
 
-import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.FileEpisode;
 
 import java.io.File;
@@ -66,8 +65,6 @@ public class FilenameParser {
                     continue;
                 }
                 String show = matcher.group(1);
-                show = StringUtils.replacePunctuation(show).toLowerCase();
-
                 int season = Integer.parseInt(matcher.group(2));
                 int episode = Integer.parseInt(matcher.group(3));
 

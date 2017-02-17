@@ -101,7 +101,7 @@ public class FilenameParserTest {
         for (TestInput testInput : values) {
             FileEpisode retval = FilenameParser.parseFilename(testInput.input);
             assertNotNull(retval);
-            assertEquals(testInput.input, testInput.show, retval.getShowName());
+            assertEquals(testInput.input, testInput.show, retval.getQueryString());
             assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getSeasonNumber());
             assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getEpisodeNumber());
             assertEquals(testInput.input, testInput.episodeResolution, retval.getEpisodeResolution());
@@ -112,7 +112,7 @@ public class FilenameParserTest {
     public void testWarehouse13() {
         FileEpisode episode = FilenameParser.parseFilename("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertNotNull(episode);
-        assertEquals("warehouse 13", episode.getShowName());
+        assertEquals("warehouse 13", episode.getQueryString());
         assertEquals(5, episode.getSeasonNumber());
         assertEquals(4, episode.getEpisodeNumber());
     }
@@ -137,7 +137,7 @@ public class FilenameParserTest {
                 if (testInput.episodeTitle != null) {
                     final FileEpisode fileEpisode = FilenameParser.parseFilename(testInput.input);
                     assertNotNull(fileEpisode);
-                    String showName = fileEpisode.getShowName();
+                    String showName = fileEpisode.getQueryString();
 
                     final CompletableFuture<String> future = new CompletableFuture<>();
                     ShowStore.getShow(showName, new ShowInformationListener() {
