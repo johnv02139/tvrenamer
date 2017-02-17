@@ -142,7 +142,7 @@ public class TVRenamerTest {
         for (TestInput testInput : values) {
             FileEpisode retval = TVRenamer.parseFilename(testInput.input);
             assertNotNull(retval);
-            assertEquals(testInput.input, testInput.queryString, retval.getShowName());
+            assertEquals(testInput.input, testInput.queryString, retval.getQueryString());
             assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getSeasonNumber());
             assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getEpisodeNumber());
             assertEquals(testInput.input, testInput.episodeResolution, retval.getEpisodeResolution());
@@ -153,7 +153,7 @@ public class TVRenamerTest {
     public void testWarehouse13() {
         FileEpisode episode = TVRenamer.parseFilename("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertNotNull(episode);
-        assertEquals("warehouse 13", episode.getShowName());
+        assertEquals("warehouse 13", episode.getQueryString());
         assertEquals(5, episode.getSeasonNumber());
         assertEquals(4, episode.getEpisodeNumber());
     }
@@ -178,7 +178,7 @@ public class TVRenamerTest {
                 if (testInput.episodeTitle != null) {
                     final FileEpisode fileEpisode = TVRenamer.parseFilename(testInput.input);
                     assertNotNull(fileEpisode);
-                    String showName = fileEpisode.getShowName();
+                    String showName = fileEpisode.getQueryString();
 
                     final CompletableFuture<String> future = new CompletableFuture<>();
                     ShowStore.mapStringToShow(showName, new ShowInformationListener() {

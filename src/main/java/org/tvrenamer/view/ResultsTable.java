@@ -735,7 +735,7 @@ public class UIStarter implements Observer {
             if (episode == null) {
                 logger.severe("Couldn't parse file: " + fileName);
             } else {
-                String showName = episode.getShowName();
+                String showName = episode.getQueryString();
 
                 files.put(fileName, episode);
                 final TableItem item = createTableItem(resultsTable, fileName, episode);
