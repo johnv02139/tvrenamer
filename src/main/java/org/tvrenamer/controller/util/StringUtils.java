@@ -53,7 +53,7 @@ public class StringUtils {
     public static String getExtension(String filename) {
         int dot = filename.lastIndexOf('.');
         if (dot >= 0) {
-            return filename.substring(dot + 1);
+            return filename.substring(dot);
         }
         return "";
     }

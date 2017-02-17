@@ -165,7 +165,7 @@ public class FileEpisode {
                 newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
                                                      formatDate(airDate, "yy"));
 
-                String resultingFilename = newFilename.concat(".").concat(StringUtils.getExtension(file.getName()));
+                String resultingFilename = newFilename.concat(StringUtils.getExtension(file.getName()));
                 return StringUtils.sanitiseTitle(resultingFilename);
             }
             case BROKEN:
