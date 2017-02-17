@@ -115,7 +115,7 @@ public class FileEpisode {
     }
 
     private File getDestinationDirectory() {
-        String show = ShowStore.getShow(queryString).getName();
+        String show = ShowStore.mapStringToShow(queryString).getName();
         String destPath = userPrefs.getDestinationDirectory().getAbsolutePath() + File.separatorChar;
         destPath = destPath + StringUtils.sanitiseTitle(show) + File.separatorChar;
 
@@ -139,7 +139,7 @@ public class FileEpisode {
                 LocalDate airDate = null;
 
                 try {
-                    Show show = ShowStore.getShow(queryString);
+                    Show show = ShowStore.mapStringToShow(queryString);
                     showName = show.getName();
 
                     Season season = show.getSeason(filenameSeason);

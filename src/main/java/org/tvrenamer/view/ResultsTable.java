@@ -739,7 +739,7 @@ public class ResultsTable implements Observer {
                 files.put(fileName, episode);
                 final TableItem item = createTableItem(resultsTable, fileName, episode);
 
-                ShowStore.getShow(showName, new ShowInformationListener() {
+                ShowStore.mapStringToShow(showName, new ShowInformationListener() {
                     @Override
                     public void downloaded(Show show) {
                         episode.setStatus(EpisodeInfo.DOWNLOADED);
