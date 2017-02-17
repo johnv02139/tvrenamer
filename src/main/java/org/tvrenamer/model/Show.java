@@ -29,6 +29,10 @@ public class Show implements Comparable<Show> {
         return name;
     }
 
+    public String getNameKey() {
+        return name.toLowerCase();
+    }
+
     public String getUrl() {
         return url;
     }
@@ -38,7 +42,15 @@ public class Show implements Comparable<Show> {
     }
 
     public Season getSeason(int sNum) {
-        return seasons.get(sNum);
+        if (seasons.containsKey(sNum)) {
+            return seasons.get(sNum);
+        } else {
+            return null;
+        }
+    }
+
+    public boolean hasSeasons() {
+        return (seasons.size() > 0);
     }
 
     @Override
@@ -54,5 +66,4 @@ public class Show implements Comparable<Show> {
     public int compareTo(Show other) {
         return Integer.parseInt(other.id) - Integer.parseInt(this.id);
     }
-
 }
