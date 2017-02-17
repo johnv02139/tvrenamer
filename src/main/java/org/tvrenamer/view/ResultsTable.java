@@ -741,7 +741,7 @@ public class ResultsTable implements Observer {
 
                 ShowStore.mapStringToShow(showName, new ShowInformationListener() {
                     @Override
-                    public void downloaded(Show show) {
+                    public void downloadComplete(Show show) {
                         episode.setStatus(EpisodeInfo.DOWNLOADED);
                         display.asyncExec(new Runnable() {
                             @Override

@@ -53,7 +53,7 @@ public class ShowStore {
     public static void mapStringToShow(String showName, ShowInformationListener listener) {
         Show show = _shows.get(showName.toLowerCase());
         if (show != null) {
-            listener.downloaded(show);
+            listener.downloadComplete(show);
         } else {
             ShowRegistrations registrations = _showRegistrations.get(showName.toLowerCase());
             if (registrations != null) {
@@ -103,7 +103,7 @@ public class ShowStore {
                 if (show instanceof FailedShow) {
                     informationListener.downloadFailed(show);
                 } else {
-                    informationListener.downloaded(show);
+                    informationListener.downloadComplete(show);
                 }
             }
         }
