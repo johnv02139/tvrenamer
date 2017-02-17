@@ -2,12 +2,14 @@ package org.tvrenamer.model;
 
 public class FailedShow extends Show {
 
-    @SuppressWarnings("unused")
-    private final TVRenamerIOException err;
+    private final TVRenamerIOException ioe;
+
+    public TVRenamerIOException getException() {
+        return ioe;
+    }
 
     public FailedShow(String id, String name, String url, TVRenamerIOException err) {
         super(id, name, url);
-        this.err = err;
+        ioe = err;
     }
-
 }
