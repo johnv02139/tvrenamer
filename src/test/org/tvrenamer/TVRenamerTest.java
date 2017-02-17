@@ -183,7 +183,7 @@ public class TVRenamerTest {
                     final CompletableFuture<String> future = new CompletableFuture<>();
                     ShowStore.mapStringToShow(showName, new ShowInformationListener() {
                         @Override
-                        public void downloaded(Show show) {
+                        public void downloadComplete(Show show) {
                             String actualShowName = show.getName();
                             assertEquals(testInput.actualShowName, actualShowName);
                             int sNum = fileEpisode.getSeasonNumber();

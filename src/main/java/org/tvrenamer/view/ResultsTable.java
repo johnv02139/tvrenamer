@@ -742,7 +742,7 @@ public class UIStarter implements Observer {
 
                 ShowStore.mapStringToShow(showName, new ShowInformationListener() {
                     @Override
-                    public void downloaded(Show show) {
+                    public void downloadComplete(Show show) {
                         episode.setStatus(EpisodeStatus.DOWNLOADED);
                         display.asyncExec(new Runnable() {
                             @Override
