@@ -10,8 +10,8 @@ import okhttp3.Response;
 import org.tvrenamer.model.EpisodeInfo;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowName;
-import org.tvrenamer.model.TVRenamerIOException;
 import org.tvrenamer.model.UserPreferences;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.io.IOException;
 import java.util.LinkedList;

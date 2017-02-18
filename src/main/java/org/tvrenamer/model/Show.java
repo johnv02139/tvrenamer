@@ -7,6 +7,7 @@ import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.ShowListingsListener;
 import org.tvrenamer.controller.TheTVDBProvider;
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;

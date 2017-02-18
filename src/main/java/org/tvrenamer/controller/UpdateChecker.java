@@ -5,8 +5,8 @@ import static org.tvrenamer.model.util.Constants.*;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 
-import org.tvrenamer.model.TVRenamerIOException;
 import org.tvrenamer.model.UserPreferences;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

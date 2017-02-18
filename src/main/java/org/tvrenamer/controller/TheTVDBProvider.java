@@ -7,7 +7,7 @@ import static org.tvrenamer.model.util.Constants.*;
 import org.tvrenamer.model.EpisodeInfo;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowName;
-import org.tvrenamer.model.TVRenamerIOException;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;

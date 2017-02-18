@@ -2,6 +2,7 @@ package org.tvrenamer.model;
 
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.TheTVDBSwaggerProvider;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;

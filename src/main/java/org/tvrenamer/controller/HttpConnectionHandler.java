@@ -1,7 +1,7 @@
 package org.tvrenamer.controller;
 
 import org.tvrenamer.controller.util.StringUtils;
-import org.tvrenamer.model.TVRenamerIOException;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

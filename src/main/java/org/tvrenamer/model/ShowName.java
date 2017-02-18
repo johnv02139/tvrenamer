@@ -2,6 +2,7 @@ package org.tvrenamer.model;
 
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.LinkedList;
 import java.util.List;
