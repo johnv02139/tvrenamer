@@ -38,27 +38,25 @@ public class TVRenamer {
     public static FileEpisode parseFilename(String fileName) {
         File f = new File(fileName);
         String fName = stripJunk(insertShowNameIfNeeded(f));
+
         int idx = 0;
         Matcher matcher;
         while (idx < COMPILED_REGEX.length) {
             matcher = COMPILED_REGEX[idx++].matcher(fName);
-            if (matcher.matches() && matcher.groupCount() == 4) {
-                String show = matcher.group(1);
-                show = StringUtils.replacePunctuation(show).toLowerCase();
-
-                int season = Integer.parseInt(matcher.group(2));
-                int episode = Integer.parseInt(matcher.group(3));
-                String resolution = matcher.group(4);
-
-                FileEpisode ep = new FileEpisode(show, season, episode, resolution, f);
-                return ep;
-            } else if (matcher.matches() && matcher.groupCount() == 3){
-                String show = matcher.group(1);
-                show = StringUtils.replacePunctuation(show).toLowerCase();
-
-                int season = Integer.parseInt(matcher.group(2));
-                int episode = Integer.parseInt(matcher.group(3));
+            if (matcher.matches()) {
                 String resolution = "";
+                if (matcher.groupCount() == 4) {
+                    resolution = matcher.group(4);
+                } else if (matcher.groupCount() != 3) {
+                    // This should never happen and so we should probably consider it
+                    // an error if it does, but not important.
+                    continue;
+                }
+                String show = matcher.group(1);
+                show = StringUtils.replacePunctuation(show).toLowerCase();
+
+                int season = Integer.parseInt(matcher.group(2));
+                int episode = Integer.parseInt(matcher.group(3));
 
                 FileEpisode ep = new FileEpisode(show, season, episode, resolution, f);
                 return ep;
