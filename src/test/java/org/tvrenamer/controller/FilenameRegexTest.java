@@ -1,6 +1,6 @@
 package org.tvrenamer.controller;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +50,8 @@ public class FilenameRegexTest {
 
     @Test
     public void testRegex() {
-        FileEpisode result = FilenameParser.parseFilename(input);
-        assertNotNull(result);
+        FileEpisode result = new FileEpisode(input);
+        boolean parsed = FilenameParser.parseFilename(result);
+        assertTrue(parsed);
     }
 }

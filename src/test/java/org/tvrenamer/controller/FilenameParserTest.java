@@ -1,7 +1,7 @@
 package org.tvrenamer.controller;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.BeforeClass;
@@ -138,22 +138,22 @@ public class FilenameParserTest {
     @Test
     public void testParseFileName() {
         for (TestInput testInput : values) {
-            FileEpisode retval = FilenameParser.parseFilename(testInput.input);
-            assertNotNull(retval);
+            FileEpisode retval = new FileEpisode(testInput.input);
+            assertTrue(FilenameParser.parseFilename(retval));
             assertEquals(testInput.input, testInput.queryString, retval.getQueryString());
-            assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getSeasonNumber());
-            assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getEpisodeNumber());
-            assertEquals(testInput.input, testInput.episodeResolution, retval.getEpisodeResolution());
+            assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getFilenameSeason());
+            assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getFilenameEpisode());
+            assertEquals(testInput.input, testInput.episodeResolution, retval.getFilenameResolution());
         }
     }
 
     @Test
     public void testWarehouse13() {
-        FileEpisode episode = FilenameParser.parseFilename("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
-        assertNotNull(episode);
+        FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
+        assertTrue(FilenameParser.parseFilename(episode));
         assertEquals("warehouse 13", episode.getQueryString());
-        assertEquals(5, episode.getSeasonNumber());
-        assertEquals(4, episode.getEpisodeNumber());
+        assertEquals(5, episode.getFilenameSeason());
+        assertEquals(4, episode.getFilenameEpisode());
     }
 
 
@@ -174,8 +174,8 @@ public class FilenameParserTest {
         try {
             for (TestInput testInput : values) {
                 if (testInput.episodeTitle != null) {
-                    final FileEpisode fileEpisode = FilenameParser.parseFilename(testInput.input);
-                    assertNotNull(fileEpisode);
+                    final FileEpisode fileEpisode = new FileEpisode(testInput.input);
+                    assertTrue(FilenameParser.parseFilename(fileEpisode));
                     String showName = fileEpisode.getQueryString();
 
                     final CompletableFuture<String> future = new CompletableFuture<>();
@@ -184,8 +184,8 @@ public class FilenameParserTest {
                         public void downloaded(Show show) {
                             String actualShowName = show.getName();
                             assertEquals(testInput.actualShowName, actualShowName);
-                            int sNum = fileEpisode.getSeasonNumber();
-                            int epNum = fileEpisode.getEpisodeNumber();
+                            int sNum = fileEpisode.getFilenameSeason();
+                            int epNum = fileEpisode.getFilenameEpisode();
                             future.complete(show.getSeason(sNum).getTitle(epNum));
                         }
 

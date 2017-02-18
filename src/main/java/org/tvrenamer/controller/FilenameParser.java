@@ -1,5 +1,6 @@
 package org.tvrenamer.controller;
 
+import org.tvrenamer.model.EpisodeInfo;
 import org.tvrenamer.model.FileEpisode;
 
 import java.io.File;
@@ -35,20 +36,24 @@ public class FilenameParser {
     }
 
     /**
-     * Parses the given filename.
+     * Parses the filename of the given FileEpisode.
      *
-     * <p>Given the path associated with the FileEpisode, tries to extract the
-     * episode-related information from it.  Uses a hard-coded, ordered list of
-     * common patterns that such filenames tend to follow.  As soon as it
-     * matches one, it creates a new FileEpisode with that data.
+     * <p>Gets the path associated with the FileEpisode, and tries to extract
+     * the episode-related information from it.  Uses a hard-coded, ordered list
+     * of common patterns that such filenames tend to follow.  As soon as it
+     * matches one, it:<ol>
+     *  <li>starts the process of looking up the show name
+     *      from the provider, which is done in a separate thread</li>
+     *  <li>updates the FileEpisode with the found information</li>
+     * </ol>
      *
-     * @param fileName
-     *   the file name we are to try to parse
+     * @param episode
+     *   the FileEpisode whose filename we are to try to parse
      * @return
-     *   a FileEpisode built from parsing the file name
+     *   true is the filename was successfully parsed, false otherwise
      */
-    public static FileEpisode parseFilename(String fileName) {
-        File f = new File(fileName);
+    public static boolean parseFilename(FileEpisode episode) {
+        File f = episode.getFile();
         String fName = stripJunk(insertShowNameIfNeeded(f));
 
         int idx = 0;
@@ -64,16 +69,17 @@ public class FilenameParser {
                     // an error if it does, but not important.
                     continue;
                 }
-                String show = matcher.group(1);
-                int season = Integer.parseInt(matcher.group(2));
-                int episode = Integer.parseInt(matcher.group(3));
+                episode.setFilenameShow(matcher.group(1));
+                episode.setFilenameSeason(Integer.parseInt(matcher.group(2)));
+                episode.setFilenameEpisode(Integer.parseInt(matcher.group(3)));
+                episode.setFilenameResolution(resolution);
+                episode.setStatus(EpisodeInfo.ADDED);
 
-                FileEpisode ep = new FileEpisode(show, season, episode, resolution, f);
-                return ep;
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
     private static String stripJunk(String input) {
