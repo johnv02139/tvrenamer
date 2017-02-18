@@ -74,9 +74,15 @@ public class ShowStore {
                 Show thisShow;
                 try {
                     List<Show> options = TheTVDBProvider.getShowOptions(showName);
-                    thisShow = options.get(0);
+                    int nOptions = (options == null) ? 0 : options.size();
+                    if (nOptions == 0) {
+                        logger.info("did not find any options for " + showName);
+                        thisShow = new FailedShow("", showName, "", null);
+                    } else {
+                        thisShow = options.get(0);
 
-                    TheTVDBProvider.getShowListing(thisShow);
+                        TheTVDBProvider.getShowListing(thisShow);
+                    }
                 } catch (TVRenamerIOException e) {
                     thisShow = new FailedShow("", showName, "", e);
                 }
