@@ -1,3 +1,10 @@
+// FileEpisode - represents a file on disk which is presumed to contain a single
+//   episode of a TV show.
+//
+// This is a very mutable class.  It is initially created with just a filename,
+// and then information comes streaming in.
+//
+
 package org.tvrenamer.model;
 
 import org.tvrenamer.controller.util.StringUtils;
@@ -21,14 +28,22 @@ public class FileEpisode {
     private File fileObj;
     private EpisodeStatus status;
 
+    // These four fields reflect the information derived from the filename.  In particular,
+    // filenameShow is based on the part of the filename we "guessed" represented the name
+    // of the show, and which we use to query the provider.  Note that the actual show name
+    // that we get back from the provider will likely differ from what we have here.
     private String filenameShow = "";
     private int filenameSeason = NO_INFORMATION;
     private int filenameEpisode = NO_INFORMATION;
     private String filenameResolution = "";
     private String queryString = "";
 
+    // This class actually figures out the proposed new name for the file, so we need
+    // a link to the user preferences to know how the user wants the file renamed.
     private UserPreferences userPrefs = UserPreferences.getInstance();
 
+    // Initially we create the FileEpisode with nothing more than the filename.
+    // Other information will flow in.
     public FileEpisode(String filename) {
         this(new File(filename));
     }
