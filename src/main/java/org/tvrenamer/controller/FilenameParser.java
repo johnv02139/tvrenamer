@@ -1,5 +1,6 @@
 package org.tvrenamer.controller;
 
+import org.tvrenamer.model.EpisodeStatus;
 import org.tvrenamer.model.FileEpisode;
 
 import java.io.File;
@@ -34,8 +35,8 @@ public class TVRenamer {
         // singleton
     }
 
-    public static FileEpisode parseFilename(String fileName) {
-        File f = new File(fileName);
+    public static boolean parseFilename(FileEpisode episode) {
+        File f = episode.getFile();
         String fName = stripJunk(insertShowNameIfNeeded(f));
 
         int idx = 0;
@@ -51,16 +52,17 @@ public class TVRenamer {
                     // an error if it does, but not important.
                     continue;
                 }
-                String show = matcher.group(1);
-                int season = Integer.parseInt(matcher.group(2));
-                int episode = Integer.parseInt(matcher.group(3));
+                episode.setFilenameShow(matcher.group(1));
+                episode.setFilenameSeason(Integer.parseInt(matcher.group(2)));
+                episode.setFilenameEpisode(Integer.parseInt(matcher.group(3)));
+                episode.setFilenameResolution(resolution);
+                episode.setStatus(EpisodeStatus.ADDED);
 
-                FileEpisode ep = new FileEpisode(show, season, episode, resolution, f);
-                return ep;
+                return true;
             }
         }
 
-        return null;
+        return false;
     }
 
     private static String stripJunk(String input) {

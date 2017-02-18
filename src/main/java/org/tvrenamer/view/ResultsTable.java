@@ -731,8 +731,9 @@ public class UIStarter implements Observer {
         ignoreKeywords = prefs.getIgnoreKeywords();
 
         for (final String fileName : fileNames) {
-            final FileEpisode episode = TVRenamer.parseFilename(fileName);
-            if (episode == null) {
+            final FileEpisode episode = new FileEpisode(fileName);
+            boolean parsed = TVRenamer.parseFilename(episode);
+            if (!parsed) {
                 logger.severe("Couldn't parse file: " + fileName);
             } else {
                 String showName = episode.getQueryString();

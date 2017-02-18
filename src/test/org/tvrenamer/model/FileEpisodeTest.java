@@ -55,7 +55,11 @@ public class FileEpisodeTest {
         show.setSeason(seasonNum, season5);
         ShowStore.addShow(showName, show);
 
-        FileEpisode episode = new FileEpisode(showName, seasonNum, episodeNum, resolution, file);
+        FileEpisode episode = new FileEpisode(file);
+        episode.setFilenameShow(showName);
+        episode.setFilenameSeason(seasonNum);
+        episode.setFilenameEpisode(episodeNum);
+        episode.setFilenameResolution(resolution);
         episode.setStatus(EpisodeStatus.DOWNLOADED);
 
         String newFilename = episode.getNewFilename();
@@ -84,7 +88,11 @@ public class FileEpisodeTest {
         show.setSeason(seasonNum, season1);
         ShowStore.addShow(showName, show);
 
-        FileEpisode fileEpisode = new FileEpisode(showName, seasonNum, episodeNum, resolution, file);
+        FileEpisode fileEpisode = new FileEpisode(file);
+        fileEpisode.setFilenameShow(showName);
+        fileEpisode.setFilenameSeason(seasonNum);
+        fileEpisode.setFilenameEpisode(episodeNum);
+        fileEpisode.setFilenameResolution(resolution);
         fileEpisode.setStatus(EpisodeStatus.RENAMED);
 
         String newFilename = fileEpisode.getNewFilename();
