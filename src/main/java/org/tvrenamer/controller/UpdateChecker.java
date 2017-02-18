@@ -2,7 +2,7 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.model.util.Constants.*;
 
-import org.tvrenamer.model.TVRenamerIOException;
+import org.tvrenamer.model.except.TVRenamerIOException;
 import org.tvrenamer.view.AboutDialog;
 
 import java.util.logging.Level;

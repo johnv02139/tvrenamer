@@ -2,6 +2,8 @@ package org.tvrenamer.model;
 
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.TheTVDBProvider;
+import org.tvrenamer.model.except.ShowNotFoundException;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.Collections;
 import java.util.HashMap;

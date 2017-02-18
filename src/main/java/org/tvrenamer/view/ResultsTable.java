@@ -53,12 +53,12 @@ import org.tvrenamer.controller.UpdateCompleteHandler;
 import org.tvrenamer.model.EpisodeStatus;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.FileMoveIcon;
-import org.tvrenamer.model.NotFoundException;
 import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
+import org.tvrenamer.model.except.NotFoundException;
 import org.tvrenamer.model.util.Environment;
 
 import java.io.File;

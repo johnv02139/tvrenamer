@@ -1,5 +1,7 @@
 package org.tvrenamer.model;
 
+import org.tvrenamer.model.except.TVRenamerIOException;
+
 public class FailedShow extends Show {
 
     private final TVRenamerIOException ioe;

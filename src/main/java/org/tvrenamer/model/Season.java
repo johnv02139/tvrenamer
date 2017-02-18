@@ -1,5 +1,7 @@
 package org.tvrenamer.model;
 
+import org.tvrenamer.model.except.EpisodeNotFoundException;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;

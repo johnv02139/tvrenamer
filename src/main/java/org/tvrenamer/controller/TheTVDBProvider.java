@@ -6,7 +6,7 @@ import static org.tvrenamer.controller.util.XPathUtilities.nodeTextValue;
 import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.Season;
 import org.tvrenamer.model.Show;
-import org.tvrenamer.model.TVRenamerIOException;
+import org.tvrenamer.model.except.TVRenamerIOException;
 import org.tvrenamer.model.util.Constants;
 
 import org.w3c.dom.DOMException;

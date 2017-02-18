@@ -8,6 +8,8 @@
 package org.tvrenamer.model;
 
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.except.EpisodeNotFoundException;
+import org.tvrenamer.model.except.ShowNotFoundException;
 
 import java.io.File;
 import java.text.DecimalFormat;

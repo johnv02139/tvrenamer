@@ -1,4 +1,4 @@
-package org.tvrenamer.model;
+package org.tvrenamer.model.except;
 
 import java.io.IOException;
 

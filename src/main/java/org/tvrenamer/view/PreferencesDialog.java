@@ -36,8 +36,8 @@ import org.eclipse.swt.widgets.Text;
 import org.tvrenamer.model.ProxySettings;
 import org.tvrenamer.model.ReplacementToken;
 import org.tvrenamer.model.SWTMessageBoxType;
-import org.tvrenamer.model.TVRenamerIOException;
 import org.tvrenamer.model.UserPreferences;
+import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.Arrays;
 import java.util.logging.Level;

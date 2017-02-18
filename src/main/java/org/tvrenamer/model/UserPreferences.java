@@ -5,6 +5,7 @@ import static org.tvrenamer.model.util.Constants.*;
 import org.tvrenamer.controller.UserPreferencesChangeListener;
 import org.tvrenamer.controller.UserPreferencesPersistence;
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.except.TVRenamerIOException;
 import org.tvrenamer.view.UIUtils;
 
 import java.io.File;

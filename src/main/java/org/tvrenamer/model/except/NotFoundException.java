@@ -1,4 +1,4 @@
-package org.tvrenamer.model;
+package org.tvrenamer.model.except;
 
 public class NotFoundException extends RuntimeException {
     private static final long serialVersionUID = 0L;
