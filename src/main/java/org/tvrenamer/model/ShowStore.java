@@ -18,6 +18,22 @@ public class ShowStore {
 
     private static Logger logger = Logger.getLogger(ShowStore.class.getName());
 
+    private static class ShowRegistrations {
+        private final List<ShowInformationListener> mListeners;
+
+        public ShowRegistrations() {
+            this.mListeners = new LinkedList<>();
+        }
+
+        public void addListener(ShowInformationListener listener) {
+            this.mListeners.add(listener);
+        }
+
+        public List<ShowInformationListener> getListeners() {
+            return Collections.unmodifiableList(mListeners);
+        }
+    }
+
     private static final Map<String, Show> _shows = new ConcurrentHashMap<>(100);
     private static final Map<String, ShowRegistrations> _showRegistrations = new ConcurrentHashMap<>();
 
@@ -117,22 +133,6 @@ public class ShowStore {
                     informationListener.downloadComplete(show);
                 }
             }
-        }
-    }
-
-    private static class ShowRegistrations {
-        private final List<ShowInformationListener> mListeners;
-
-        public ShowRegistrations() {
-            this.mListeners = new LinkedList<>();
-        }
-
-        public void addListener(ShowInformationListener listener) {
-            this.mListeners.add(listener);
-        }
-
-        public List<ShowInformationListener> getListeners() {
-            return Collections.unmodifiableList(mListeners);
         }
     }
 
