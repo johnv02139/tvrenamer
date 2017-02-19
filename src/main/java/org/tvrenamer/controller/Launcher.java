@@ -37,5 +37,10 @@ public class Launcher {
         // of the UI.  This is just a first tiny step in that direction.
         UIStarter ui = new UIStarter(prefs.getPreloadFolder());
         ui.run();
+        // The application doesn't seem to exit without this line.  I assume
+        // this means that there are other threads that have not been shut
+        // down.  It would be better to shut them down explicitly and let
+        // the program exit on its own.  TODO: investigate threads.
+        System.exit(0);
     }
 }
