@@ -11,18 +11,26 @@ import java.util.concurrent.ConcurrentHashMap;
  * Represents a TV Series, with a name, url and list of seasons.
  */
 public class Series implements Comparable<Series> {
-    private final String id;
+    private final int id;
     private final String name;
+    private final String nameKey;
     private final String dirName;
+    private final String idString;
     private final String imdb;
 
     private final Map<Integer, Season> seasons;
 
-    public Series(String name, String id, String imdb) {
-        this.id = id;
+    public Series(String name, String idString, String imdb) {
+        try {
+            id = Integer.parseInt(idString);
+        } catch (NumberFormatException nfe) {
+            throw new IllegalArgumentException("series ID must be an integer, not " + idString);
+        }
         this.name = name;
-        this.imdb = imdb;
+        nameKey = name.toLowerCase();
         dirName = StringUtils.sanitiseTitle(name);
+        this.idString = idString;
+        this.imdb = imdb;
 
         seasons = new ConcurrentHashMap<>();
     }
@@ -31,8 +39,12 @@ public class Series implements Comparable<Series> {
         this(name, id, null);
     }
 
-    public String getId() {
+    public int getId() {
         return id;
+    }
+
+    public String getIdString() {
+        return idString;
     }
 
     public String getName() {
@@ -40,7 +52,7 @@ public class Series implements Comparable<Series> {
     }
 
     public String getNameKey() {
-        return name.toLowerCase();
+        return nameKey;
     }
 
     public String getDirName() {
@@ -55,12 +67,21 @@ public class Series implements Comparable<Series> {
         seasons.put(sNum, season);
     }
 
+    public void setSeason(String sNumText, Season season) {
+        Integer sNum = StringUtils.stringToInt(sNumText);
+        seasons.put(sNum, season);
+    }
+
     public Season getSeason(int sNum) {
         if (seasons.containsKey(sNum)) {
             return seasons.get(sNum);
         } else {
             return null;
         }
+    }
+
+    public int getSeasonCount() {
+        return seasons.size();
     }
 
     public boolean hasSeasons() {
@@ -78,6 +99,6 @@ public class Series implements Comparable<Series> {
 
     @Override
     public int compareTo(Series other) {
-        return Integer.parseInt(other.id) - Integer.parseInt(this.id);
+        return other.id - id;
     }
 }

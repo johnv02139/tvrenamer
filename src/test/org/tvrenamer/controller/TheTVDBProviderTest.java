@@ -312,13 +312,15 @@ public class TheTVDBProviderTest {
     public void testQuerySeriesName() throws Exception {
         for (Series show : TheTVDBProvider.querySeriesName("Gossip Girl")) {
             assertNotNull(show);
-            assertNotEquals(0, show.getId().length());
             assertNotEquals(0, show.getName().length());
+            assertNotEquals(0, show.getIdString().length());
         }
     }
 
     @Test
     public void testGetListings() throws Exception {
-        TheTVDBProvider.getListings(new Series("Gossip Girl", "80547"));
+        Series gossip = new Series("Gossip Girl", "80547");
+        TheTVDBProvider.getListings(gossip);
+        assertNotEquals(0, gossip.getSeasonCount());
     }
 }

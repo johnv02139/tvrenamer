@@ -109,7 +109,7 @@ public class TheTVDBProvider {
     }
 
     private static Path episodeListingsCachePath(Series show) {
-        return TvDbCache.resolve(show.getId() + ".xml");
+        return TvDbCache.resolve(show.getIdString() + ".xml");
     }
 
     private static File performShowQuery(String showName)
@@ -134,7 +134,7 @@ public class TheTVDBProvider {
         if (Files.exists(cachePath)) {
             return cachePath.toFile();
         }
-        String showURL = BASE_LIST_URL + show.getId() + BASE_LIST_FILENAME;
+        String showURL = BASE_LIST_URL + show.getIdString() + BASE_LIST_FILENAME;
 
         logger.info("Downloading episode listing from " + showURL);
 
@@ -149,9 +149,12 @@ public class TheTVDBProvider {
 
         for (int i = 0; i < shows.getLength(); i++) {
             Node eNode = shows.item(i);
-            options.add(new Series(nodeTextValue(XPATH_NAME, eNode, xpath),
-                                   nodeTextValue(XPATH_SHOWID, eNode, xpath),
-                                   nodeTextValue(XPATH_IMDB, eNode, xpath)));
+            String seriesName = nodeTextValue(XPATH_NAME, eNode, xpath);
+            String tvdbId = nodeTextValue(XPATH_SHOWID, eNode, xpath);
+            String imdbId = nodeTextValue(XPATH_IMDB, eNode, xpath);
+
+            Series series = new Series(seriesName, tvdbId, imdbId);
+            options.add(series);
         }
 
         return options;
@@ -245,10 +248,10 @@ public class TheTVDBProvider {
         throws TVRenamerIOException
     {
         try {
-            File showXml = getXmlListings(series);
+            File listingsXml = getXmlListings(series);
 
-            DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document doc = db.parse(new InputSource(new FileReader(showXml)));
+            DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document doc = bld.parse(new InputSource(new FileReader(listingsXml)));
 
             XPath xpath = XPathFactory.newInstance().newXPath();
 
