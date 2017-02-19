@@ -62,6 +62,35 @@ public class ShowStore {
         _showRegistrations.clear();
     }
 
+    /**
+     * Add a show to the store, registered by the show name.<br />
+     * Added this distinct method to enable unit testing
+     *
+     * @param showName
+     *            the show name
+     * @param show
+     *            the {@link Show}
+     */
+    static void addShow(String showName, Show show) {
+        if (show instanceof FailedShow) {
+            logger.info("Failed to get options or episodes for '" + show.getName());
+        } else {
+            logger.info("Options and episodes for '" + show.getName() + "' acquired");
+        }
+        _shows.put(showName.toLowerCase(), show);
+        notifyListeners(showName, show);
+    }
+
+    // Given a list of one or more options for which show we're dealing with,
+    // choose the best one and return it.
+    private static Show selectShowOption(String showName, List<Show> options) {
+        for (Show s : options) {
+            logger.info("option: " + s.getName() + " for " + showName);
+        }
+        // TODO: might not always be option zero...
+        return options.get(0);
+    }
+
     public static Show mapStringToShow(String showName) {
         Show s = _shows.get(showName.toLowerCase());
         if (s == null) {
@@ -109,16 +138,6 @@ public class ShowStore {
         }
     }
 
-    // Given a list of one or more options for which show we're dealing with,
-    // choose the best one and return it.
-    private static Show selectShowOption(String showName, List<Show> options) {
-        for (Show s : options) {
-            logger.info("option: " + s.getName() + " for " + showName);
-        }
-        // TODO: might not always be option zero...
-        return options.get(0);
-    }
-
     private static void downloadShow(final String showName) {
         Callable<Boolean> showFetcher = new Callable<Boolean>() {
             @Override
@@ -143,24 +162,5 @@ public class ShowStore {
             }
         };
         threadPool.submit(showFetcher);
-    }
-
-    /**
-     * Add a show to the store, registered by the show name.<br />
-     * Added this distinct method to enable unit testing
-     *
-     * @param showName
-     *            the show name
-     * @param show
-     *            the {@link Show}
-     */
-    static void addShow(String showName, Show show) {
-        if (show instanceof FailedShow) {
-            logger.info("Failed to get options or episodes for '" + show.getName());
-        } else {
-            logger.info("Options and episodes for '" + show.getName() + "' acquired");
-        }
-        _shows.put(showName.toLowerCase(), show);
-        notifyListeners(showName, show);
     }
 }
