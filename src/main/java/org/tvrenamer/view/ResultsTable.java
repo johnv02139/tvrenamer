@@ -174,7 +174,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         if (episode.isFailed()) {
             return getFailMessage(episode);
         } else if (episode.isReady()) {
-            return episode.getNewFilename();
+            return episode.getProposedFilename();
         } else if (episode.isSeriesReady()) {
             return "Processing episodes...";
         } else {

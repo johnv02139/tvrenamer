@@ -25,6 +25,10 @@ public class Season {
         episodes.put(epNum, new Episode(this, num, epNum, title, airDate));
     }
 
+    public Episode getEpisode(int epNum) {
+        return episodes.get(epNum);
+    }
+
     public String getTitle(int epNum) {
         Episode e = episodes.get(epNum);
         if (e == null) {

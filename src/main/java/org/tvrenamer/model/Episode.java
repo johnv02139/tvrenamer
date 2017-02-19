@@ -22,7 +22,7 @@ public class Episode {
     }
 
     public LocalDate getAirDate() {
-        return this.airDate;
+        return airDate;
     }
 
     @Override

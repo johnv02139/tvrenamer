@@ -66,11 +66,12 @@ public class FileEpisodeTest {
 
         Season season5 = new Season(series, seasonNum);
         series.setSeason(seasonNum, season5);
+        episode.setSeason();
 
         String title = "$pringfield";
         season5.addEpisode(episodeNum, title, LocalDate.now());
 
-        String newFilename = episode.getNewFilename();
+        String newFilename = episode.getProposedFilename();
         assertEquals("The Simpsons [5x10] $pringfield 720p.avi", newFilename);
     }
 
@@ -102,11 +103,12 @@ public class FileEpisodeTest {
 
         Season season1 = new Season(series, seasonNum);
         series.setSeason(seasonNum, season1);
+        fileEpisode.setSeason();
 
         String title = "The Way of the Gun";
         season1.addEpisode(episodeNum, title, LocalDate.now());
 
-        String newFilename = fileEpisode.getNewFilename();
+        String newFilename = fileEpisode.getProposedFilename();
         assertFalse("Resulting filename must not contain a ':' as it breaks Windows", newFilename.contains(":"));
     }
 

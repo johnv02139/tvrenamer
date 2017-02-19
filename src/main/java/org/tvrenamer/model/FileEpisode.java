@@ -7,24 +7,20 @@
 
 package org.tvrenamer.model;
 
+import static org.tvrenamer.model.util.Constants.ADDED_PLACEHOLDER_FILENAME;
+
 import org.eclipse.swt.widgets.TableItem;
 import org.tvrenamer.controller.EpisodeInformationListener;
 import org.tvrenamer.controller.FilenameParser;
 import org.tvrenamer.controller.ListingsLookup;
+import org.tvrenamer.controller.NameFormatter;
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.ShowListingsListener;
-import org.tvrenamer.controller.util.StringUtils;
-import org.tvrenamer.model.except.EpisodeNotFoundException;
 
 import java.io.File;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 
 public class FileEpisode implements ShowInformationListener, ShowListingsListener {
 
@@ -58,21 +54,6 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
 
     public static final int NO_SEASON = -1;
     public static final int NO_EPISODE = -1;
-
-    private static final String DATEDAY_NUM = ReplacementToken.DATE_DAY_NUM.getToken();
-    private static final String DATEDAY_NLZ = ReplacementToken.DATE_DAY_NUMLZ.getToken();
-    private static final String DATEMON_NUM = ReplacementToken.DATE_MONTH_NUM.getToken();
-    private static final String DATEMON_NLZ = ReplacementToken.DATE_MONTH_NUMLZ.getToken();
-    private static final String DATE_YR_FUL = ReplacementToken.DATE_YEAR_FULL.getToken();
-    private static final String DATE_YR_MIN = ReplacementToken.DATE_YEAR_MIN.getToken();
-    private static final String ERESOLUTION = ReplacementToken.EPISODE_RESOLUTION.getToken();
-    private static final String EPISODE_NUM = ReplacementToken.EPISODE_NUM.getToken();
-    private static final String ENUM_LEADZR = ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken();
-    private static final String EPISD_TITLE = ReplacementToken.EPISODE_TITLE.getToken();
-    private static final String EP_TIT_NOSP = ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken();
-    private static final String SEAS_NUMBER = ReplacementToken.SEASON_NUM.getToken();
-    private static final String SNUM_LEADZR = ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken();
-    private static final String SERIES_NAME = ReplacementToken.SERIES_NAME.getToken();
 
     // Although we also store the file object that clearly gives us all the information
     // about the file's name, store this explicitly to know what we were given.  Note,
@@ -111,6 +92,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // about how far we've processed the filename.
     private EpisodeStatus episodeStatus;
     private Series series;
+    private Season season;
 
     // We currently keep a link to the item in the view that represents this object.
     // It might be better to just have the view object subscribe to the episode, or
@@ -123,6 +105,8 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // This class actually figures out the proposed new name for the file, so we need
     // a link to the user preferences to know how the user wants the file renamed.
     private UserPreferences userPrefs = UserPreferences.getInstance();
+
+    private NameFormatter formatter = null;
 
     public static String getExtension(File file) {
         String filename = file.getName();
@@ -312,9 +296,20 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         setSeries(series);
     }
 
+    public Season getSeason() {
+        return season;
+    }
+
+    public void setSeason() {
+        if (series != null) {
+            season = series.getSeason(filenameSeason);
+        }
+    }
+
     @Override
     public void downloadListingsComplete(Series series) {
         // TODO: we already have the series.  We don't need to return it.
+        setSeason();
         // Only thing we could do would be to verify it.
         setStatus(EpisodeStatus.DOWNLOADED);
     }
@@ -381,151 +376,19 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         return (uiStatus != EpisodeUIStatus.ERROR);
     }
 
-    private String seasonSubdir() {
-        return userPrefs.getSeasonPrefix()
-            + String.format((userPrefs.isSeasonPrefixLeadingZero() ? "%02d" : "%d"),
-                            filenameSeason);
-    }
-
-    private String addDestinationDirectory(Series seriesObj, String basename) {
-        String dirname = (seriesObj == null)
-            ? StringUtils.sanitiseTitle(filenameSeries)
-            : seriesObj.getDirName();
-        File destPath = new File(userPrefs.getDestinationDirectory(), dirname);
-
-        // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
-        if (StringUtils.isNotBlank(userPrefs.getSeasonPrefix())) {
-            destPath = new File(destPath, seasonSubdir());
+    public String getProposedFilename() {
+        if ((series == null) || (season == null)) {
+            return ADDED_PLACEHOLDER_FILENAME;
         }
-        File destFile = new File(destPath, basename);
-        return destFile.getAbsolutePath();
-    }
-
-    private String transformedFilename(String officialSeriesName,
-                                       String titleString,
-                                       String seasonNumString,
-                                       LocalDate airDate)
-    {
-        String nf = userPrefs.getRenameReplacementString();
-
-        // Make whatever modifications are required
-        nf = nf.replaceAll(SERIES_NAME, officialSeriesName);
-        nf = nf.replaceAll(SEAS_NUMBER, seasonNumString);
-        nf = nf.replaceAll(SNUM_LEADZR, new DecimalFormat("00").format(filenameSeason));
-        nf = nf.replaceAll(EPISODE_NUM, new DecimalFormat("##0").format(filenameEpisode));
-        nf = nf.replaceAll(ENUM_LEADZR, new DecimalFormat("#00").format(filenameEpisode));
-        nf = nf.replaceAll(EPISD_TITLE, Matcher.quoteReplacement(titleString));
-        nf = nf.replaceAll(EP_TIT_NOSP, Matcher.quoteReplacement(StringUtils.makeDotTitle(titleString)));
-        nf = nf.replaceAll(ERESOLUTION, Matcher.quoteReplacement(filenameResolution));
-
-        // Date and times
-        if (airDate == null) {
-            nf = nf.replaceAll(DATEDAY_NUM, "");
-            nf = nf.replaceAll(DATEDAY_NLZ, "");
-            nf = nf.replaceAll(DATEMON_NUM, "");
-            nf = nf.replaceAll(DATEMON_NLZ, "");
-            nf = nf.replaceAll(DATE_YR_FUL, "");
-            nf = nf.replaceAll(DATE_YR_MIN, "");
-        } else {
-            nf = replaceDate(nf, DATEDAY_NUM, airDate, "d");
-            nf = replaceDate(nf, DATEDAY_NLZ, airDate, "dd");
-            nf = replaceDate(nf, DATEMON_NUM, airDate, "M");
-            nf = replaceDate(nf, DATEMON_NLZ, airDate, "MM");
-            nf = replaceDate(nf, DATE_YR_FUL, airDate, "yyyy");
-            nf = replaceDate(nf, DATE_YR_MIN, airDate, "yy");
+        if (formatter == null) {
+            formatter = new NameFormatter(this);
         }
-        // Note, this is an instance variable, not a local variable.
-        fileBasename = StringUtils.sanitiseTitle(nf);
-
-        nf = fileBasename + filenameSuffix;
-        nf = StringUtils.sanitiseTitle(nf);
-
-        return nf;
-    }
-
-    private String getOfficialSeriesName(Series series) {
-        // Ensure that all special characters in the replacement are quoted
-        String officialSeriesName = series.getName();
-        officialSeriesName = Matcher.quoteReplacement(officialSeriesName);
-        officialSeriesName = GlobalOverrides.getInstance().applyTitleOverride(officialSeriesName);
-
-        return officialSeriesName;
-    }
-
-    private String getTitleString(Season season) {
-        if (season != null) {
-            try {
-                return season.getTitle(filenameEpisode);
-            } catch (EpisodeNotFoundException e) {
-                logger.info("Episode not found for '" + this);
-            }
-        }
-        return "";
-    }
-
-    private String getSeasonNumString(Season season) {
-        if (season == null) {
-            logger.log(Level.SEVERE, "Season #" + filenameSeason
-                       + " not found for series '" + filenameSeries + "'");
-            return String.valueOf(filenameSeason);
-        }
-        return String.valueOf(season.getNumber());
-    }
-
-    private LocalDate getAirDate(Season season) {
-        LocalDate airDate = null;
-        if (season != null) {
-            try {
-                airDate = season.getAirDate(filenameEpisode);
-            } catch (EpisodeNotFoundException ignored) {
-            }
-        }
-        if (airDate == null) {
-            logger.log(Level.WARNING, "Episode air date not found for '"
-                       + this.toString() + "'");
-        }
-        return airDate;
-    }
-
-    public String getNewFilename() {
-        if ((episodeStatus != EpisodeStatus.GOT_SERIES)
-            && (episodeStatus != EpisodeStatus.DOWNLOADED)
-            && (episodeStatus != EpisodeStatus.RENAMED))
-        {
-            return null;
-        }
-        if (series == null) {
-            logger.severe("for " + originalFilename + ", series was null, even though status was "
-                          + getEpisodeStatusString());
-            return null;
-        }
-        String newBasename = fileObj.getName();
         if (userPrefs.isRenameEnabled()) {
-            Season season = series.getSeason(filenameSeason);
-            if (season == null) {
-                logger.severe("for " + originalFilename + ", season " + filenameSeason
-                              + " was null, even though status was " + getEpisodeStatusString());
-                return null;
-            }
-            newBasename = transformedFilename(getOfficialSeriesName(series),
-                                              getTitleString(season),
-                                              getSeasonNumString(season),
-                                              getAirDate(season));
-        }
-        if (userPrefs.isMoveEnabled()) {
-            return addDestinationDirectory(series, newBasename);
+            // Note, this is an instance variable, not a local variable.
+            fileBasename = formatter.getNewBasename();
+            return formatter.getProposedFilename(fileBasename + filenameSuffix);
         } else {
-            return newBasename;
-        }
-    }
-
-    private String replaceDate(String orig, String match, LocalDate date, String format) {
-        if (date == null) {
-            // TODO: any kind of logging here?
-            return orig.replaceAll(match, "");
-        } else {
-            DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(format);
-            return orig.replaceAll(match, dateFormat.format(date));
+            return formatter.getProposedFilename(fileObj.getName());
         }
     }
 

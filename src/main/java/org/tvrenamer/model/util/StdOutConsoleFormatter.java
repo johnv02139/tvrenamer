@@ -46,7 +46,6 @@ public class StdOutConsoleFormatter extends Formatter {
         }
 
         // Note: No need to add a newline as that is added by the Handler
-
         return buffer.toString();
     }
 }
