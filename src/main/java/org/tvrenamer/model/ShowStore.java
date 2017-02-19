@@ -117,19 +117,6 @@ public class ShowStore {
         threadPool.submit(showFetcher);
     }
 
-    public static Series mapStringToShow(String showName) {
-        Series s = _shows.get(showName.toLowerCase());
-        if (s == null) {
-            TVRenamerIOException e = new TVRenamerIOException("Show not found for show name: '"
-                                                              + showName + "'");
-            UnresolvedShow notFound = new UnresolvedShow(showName, e);
-            addShow(showName, notFound);
-            return notFound;
-        }
-
-        return s;
-    }
-
     /**
      * <p>
      * Download the show details if required, otherwise notify listener.

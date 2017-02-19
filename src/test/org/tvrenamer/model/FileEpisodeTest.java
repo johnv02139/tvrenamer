@@ -20,6 +20,9 @@ import java.util.logging.Logger;
 public class FileEpisodeTest {
     private static Logger logger = Logger.getLogger(FileEpisodeTest.class.getName());
 
+    private static final String TEMP_DIR_NAME = System.getProperty("java.io.tmpdir");
+    private static final File TEMP_DIR = new File(TEMP_DIR_NAME);
+
     private List<File> testFiles;
 
     private UserPreferences prefs;
@@ -43,29 +46,31 @@ public class FileEpisodeTest {
         prefs.setRenameReplacementString(testReplacementPattern);
 
         String filename = "the.simpsons.5.10.720p.avi";
+        File file = new File(TEMP_DIR, filename);
+        createFile(file);
+
+        FileEpisode episode = new FileEpisode(filename);
         String showName = "The Simpsons";
-        String title = "$pringfield";
         int seasonNum = 5;
         int episodeNum = 10;
         String resolution = "720p";
-        File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
-        createFile(file);
 
-        Series series = new Series(showName, "1");
-        Season season5 = new Season(series, seasonNum);
-        season5.addEpisode(episodeNum, title, LocalDate.now());
-        series.setSeason(seasonNum, season5);
-        ShowStore.addShow(showName, series);
-
-        FileEpisode episode = new FileEpisode(filename);
         episode.setFilenameSeries(showName);
         episode.setFilenameSeason(seasonNum);
         episode.setFilenameEpisode(episodeNum);
         episode.setFilenameResolution(resolution);
-        episode.setDownloaded();
+
+        Series series = new Series(showName, "1");
+        ShowStore.addShow(showName, series);
+        episode.setSeries(series);
+
+        Season season5 = new Season(series, seasonNum);
+        series.setSeason(seasonNum, season5);
+
+        String title = "$pringfield";
+        season5.addEpisode(episodeNum, title, LocalDate.now());
 
         String newFilename = episode.getNewFilename();
-
         assertEquals("The Simpsons [5x10] $pringfield 720p.avi", newFilename);
     }
 
@@ -79,29 +84,29 @@ public class FileEpisodeTest {
         prefs.setRenameReplacementString(testReplacementPattern);
 
         String filename = "steven.segal.lawman.1.01.avi";
-        String showName = "Steven Seagal: Lawman";
-        String title = "The Way of the Gun";
-        int seasonNum = 1;
-        int episodeNum = 1;
-        String resolution = "";
-        File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
+        File file = new File(TEMP_DIR, filename);
         createFile(file);
 
-        Series series = new Series(showName, "1");
-        Season season1 = new Season(series, seasonNum);
-        season1.addEpisode(episodeNum, title, LocalDate.now());
-        series.setSeason(seasonNum, season1);
-        ShowStore.addShow(showName, series);
-
         FileEpisode fileEpisode = new FileEpisode(filename);
+
+        String showName = "Steven Seagal: Lawman";
+        int seasonNum = 1;
+        int episodeNum = 1;
         fileEpisode.setFilenameSeries(showName);
         fileEpisode.setFilenameSeason(seasonNum);
         fileEpisode.setFilenameEpisode(episodeNum);
-        fileEpisode.setFilenameResolution(resolution);
-        fileEpisode.setRenamed();
+
+        Series series = new Series(showName, "1");
+        ShowStore.addShow(showName, series);
+        fileEpisode.setSeries(series);
+
+        Season season1 = new Season(series, seasonNum);
+        series.setSeason(seasonNum, season1);
+
+        String title = "The Way of the Gun";
+        season1.addEpisode(episodeNum, title, LocalDate.now());
 
         String newFilename = fileEpisode.getNewFilename();
-
         assertFalse("Resulting filename must not contain a ':' as it breaks Windows", newFilename.contains(":"));
     }
 

@@ -278,10 +278,6 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         setStatus(EpisodeStatus.BAD_PARSE);
     }
 
-    public void setDownloaded() {
-        setStatus(EpisodeStatus.DOWNLOADED);
-    }
-
     public void setMoving() {
         setStatus(EpisodeStatus.MOVING);
     }
@@ -312,7 +308,20 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     }
 
     @Override
+    public void downloadComplete(Series series) {
+        setSeries(series);
+        ListingsLookup.getListings(series, this);
+    }
+
+    @Override
+    public void downloadFailed(Series series) {
+        setSeries(series);
+    }
+
+    @Override
     public void downloadListingsComplete(Series series) {
+        // TODO: we already have the series.  We don't need to return it.
+        // Only thing we could do would be to verify it.
         setStatus(EpisodeStatus.DOWNLOADED);
     }
 
@@ -320,21 +329,6 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     public void downloadListingsFailed(Series series) {
         logger.warning("failed to download listings for " + series);
         setStatus(EpisodeStatus.NO_LISTINGS);
-    }
-
-    private void findEpisodes(final Series series) {
-        ListingsLookup.getListings(series, this);
-    }
-
-    @Override
-    public void downloadComplete(Series series) {
-        setSeries(series);
-        findEpisodes(series);
-    }
-
-    @Override
-    public void downloadFailed(Series series) {
-        setSeries(series);
     }
 
     // It would be nice to call this on our own.  But if we do, we have
@@ -431,7 +425,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         nf = nf.replaceAll(ENUM_LEADZR, new DecimalFormat("#00").format(filenameEpisode));
         nf = nf.replaceAll(EPISD_TITLE, Matcher.quoteReplacement(titleString));
         nf = nf.replaceAll(EP_TIT_NOSP, Matcher.quoteReplacement(StringUtils.makeDotTitle(titleString)));
-        nf = nf.replaceAll(ERESOLUTION, filenameResolution);
+        nf = nf.replaceAll(ERESOLUTION, Matcher.quoteReplacement(filenameResolution));
 
         // Date and times
         if (airDate == null) {
@@ -503,15 +497,25 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     }
 
     public String getNewFilename() {
-        if ((episodeStatus != EpisodeStatus.DOWNLOADED)
+        if ((episodeStatus != EpisodeStatus.GOT_SERIES)
+            && (episodeStatus != EpisodeStatus.DOWNLOADED)
             && (episodeStatus != EpisodeStatus.RENAMED))
         {
             return null;
         }
+        if (series == null) {
+            logger.severe("for " + originalFilename + ", series was null, even though status was "
+                          + getEpisodeStatusString());
+            return null;
+        }
         String newBasename = fileObj.getName();
-        Series series = ShowStore.mapStringToShow(filenameSeries);
         if (userPrefs.isRenameEnabled()) {
             Season season = series.getSeason(filenameSeason);
+            if (season == null) {
+                logger.severe("for " + originalFilename + ", season " + filenameSeason
+                              + " was null, even though status was " + getEpisodeStatusString());
+                return null;
+            }
             newBasename = transformedFilename(getOfficialSeriesName(series),
                                               getTitleString(season),
                                               getSeasonNumString(season),
