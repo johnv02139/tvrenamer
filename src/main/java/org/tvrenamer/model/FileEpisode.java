@@ -9,10 +9,10 @@ package org.tvrenamer.model;
 
 import org.eclipse.swt.widgets.TableItem;
 import org.tvrenamer.controller.EpisodeInformationListener;
+import org.tvrenamer.controller.FilenameParser;
 import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.ShowListingsListener;
-import org.tvrenamer.controller.TVRenamer;
 import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.except.EpisodeNotFoundException;
 
@@ -136,10 +136,11 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // Initially we create the FileEpisode with nothing more than the filename.
     // Other information will flow in.
     public FileEpisode(String filename) {
-        fileObj = new File(filename);
-        originalFilename = filename;
-        filenameSuffix = getExtension(fileObj);
         episodeStatus = EpisodeStatus.UNPARSED;
+        originalFilename = filename;
+        fileObj = new File(filename);
+        filenameSuffix = getExtension(fileObj);
+        FilenameParser.parseFilename(this);
     }
 
     public void listen(EpisodeInformationListener o) {
@@ -253,9 +254,6 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     }
 
     public File getFile() {
-        if (fileObj == null) {
-            fileObj = new File(originalFilename);
-        }
         return fileObj;
     }
 
@@ -349,9 +347,6 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // if the data is different from what the listener already knows about, but
     // that will have to wait.
     public void lookupSeries() {
-        if (episodeStatus == EpisodeStatus.UNPARSED) {
-            TVRenamer.parseFilename(this);
-        }
         if (filenameSeries == null) {
             logger.info("cannot lookup series; did not extract a series name: "
                         + originalFilename);

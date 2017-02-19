@@ -1,7 +1,7 @@
 package org.tvrenamer.controller;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,7 +49,7 @@ import java.util.List;
  * identical to the show name, apart from case, we can infer it.
  *
  */
-public class TVRenamerTest {
+public class FilenameParserTest {
 
     private static class TestInput {
         public final String input;
@@ -230,8 +230,7 @@ public class TVRenamerTest {
     public void testParseFileName() {
         for (TestInput testInput : values) {
             FileEpisode retval = new FileEpisode(testInput.input);
-            assertNotNull(retval);
-            TVRenamer.parseFilename(retval);
+            assertTrue(retval.wasParsed());
             assertEquals(testInput.input, testInput.queryString, retval.getFilenameSeries());
             assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getFilenameSeason());
             assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getFilenameEpisode());
@@ -242,8 +241,7 @@ public class TVRenamerTest {
     @Test
     public void testWarehouse13() {
         FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
-        assertNotNull(episode);
-        TVRenamer.parseFilename(episode);
+        assertTrue(episode.wasParsed());
         assertEquals("warehouse 13", episode.getFilenameSeries());
         assertEquals(5, episode.getFilenameSeason());
         assertEquals(4, episode.getFilenameEpisode());

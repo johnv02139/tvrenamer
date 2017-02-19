@@ -42,7 +42,6 @@ public class FilenameRegexTest {
     @Test
     public void testRegex() {
         FileEpisode result = new FileEpisode(input);
-        boolean parsed = TVRenamer.parseFilename(result);
-        assertTrue(parsed);
+        assertTrue(result.wasParsed());
     }
 }

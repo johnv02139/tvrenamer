@@ -1,7 +1,5 @@
 package org.tvrenamer.model;
 
-import org.tvrenamer.controller.TVRenamer;
-
 import java.io.File;
 import java.util.Collection;
 import java.util.Map;
@@ -59,7 +57,6 @@ public class EpisodeDb {
     public FileEpisode add(String filename) {
         FileEpisode ep = new FileEpisode(filename);
         put(filename, ep);
-        TVRenamer.parseFilename(ep);
         return ep;
     }
 

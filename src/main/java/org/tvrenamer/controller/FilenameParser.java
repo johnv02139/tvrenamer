@@ -7,8 +7,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TVRenamer {
-    private static Logger logger = Logger.getLogger(TVRenamer.class.getName());
+public class FilenameParser {
+    private static Logger logger = Logger.getLogger(FilenameParser.class.getName());
 
     private static final String RESOLUTION_REGEX = "\\D(\\d+[pk]).*";
 
@@ -40,8 +40,37 @@ public class TVRenamer {
         }
     }
 
-    private TVRenamer() {
-        // singleton
+    private static String removeLast(String input, String match) {
+        int idx = input.toLowerCase().lastIndexOf(match);
+        if (idx > 0) {
+            input = input.substring(0, idx) + input.substring(idx + match.length(), input.length());
+        }
+        return input;
+    }
+
+    private static String stripJunk(String input) {
+        String output = input;
+        output = removeLast(output, "hdtv");
+        output = removeLast(output, "dvdrip");
+        return output;
+    }
+
+    private static String insertShowNameIfNeeded(File file) {
+        String fName = file.getName();
+        // TODO: don't inline these patterns; can we use same ones
+        // as used by UserPreferences?
+        if (fName.matches("[sS]\\d\\d?[eE]\\d\\d?.*")) {
+            String parentName = file.getParentFile().getName();
+            if (parentName.toLowerCase().startsWith("season")
+                || parentName.matches("[sS][0-3][0-9]"))
+            {
+                parentName = file.getParentFile().getParentFile().getName();
+            }
+            logger.info("appending parent directory '" + parentName + "' to filename '" + fName + "'");
+            return parentName + " " + fName;
+        } else {
+            return fName;
+        }
     }
 
     public static boolean parseFilename(FileEpisode episode) {
@@ -74,36 +103,6 @@ public class TVRenamer {
         return false;
     }
 
-    private static String stripJunk(String input) {
-        String output = input;
-        output = removeLast(output, "hdtv");
-        output = removeLast(output, "dvdrip");
-        return output;
-    }
-
-    private static String removeLast(String input, String match) {
-        int idx = input.toLowerCase().lastIndexOf(match);
-        if (idx > 0) {
-            input = input.substring(0, idx) + input.substring(idx + match.length(), input.length());
-        }
-        return input;
-    }
-
-    private static String insertShowNameIfNeeded(File file) {
-        String fName = file.getName();
-        // TODO: don't inline these patterns; can we use same ones
-        // as used by UserPreferences?
-        if (fName.matches("[sS]\\d\\d?[eE]\\d\\d?.*")) {
-            String parentName = file.getParentFile().getName();
-            if (parentName.toLowerCase().startsWith("season")
-                || parentName.matches("[sS][0-3][0-9]"))
-            {
-                parentName = file.getParentFile().getParentFile().getName();
-            }
-            logger.info("appending parent directory '" + parentName + "' to filename '" + fName + "'");
-            return parentName + " " + fName;
-        } else {
-            return fName;
-        }
-    }
+    // prevent instantiation
+    private FilenameParser() { }
 }
