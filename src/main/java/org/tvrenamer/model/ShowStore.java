@@ -91,6 +91,32 @@ public class ShowStore {
         return options.get(0);
     }
 
+    private static void downloadShow(final String showName) {
+        Callable<Boolean> showFetcher = new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws InterruptedException {
+                List<Show> options;
+                try {
+                    options = TheTVDBProvider.getShowOptions(showName);
+                } catch (TVRenamerIOException e) {
+                    logger.info("exception getting options for " + showName);
+                    addShow(showName, new FailedShow("", showName, e));
+                    return true;
+                }
+                int nOptions = (options == null) ? 0 : options.size();
+                if (nOptions == 0) {
+                    logger.info("did not find any options for " + showName);
+                    addShow(showName, new FailedShow("", showName, null));
+                    return true;
+                }
+                addShow(showName, selectShowOption(showName, options));
+
+                return true;
+            }
+        };
+        threadPool.submit(showFetcher);
+    }
+
     public static Show mapStringToShow(String showName) {
         Show s = _shows.get(showName.toLowerCase());
         if (s == null) {
@@ -136,31 +162,5 @@ public class ShowStore {
                 downloadShow(showName);
             }
         }
-    }
-
-    private static void downloadShow(final String showName) {
-        Callable<Boolean> showFetcher = new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws InterruptedException {
-                List<Show> options;
-                try {
-                    options = TheTVDBProvider.getShowOptions(showName);
-                } catch (TVRenamerIOException e) {
-                    logger.info("exception getting options for " + showName);
-                    addShow(showName, new FailedShow("", showName, e));
-                    return true;
-                }
-                int nOptions = (options == null) ? 0 : options.size();
-                if (nOptions == 0) {
-                    logger.info("did not find any options for " + showName);
-                    addShow(showName, new FailedShow("", showName, null));
-                    return true;
-                }
-                addShow(showName, selectShowOption(showName, options));
-
-                return true;
-            }
-        };
-        threadPool.submit(showFetcher);
     }
 }
