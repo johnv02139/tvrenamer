@@ -54,6 +54,7 @@ public class CocoaUIEnhancer {
      * {@link org.eclipse.jface.action.IAction}s to {@link org.eclipse.swt.widgets.Listener}s.
      * </p>
      */
+    @SuppressWarnings("JavadocReference")
     private static class MenuHookObject {
         final Listener about;
         final Listener pref;
@@ -74,6 +75,7 @@ public class CocoaUIEnhancer {
         /**
          * Will be called on 64bit SWT.
          */
+        @SuppressWarnings({"SameReturnValue", "StatementWithEmptyBody", "UnusedParameters"})
         public long actionProc( long id, long sel, long arg0 ) {
             if ( sel == sel_aboutMenuItemSelected_ ) {
                 about.handleEvent(null);

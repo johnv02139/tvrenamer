@@ -2,15 +2,14 @@ package org.tvrenamer.model;
 
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.TheTVDBProvider;
-import org.tvrenamer.model.except.ShowNotFoundException;
 import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -19,17 +18,19 @@ public class ShowStore {
 
     private static Logger logger = Logger.getLogger(ShowStore.class.getName());
 
-    private static final Map<String, Show> _shows = Collections.synchronizedMap(new HashMap<String, Show>());
-    private static final Map<String, ShowRegistrations> _showRegistrations = new HashMap<>();
+    private static final Map<String, Show> _shows = new ConcurrentHashMap<>(100);
+    private static final Map<String, ShowRegistrations> _showRegistrations = new ConcurrentHashMap<>();
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     public static Show mapStringToShow(String showName) {
         Show s = _shows.get(showName.toLowerCase());
         if (s == null) {
-            String message = "Show not found for show name: '" + showName + "'";
-            logger.warning(message);
-            throw new ShowNotFoundException(message);
+            TVRenamerIOException e = new TVRenamerIOException("Show not found for show name: '"
+                                                              + showName + "'");
+            FailedShow notFound = new FailedShow("", showName, e);
+            addShow(showName, notFound);
+            return notFound;
         }
 
         return s;
@@ -69,27 +70,35 @@ public class ShowStore {
         }
     }
 
+    // Given a list of one or more options for which show we're dealing with,
+    // choose the best one and return it.
+    private static Show selectShowOption(String showName, List<Show> options) {
+        for (Show s : options) {
+            logger.info("option: " + s.getName() + " for " + showName);
+        }
+        // TODO: might not always be option zero...
+        return options.get(0);
+    }
+
     private static void downloadShow(final String showName) {
         Callable<Boolean> showFetcher = new Callable<Boolean>() {
             @Override
             public Boolean call() throws InterruptedException {
-                Show thisShow;
+                List<Show> options;
                 try {
-                    List<Show> options = TheTVDBProvider.getShowOptions(showName);
-                    int nOptions = (options == null) ? 0 : options.size();
-                    if (nOptions == 0) {
-                        logger.info("did not find any options for " + showName);
-                        thisShow = new FailedShow("", showName, null);
-                    } else {
-                        thisShow = options.get(0);
-
-                        TheTVDBProvider.getShowListing(thisShow);
-                    }
+                    options = TheTVDBProvider.getShowOptions(showName);
                 } catch (TVRenamerIOException e) {
-                    thisShow = new FailedShow("", showName, e);
+                    logger.info("exception getting options for " + showName);
+                    addShow(showName, new FailedShow("", showName, e));
+                    return true;
                 }
-
-                addShow(showName, thisShow);
+                int nOptions = (options == null) ? 0 : options.size();
+                if (nOptions == 0) {
+                    logger.info("did not find any options for " + showName);
+                    addShow(showName, new FailedShow("", showName, null));
+                    return true;
+                }
+                addShow(showName, selectShowOption(showName, options));
 
                 return true;
             }
@@ -146,7 +155,11 @@ public class ShowStore {
      *            the {@link Show}
      */
     static void addShow(String showName, Show show) {
-        logger.info("Show listing for '" + show.getName() + "' downloaded");
+        if (show instanceof FailedShow) {
+            logger.info("Failed to get options or episodes for '" + show.getName());
+        } else {
+            logger.info("Options and episodes for '" + show.getName() + "' acquired");
+        }
         _shows.put(showName.toLowerCase(), show);
         notifyListeners(showName, show);
     }

@@ -29,7 +29,6 @@ public class FileEpisodeTest {
     public void setUp() throws Exception {
         testFiles = new ArrayList<>();
         prefs = UserPreferences.getInstance();
-        prefs.setRenameReplacementString("%S [%sx%e] %t");
         prefs.setMoveEnabled(false);
         mockListener = mock(ShowInformationListener.class);
     }
@@ -40,7 +39,8 @@ public class FileEpisodeTest {
      */
     @Test
     public void testGetNewFilenameSpecialRegexChars() throws Exception {
-        prefs.setRenameReplacementString("%S [%sx%e] %t %r");
+        final String testReplacementPattern = "%S [%sx%e] %t %r";
+        prefs.setRenameReplacementString(testReplacementPattern);
 
         String filename = "the.simpsons.5.10.720p.avi";
         String showName = "The Simpsons";
@@ -57,12 +57,12 @@ public class FileEpisodeTest {
         show.setSeason(seasonNum, season5);
         ShowStore.addShow(showName, show);
 
-        FileEpisode episode = new FileEpisode(file);
+        FileEpisode episode = new FileEpisode(filename);
         episode.setFilenameShow(showName);
         episode.setFilenameSeason(seasonNum);
         episode.setFilenameEpisode(episodeNum);
         episode.setFilenameResolution(resolution);
-        episode.setStatus(EpisodeStatus.DOWNLOADED);
+        episode.setDownloaded();
 
         String newFilename = episode.getNewFilename();
 
@@ -75,7 +75,8 @@ public class FileEpisodeTest {
      */
     @Test
     public void testColon() throws Exception {
-        prefs.setRenameReplacementString("%S [%sx%e] %t");
+        final String testReplacementPattern = "%S [%sx%e] %t";
+        prefs.setRenameReplacementString(testReplacementPattern);
 
         String filename = "steven.segal.lawman.1.01.avi";
         String showName = "Steven Seagal: Lawman";
@@ -92,12 +93,12 @@ public class FileEpisodeTest {
         show.setSeason(seasonNum, season1);
         ShowStore.addShow(showName, show);
 
-        FileEpisode fileEpisode = new FileEpisode(file);
+        FileEpisode fileEpisode = new FileEpisode(filename);
         fileEpisode.setFilenameShow(showName);
         fileEpisode.setFilenameSeason(seasonNum);
         fileEpisode.setFilenameEpisode(episodeNum);
         fileEpisode.setFilenameResolution(resolution);
-        fileEpisode.setStatus(EpisodeStatus.RENAMED);
+        fileEpisode.setRenamed();
 
         String newFilename = fileEpisode.getNewFilename();
 

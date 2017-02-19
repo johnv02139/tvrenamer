@@ -18,7 +18,7 @@ public class Episode {
     }
 
     public String getTitle() {
-        return this.title;
+        return title;
     }
 
     public LocalDate getAirDate() {

@@ -18,14 +18,6 @@ Website: http://x-stream.github.io/
 License: Berkeley Software Distribution v2.0 (BSD)
 License website: http://x-stream.github.io/license.html
 
-jEdit
-=========================================
-Description: The Programmer's Text Editor
-Website: http://jedit.org
-License: Berkeley Software Distribution v2.0 (BSD)
-License website: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-Note: A small number of classes were taken from the jEdit source and repackaged into the TVRenamer application.  This was purely done to keep the download of our application small
-
 TransparenTech CocoaUIEnhancer
 =========================================
 Description: Connect the About, Preferences and Quit menus in Mac OS X Cocoa SWT and JFace applications

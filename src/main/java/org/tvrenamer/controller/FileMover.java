@@ -1,15 +1,8 @@
 package org.tvrenamer.controller;
 
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.TableItem;
-
 import org.tvrenamer.controller.util.FileUtilities;
 import org.tvrenamer.model.FileEpisode;
-import org.tvrenamer.model.FileMoveIcon;
 import org.tvrenamer.model.UserPreferences;
-import org.tvrenamer.view.FileCopyMonitor;
-import org.tvrenamer.view.UIStarter;
 
 import java.io.File;
 import java.util.concurrent.Callable;
@@ -20,78 +13,67 @@ public class FileMover implements Callable<Boolean> {
 
     private final File destFile;
 
-    private final TableItem item;
-
     private final FileEpisode episode;
 
-    private final Label progressLabel;
-
-    private final Display display;
-
-    public FileMover(Display display, FileEpisode src, File destFile, TableItem item, Label progressLabel) {
-        this.display = display;
-        this.episode = src;
+    public FileMover(FileEpisode episode, File destFile) {
+        this.episode = episode;
         this.destFile = destFile;
-        this.item = item;
-        this.progressLabel = progressLabel;
+    }
+
+    private void updateFileModifiedDate(File file, long timestamp) {
+        // update the modified time on the file, the parent, and the grandparent
+        file.setLastModified(timestamp);
+        if (UserPreferences.getInstance().isMoveEnabled()) {
+            file.getParentFile().setLastModified(timestamp);
+            file.getParentFile().getParentFile().setLastModified(timestamp);
+        }
     }
 
     @Override
     public Boolean call() {
-        File srcFile = this.episode.getFile();
-        if (destFile.exists()) {
-            String message = "File " + destFile + " already exists.\n" + srcFile + " was not renamed!";
-            logger.warning(message);
-            // showMessageBox(SWTMessageBoxType.ERROR, "Rename Failed", message);
+        File srcFile = episode.getFile();
+        if (!srcFile.exists()) {
+            logger.info("File no longer exists: " + srcFile);
+            episode.setDoesNotExist();
             return false;
         }
-        if (destFile.getParentFile().exists() || destFile.getParentFile().mkdirs()) {
-            UIStarter.setTableItemStatus(display, item, FileMoveIcon.RENAMING);
+        File destDir = destFile.getParentFile();
+        String destFileName = destFile.getAbsolutePath();
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+        if (destDir.exists() && destDir.isDirectory()) {
+            if (destFile.exists()) {
+                String message = "File " + destFile + " already exists.\n" + srcFile + " was not renamed!";
+                logger.warning(message);
+                // showMessageBox(SWTMessageBoxType.ERROR, "Rename Failed", message);
+                return false;
+            }
+            episode.setMoving();
             boolean succeeded = false;
-            if (FileUtilities.areSameDisk(srcFile.getAbsolutePath(), destFile.getAbsolutePath())) {
+            if (FileUtilities.areSameDisk(srcFile.getAbsolutePath(), destFileName)) {
                 succeeded = srcFile.renameTo(destFile);
             }
             if (succeeded) {
-                UIStarter.setTableItemStatus(display, item, FileMoveIcon.SUCCESS);
-                logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFile.getAbsolutePath());
+                long timestamp = System.currentTimeMillis();
+                episode.setRenamed();
+                logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFileName);
                 episode.setFile(destFile);
-                this.updateFileModifiedDate(destFile);
+                updateFileModifiedDate(destFile, timestamp);
                 return true;
             } else {
-                FileCopyMonitor monitor = new FileCopyMonitor(progressLabel, srcFile.length());
-                succeeded = FileUtilities.moveFile(srcFile, destFile, monitor, true);
-                if (!display.isDisposed()) {
-                    display.asyncExec(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (progressLabel.isDisposed()) {
-                                return;
-                            }
-                            progressLabel.setText("");
-                        }
-                    });
-                }
-                if (succeeded) {
-                    logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFile.getAbsolutePath());
-                    this.updateFileModifiedDate(destFile);
-                    episode.setFile(destFile);
-                    UIStarter.setTableItemStatus(display, item, FileMoveIcon.SUCCESS);
-                } else {
-                    logger.severe("Unable to move " + srcFile.getAbsolutePath() + " to " + destFile.getAbsolutePath());
-                    UIStarter.setTableItemStatus(display, item, FileMoveIcon.FAIL);
-                }
-                return succeeded;
+                // TODO: there used to be a facility for moving files to a different disk,
+                // and monitoring the progress, but I didn't like the library it used.
+                // Look into a replacement.
+                logger.severe("Unable to move " + srcFile.getAbsolutePath()
+                              + " to " + destFileName);
+                episode.setFailToMove();
+                return false;
             }
+        } else {
+            logger.severe("Unable to use " + destDir + " as destination directory");
+            episode.setFailToMove();
         }
         return false;
-    }
-
-    private void updateFileModifiedDate(File file) {
-        // update the modified time on the file, the parent, and the grandparent
-        file.setLastModified(System.currentTimeMillis());
-        if (UserPreferences.getInstance().isMoveEnabled()) {
-            file.getParentFile().setLastModified(System.currentTimeMillis());
-            file.getParentFile().getParentFile().setLastModified(System.currentTimeMillis());
-        }
     }
 }

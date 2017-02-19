@@ -23,8 +23,8 @@ then
   exit 1
 fi
 
-# local libraries -- hard-coded.  The first one is platform-specific.
-loclibs="swt-win64-4.3.jar jedit-4.3.2-IOUtilities.jar"
+# local library -- hard-coded.  It is platform-specific.
+loclibs="swt-win64-4.3.jar"
 
 # downloaded libraries -- may need to run "ant resolve" to get...
 dllibs="commons-codec-1.4.jar xstream-1.4.9.jar xmlpull-1.1.3.1.jar xpp3_min-1.1.4c.jar"
@@ -97,4 +97,4 @@ do
 done
 export CLASSPATH
 
-java org.tvrenamer.view.UIStarter
+java org.tvrenamer.controller.Launcher
