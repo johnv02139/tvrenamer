@@ -18,7 +18,7 @@ public class Series implements Comparable<Series> {
 
     private final Map<Integer, Season> seasons;
 
-    public Series(String id, String name, String imdb) {
+    public Series(String name, String id, String imdb) {
         this.id = id;
         this.name = name;
         this.imdb = imdb;
@@ -27,8 +27,8 @@ public class Series implements Comparable<Series> {
         seasons = new ConcurrentHashMap<>();
     }
 
-    public Series(String id, String name) {
-        this(id, name, null);
+    public Series(String name, String id) {
+        this(name, id, null);
     }
 
     public String getId() {
@@ -69,11 +69,11 @@ public class Series implements Comparable<Series> {
 
     @Override
     public String toString() {
-        return "Show [" + name + ", id=" + id + ", imdb=" + imdb + ", " + seasons.size() + " seasons]";
+        return "Series [" + name + ", id=" + id + ", imdb=" + imdb + ", " + seasons.size() + " seasons]";
     }
 
     public String toLongString() {
-        return "Show [id=" + id + ", name=" + name + ", imdb=" + imdb + ", seasons=" + seasons + "]";
+        return "Series [id=" + id + ", name=" + name + ", imdb=" + imdb + ", seasons=" + seasons + "]";
     }
 
     @Override

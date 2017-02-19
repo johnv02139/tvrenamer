@@ -112,7 +112,7 @@ public class TheTVDBProvider {
         return TvDbCache.resolve(show.getId() + ".xml");
     }
 
-    private static File getShowSearchXml(String showName)
+    private static File performShowQuery(String showName)
         throws TVRenamerIOException
     {
         Path cachePath = seriesOptionsCachePath(showName);
@@ -127,7 +127,7 @@ public class TheTVDBProvider {
         return cacheXml(cachePath, searchXml);
     }
 
-    private static File getShowListingXml(Series show)
+    private static File getXmlListings(Series show)
         throws TVRenamerIOException
     {
         Path cachePath = episodeListingsCachePath(show);
@@ -149,19 +149,19 @@ public class TheTVDBProvider {
 
         for (int i = 0; i < shows.getLength(); i++) {
             Node eNode = shows.item(i);
-            options.add(new Series(nodeTextValue(XPATH_SHOWID, eNode, xpath),
-                                   nodeTextValue(XPATH_NAME, eNode, xpath),
+            options.add(new Series(nodeTextValue(XPATH_NAME, eNode, xpath),
+                                   nodeTextValue(XPATH_SHOWID, eNode, xpath),
                                    nodeTextValue(XPATH_IMDB, eNode, xpath)));
         }
 
         return options;
     }
 
-    public static List<Series> getShowOptions(String showName)
+    public static List<Series> querySeriesName(String showName)
         throws TVRenamerIOException
     {
         try {
-            File searchXml = getShowSearchXml(showName);
+            File searchXml = performShowQuery(showName);
 
             DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = db.parse(new InputSource(new FileReader(searchXml)));
@@ -241,11 +241,11 @@ public class TheTVDBProvider {
         }
     }
 
-    public static void getShowListing(Series series)
+    public static void getListings(Series series)
         throws TVRenamerIOException
     {
         try {
-            File showXml = getShowListingXml(series);
+            File showXml = getXmlListings(series);
 
             DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = db.parse(new InputSource(new FileReader(showXml)));

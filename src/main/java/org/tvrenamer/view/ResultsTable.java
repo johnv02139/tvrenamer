@@ -155,11 +155,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private static String getFailMessage(final FileEpisode ep) {
         if (ep.isFailed()) {
-            final Series epShow = ep.getSeries();
+            final Series epSeries = ep.getSeries();
             // BROKEN_PLACEHOLDER_FILENAME;
             String failMsg = DOWNLOADING_FAILED_MESSAGE;
-            if (epShow instanceof UnresolvedShow) {
-                UnresolvedShow f = (UnresolvedShow) epShow;
+            if (epSeries instanceof UnresolvedShow) {
+                UnresolvedShow f = (UnresolvedShow) epSeries;
                 if (f.getException() == null) {
                     failMsg = NO_SUCH_SHOW_MESSAGE + f.getName();
                 }

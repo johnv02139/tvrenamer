@@ -42,7 +42,7 @@ public class GlobalOverrides {
         logger.fine("Sucessfully saved/updated overrides");
     }
 
-    public String getSeriesName(String showName) {
+    public String applyTitleOverride(String showName) {
         String name = this.showNames.get(showName);
         if (name == null) {
             name = showName;

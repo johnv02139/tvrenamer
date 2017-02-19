@@ -56,7 +56,7 @@ public class ListingsLookup {
                 @Override
                 public Boolean call() throws InterruptedException {
                     try {
-                        TheTVDBProvider.getShowListing(series);
+                        TheTVDBProvider.getListings(series);
                         notifyListeners(series);
                         return true;
                     } catch (TVRenamerIOException e) {
@@ -67,7 +67,7 @@ public class ListingsLookup {
                         // exception does not get caught by the main thread, and
                         // prevents this thread from dying.  Try to make sure that the
                         // thread dies, one way or another.
-                        logger.info("generic exception doing getShowListing for " + series);
+                        logger.info("generic exception doing getListings for " + series);
                         logger.info(e.toString());
                         return false;
                     }

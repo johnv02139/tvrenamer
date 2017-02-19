@@ -97,7 +97,7 @@ public class ShowStore {
             public Boolean call() throws InterruptedException {
                 List<Series> options;
                 try {
-                    options = TheTVDBProvider.getShowOptions(showName);
+                    options = TheTVDBProvider.querySeriesName(showName);
                 } catch (TVRenamerIOException e) {
                     logger.info("exception getting options for " + showName);
                     addShow(showName, new UnresolvedShow(showName, e));

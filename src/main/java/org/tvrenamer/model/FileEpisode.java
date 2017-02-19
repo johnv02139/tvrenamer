@@ -462,7 +462,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         // Ensure that all special characters in the replacement are quoted
         String officialSeriesName = series.getName();
         officialSeriesName = Matcher.quoteReplacement(officialSeriesName);
-        officialSeriesName = GlobalOverrides.getInstance().getSeriesName(officialSeriesName);
+        officialSeriesName = GlobalOverrides.getInstance().applyTitleOverride(officialSeriesName);
 
         return officialSeriesName;
     }

@@ -11,7 +11,7 @@ public class UnresolvedShow extends Series {
     }
 
     public UnresolvedShow(String name, TVRenamerIOException err) {
-        super("", name);
+        super(name, "");
         ioe = err;
     }
 
