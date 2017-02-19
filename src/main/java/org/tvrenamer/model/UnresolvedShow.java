@@ -2,7 +2,7 @@ package org.tvrenamer.model;
 
 import org.tvrenamer.model.except.TVRenamerIOException;
 
-public class UnresolvedShow extends Show {
+public class UnresolvedShow extends Series {
 
     private final TVRenamerIOException ioe;
 

@@ -1,5 +1,5 @@
 // FileEpisode - represents a file on disk which is presumed to contain a single
-//   episode of a TV show.
+//   episode of a TV series.
 //
 // This is a very mutable class.  It is initially created with just a filename,
 // and then information comes streaming in.
@@ -35,7 +35,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         PARSED,
         BAD_PARSE,
 
-        GOT_SHOW,
+        GOT_SERIES,
         DOWNLOADED,
         UNFOUND,
         NO_LISTINGS,
@@ -72,7 +72,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     private static final String EP_TIT_NOSP = ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken();
     private static final String SEAS_NUMBER = ReplacementToken.SEASON_NUM.getToken();
     private static final String SNUM_LEADZR = ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken();
-    private static final String SERIES_NAME = ReplacementToken.SHOW_NAME.getToken();
+    private static final String SERIES_NAME = ReplacementToken.SERIES_NAME.getToken();
 
     // Although we also store the file object that clearly gives us all the information
     // about the file's name, store this explicitly to know what we were given.  Note,
@@ -81,12 +81,12 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     private final String originalFilename;
 
     // "filename" instance vars -- these are the results of parsing the filename.
-    // The "filenameShow" is the precise string from the filename, that we think
+    // The "filenameSeries" is the precise string from the filename, that we think
     // corresponds to the name of the TV series.  We use these data to look up
-    // information about the show, and the information we find may differ from
+    // information about the series, and the information we find may differ from
     // what the filename actually represents.
     private final String filenameSuffix;
-    private String filenameShow;
+    private String filenameSeries;
     private int filenameSeason;
     private int filenameEpisode;
     private String filenameResolution = "";
@@ -110,7 +110,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // The state of this object, not the state of the actual TV episode.  This is
     // about how far we've processed the filename.
     private EpisodeStatus episodeStatus;
-    private Show show;
+    private Series series;
 
     // We currently keep a link to the item in the view that represents this object.
     // It might be better to just have the view object subscribe to the episode, or
@@ -191,9 +191,9 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
                 || (episodeStatus == EpisodeStatus.RENAMED));
     }
 
-    public boolean isShowReady() {
+    public boolean isSeriesReady() {
         // should include isReady()?
-        return (episodeStatus == EpisodeStatus.GOT_SHOW);
+        return (episodeStatus == EpisodeStatus.GOT_SERIES);
     }
 
     public String getFilename() {
@@ -204,17 +204,16 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         return filenameSuffix;
     }
 
-    public String getFilenameShow() {
-        return filenameShow;
+    public String getFilenameSeries() {
+        return filenameSeries;
     }
 
-    public void setFilenameShow(String filenameShow) {
-        this.filenameShow = filenameShow;
+    public void setFilenameSeries(String filenameSeries) {
+        this.filenameSeries = filenameSeries;
     }
 
-    public void setRawShow(String filenameShow) {
-        this.filenameShow
-            = StringUtils.replacePunctuation(filenameShow).toLowerCase();
+    public void setRawSeries(String filenameSeries) {
+        this.filenameSeries = StringUtils.replacePunctuation(filenameSeries).toLowerCase();
     }
 
     public int getFilenameSeason() {
@@ -299,43 +298,43 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         setStatus(EpisodeStatus.FAIL_TO_MOVE);
     }
 
-    public Show getShow() {
-        return show;
+    public Series getSeries() {
+        return series;
     }
 
-    public void setShow(Show show) {
-        this.show = show;
-        if ((show == null) || (show instanceof UnresolvedShow)) {
+    public void setSeries(Series series) {
+        this.series = series;
+        if ((series == null) || (series instanceof UnresolvedShow)) {
             setStatus(EpisodeStatus.UNFOUND);
         } else {
-            setStatus(EpisodeStatus.GOT_SHOW);
+            setStatus(EpisodeStatus.GOT_SERIES);
         }
     }
 
     @Override
-    public void downloadListingsComplete(Show show) {
+    public void downloadListingsComplete(Series series) {
         setStatus(EpisodeStatus.DOWNLOADED);
     }
 
     @Override
-    public void downloadListingsFailed(Show show) {
-        logger.warning("failed to download listings for " + show);
+    public void downloadListingsFailed(Series series) {
+        logger.warning("failed to download listings for " + series);
         setStatus(EpisodeStatus.NO_LISTINGS);
     }
 
-    private void findEpisodes(final Show show) {
-        ListingsLookup.getListings(show, this);
+    private void findEpisodes(final Series series) {
+        ListingsLookup.getListings(series, this);
     }
 
     @Override
-    public void downloadComplete(Show show) {
-        setShow(show);
-        findEpisodes(show);
+    public void downloadComplete(Series series) {
+        setSeries(series);
+        findEpisodes(series);
     }
 
     @Override
-    public void downloadFailed(Show show) {
-        setShow(show);
+    public void downloadFailed(Series series) {
+        setSeries(series);
     }
 
     // It would be nice to call this on our own.  But if we do, we have
@@ -346,7 +345,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // One approach would be that registering as a listener automatically gets
     // you an immediate publish, but most of the time, that would be
     // unnecessary.  A more efficient approach would be to automatically call
-    // lookupShow after the listener is added, knowing that, in reality, each
+    // lookupSeries after the listener is added, knowing that, in reality, each
     // episode will have exactly one listener.  But that's a little too magical.
 
     // I prefer the pedantic approach of having the UI explicitly tell us when
@@ -355,16 +354,16 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // There's another approach that would do an immediate publish if and only
     // if the data is different from what the listener already knows about, but
     // that will have to wait.
-    public void lookupShow() {
+    public void lookupSeries() {
         if (episodeStatus == EpisodeStatus.UNPARSED) {
             TVRenamer.parseFilename(this);
         }
-        if (filenameShow == null) {
-            logger.info("cannot lookup show; did not extract a show name: "
+        if (filenameSeries == null) {
+            logger.info("cannot lookup series; did not extract a series name: "
                         + originalFilename);
         } else {
-            ShowStore.mapStringToShow(filenameShow, this);
-            logger.info("mapStringToShow returned for " + filenameShow);
+            ShowStore.mapStringToShow(filenameSeries, this);
+            logger.info("mapStringToShow returned for " + filenameSeries);
         }
     }
 
@@ -403,10 +402,10 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
                             filenameSeason);
     }
 
-    private String addDestinationDirectory(Show showObj, String basename) {
-        String dirname = (showObj == null)
-            ? StringUtils.sanitiseTitle(filenameShow)
-            : showObj.getDirName();
+    private String addDestinationDirectory(Series seriesObj, String basename) {
+        String dirname = (seriesObj == null)
+            ? StringUtils.sanitiseTitle(filenameSeries)
+            : seriesObj.getDirName();
         File destPath = new File(userPrefs.getDestinationDirectory(), dirname);
 
         // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
@@ -417,7 +416,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         return destFile.getAbsolutePath();
     }
 
-    private String transformedFilename(String officialShowName,
+    private String transformedFilename(String officialSeriesName,
                                        String titleString,
                                        String seasonNumString,
                                        LocalDate airDate)
@@ -425,7 +424,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         String nf = userPrefs.getRenameReplacementString();
 
         // Make whatever modifications are required
-        nf = nf.replaceAll(SERIES_NAME, officialShowName);
+        nf = nf.replaceAll(SERIES_NAME, officialSeriesName);
         nf = nf.replaceAll(SEAS_NUMBER, seasonNumString);
         nf = nf.replaceAll(SNUM_LEADZR, new DecimalFormat("00").format(filenameSeason));
         nf = nf.replaceAll(EPISODE_NUM, new DecimalFormat("##0").format(filenameEpisode));
@@ -459,13 +458,13 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         return nf;
     }
 
-    private String getOfficialShowName(Show show) {
+    private String getOfficialSeriesName(Series series) {
         // Ensure that all special characters in the replacement are quoted
-        String officialShowName = show.getName();
-        officialShowName = Matcher.quoteReplacement(officialShowName);
-        officialShowName = GlobalOverrides.getInstance().getShowName(officialShowName);
+        String officialSeriesName = series.getName();
+        officialSeriesName = Matcher.quoteReplacement(officialSeriesName);
+        officialSeriesName = GlobalOverrides.getInstance().getSeriesName(officialSeriesName);
 
-        return officialShowName;
+        return officialSeriesName;
     }
 
     private String getTitleString(Season season) {
@@ -482,7 +481,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     private String getSeasonNumString(Season season) {
         if (season == null) {
             logger.log(Level.SEVERE, "Season #" + filenameSeason
-                       + " not found for show '" + filenameShow + "'");
+                       + " not found for series '" + filenameSeries + "'");
             return String.valueOf(filenameSeason);
         }
         return String.valueOf(season.getNumber());
@@ -510,16 +509,16 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
             return null;
         }
         String newBasename = fileObj.getName();
-        Show show = ShowStore.mapStringToShow(filenameShow);
+        Series series = ShowStore.mapStringToShow(filenameSeries);
         if (userPrefs.isRenameEnabled()) {
-            Season season = show.getSeason(filenameSeason);
-            newBasename = transformedFilename(getOfficialShowName(show),
+            Season season = series.getSeason(filenameSeason);
+            newBasename = transformedFilename(getOfficialSeriesName(series),
                                               getTitleString(season),
                                               getSeasonNumString(season),
                                               getAirDate(season));
         }
         if (userPrefs.isMoveEnabled()) {
-            return addDestinationDirectory(show, newBasename);
+            return addDestinationDirectory(series, newBasename);
         } else {
             return newBasename;
         }
@@ -537,8 +536,8 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
 
     @Override
     public String toString() {
-        return "FileEpisode { show:"
-                + filenameShow
+        return "FileEpisode { series:"
+                + filenameSeries
                 + ", season:"
                 + filenameSeason
                 + ", episode:"

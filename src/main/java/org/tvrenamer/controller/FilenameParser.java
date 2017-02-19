@@ -62,7 +62,7 @@ public class TVRenamer {
                     // an error if it does, but not important.
                     continue;
                 }
-                episode.setRawShow(matcher.group(1));
+                episode.setRawSeries(matcher.group(1));
                 episode.setFilenameSeason(matcher.group(2));
                 episode.setFilenameEpisode(matcher.group(3));
                 episode.setFilenameResolution(resolution);

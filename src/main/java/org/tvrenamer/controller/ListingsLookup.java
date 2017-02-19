@@ -1,6 +1,6 @@
 package org.tvrenamer.controller;
 
-import org.tvrenamer.model.Show;
+import org.tvrenamer.model.Series;
 import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.Collections;
@@ -37,37 +37,37 @@ public class ListingsLookup {
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    private static void notifyListeners(Show show) {
-        ListingsRegistrations registrations = listenersMap.get(show.getNameKey());
+    private static void notifyListeners(Series series) {
+        ListingsRegistrations registrations = listenersMap.get(series.getNameKey());
 
         if (registrations != null) {
             for (ShowListingsListener listener : registrations.getListeners()) {
-                if (show.hasSeasons()) {
-                    listener.downloadListingsComplete(show);
+                if (series.hasSeasons()) {
+                    listener.downloadListingsComplete(series);
                 } else {
-                    listener.downloadListingsFailed(show);
+                    listener.downloadListingsFailed(series);
                 }
             }
         }
     }
 
-    private static void downloadListings(final Show show) {
+    private static void downloadListings(final Series series) {
         Callable<Boolean> showFetcher = new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws InterruptedException {
                     try {
-                        TheTVDBProvider.getShowListing(show);
-                        notifyListeners(show);
+                        TheTVDBProvider.getShowListing(series);
+                        notifyListeners(series);
                         return true;
                     } catch (TVRenamerIOException e) {
-                        notifyListeners(show);
+                        notifyListeners(series);
                         return false;
                     } catch (Exception e) {
                         // Because this is running in a separate thread, an uncaught
                         // exception does not get caught by the main thread, and
                         // prevents this thread from dying.  Try to make sure that the
                         // thread dies, one way or another.
-                        logger.info("generic exception doing getShowListing for " + show);
+                        logger.info("generic exception doing getShowListing for " + series);
                         logger.info(e.toString());
                         return false;
                     }
@@ -78,10 +78,10 @@ public class ListingsLookup {
 
     /**
      * <p>
-     * Download the show details if required, otherwise notify listener.
+     * Download the series details if required, otherwise notify listener.
      * </p>
      * <ul>
-     * <li>if we already have the show listings (the Show has season info) then just  call the method on the listener</li>
+     * <li>if we already have the series listings (the Series has season info) then just  call the method on the listener</li>
      * <li>if we don't have the listings, but are in the process of processing them (exists in listenersMap) then
      * add the listener to the registration</li>
      * <li>if we don't have the listings and aren't processing, then create the
@@ -89,22 +89,22 @@ public class ListingsLookup {
      * the download</li>
      * </ul>
      *
-     * @param show
-     *            the Show object representing the show
+     * @param series
+     *            the Series object representing the series
      * @param listener
      *            the listener to notify or register
      */
-    public static void getListings(final Show show, ShowListingsListener listener) {
-        if (show.hasSeasons()) {
-            listener.downloadListingsComplete(show);
+    public static void getListings(final Series series, ShowListingsListener listener) {
+        if (series.hasSeasons()) {
+            listener.downloadListingsComplete(series);
         } else {
-            String key = show.getNameKey();
+            String key = series.getNameKey();
             ListingsRegistrations registrations = listenersMap.get(key);
             if (registrations == null) {
                 registrations = new ListingsRegistrations();
                 registrations.addListener(listener);
                 listenersMap.put(key, registrations);
-                downloadListings(show);
+                downloadListings(series);
             } else {
                 registrations.addListener(listener);
             }

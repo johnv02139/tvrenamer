@@ -5,7 +5,7 @@ import static org.tvrenamer.controller.util.XPathUtilities.nodeTextValue;
 
 import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.Season;
-import org.tvrenamer.model.Show;
+import org.tvrenamer.model.Series;
 import org.tvrenamer.model.except.TVRenamerIOException;
 import org.tvrenamer.model.util.Constants;
 
@@ -108,7 +108,7 @@ public class TheTVDBProvider {
         return TvDbCache.resolve(StringUtils.sanitiseTitle(showName) + ".xml");
     }
 
-    private static Path episodeListingsCachePath(Show show) {
+    private static Path episodeListingsCachePath(Series show) {
         return TvDbCache.resolve(show.getId() + ".xml");
     }
 
@@ -127,7 +127,7 @@ public class TheTVDBProvider {
         return cacheXml(cachePath, searchXml);
     }
 
-    private static File getShowListingXml(Show show)
+    private static File getShowListingXml(Series show)
         throws TVRenamerIOException
     {
         Path cachePath = episodeListingsCachePath(show);
@@ -142,22 +142,22 @@ public class TheTVDBProvider {
         return cacheXml(cachePath, listingXml);
     }
 
-    private static List<Show> collectShowOptions(NodeList shows, XPath xpath)
+    private static List<Series> collectShowOptions(NodeList shows, XPath xpath)
         throws XPathExpressionException
     {
-        List<Show> options = new ArrayList<>();
+        List<Series> options = new ArrayList<>();
 
         for (int i = 0; i < shows.getLength(); i++) {
             Node eNode = shows.item(i);
-            options.add(new Show(nodeTextValue(XPATH_SHOWID, eNode, xpath),
-                                 nodeTextValue(XPATH_NAME, eNode, xpath),
-                                 nodeTextValue(XPATH_IMDB, eNode, xpath)));
+            options.add(new Series(nodeTextValue(XPATH_SHOWID, eNode, xpath),
+                                   nodeTextValue(XPATH_NAME, eNode, xpath),
+                                   nodeTextValue(XPATH_IMDB, eNode, xpath)));
         }
 
         return options;
     }
 
-    public static List<Show> getShowOptions(String showName)
+    public static List<Series> getShowOptions(String showName)
         throws TVRenamerIOException
     {
         try {
@@ -180,7 +180,7 @@ public class TheTVDBProvider {
         }
     }
 
-    private static Season showSeason(Show show, String seasonId) {
+    private static Season showSeason(Series show, String seasonId) {
         int seasonNum = Integer.parseInt(seasonId);
         Season season = show.getSeason(seasonNum);
         if (season == null) {
@@ -217,7 +217,7 @@ public class TheTVDBProvider {
         }
     }
 
-    private static void addEpisodeToSeason(Node eNode, Show show, XPath xpath,
+    private static void addEpisodeToSeason(Node eNode, Series series, XPath xpath,
                                            DateTimeFormatter dateFormatter)
     {
         try {
@@ -233,19 +233,19 @@ public class TheTVDBProvider {
 
             LocalDate date = getEpisodeDate(eNode, xpath, dateFormatter);
 
-            Season season = showSeason(show, seasonNumString);
+            Season season = showSeason(series, seasonNumString);
             season.addEpisode(epNum, episodeName, date);
         } catch (Exception e) {
-            logger.warning("exception parsing episode of " + show);
+            logger.warning("exception parsing episode of " + series);
             logger.warning(e.toString());
         }
     }
 
-    public static void getShowListing(Show show)
+    public static void getShowListing(Series series)
         throws TVRenamerIOException
     {
         try {
-            File showXml = getShowListingXml(show);
+            File showXml = getShowListingXml(series);
 
             DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = db.parse(new InputSource(new FileReader(showXml)));
@@ -255,7 +255,7 @@ public class TheTVDBProvider {
             NodeList episodes = nodeListValue(XPATH_EPISODE_LIST, doc, xpath);
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
             for (int i = 0; i < episodes.getLength(); i++) {
-                addEpisodeToSeason(episodes.item(i), show, xpath, dateFormatter);
+                addEpisodeToSeason(episodes.item(i), series, xpath, dateFormatter);
             }
         } catch (ParserConfigurationException | XPathExpressionException | SAXException | IOException | NumberFormatException | DOMException e) {
             logger.log(Level.WARNING, e.getMessage(), e);

@@ -34,12 +34,12 @@ public class ShowStore {
         }
     }
 
-    private static final Map<String, Show> _shows = new ConcurrentHashMap<>(100);
+    private static final Map<String, Series> _shows = new ConcurrentHashMap<>(100);
     private static final Map<String, ShowRegistrations> _showRegistrations = new ConcurrentHashMap<>();
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    private static void notifyListeners(String showName, Show show) {
+    private static void notifyListeners(String showName, Series show) {
         ShowRegistrations registrations = _showRegistrations.get(showName.toLowerCase());
 
         if (registrations != null) {
@@ -69,9 +69,9 @@ public class ShowStore {
      * @param showName
      *            the show name
      * @param show
-     *            the {@link Show}
+     *            the {@link Series}
      */
-    static void addShow(String showName, Show show) {
+    static void addShow(String showName, Series show) {
         if (show instanceof UnresolvedShow) {
             logger.info("Failed to get options or episodes for '" + show.getName());
         } else {
@@ -83,8 +83,8 @@ public class ShowStore {
 
     // Given a list of one or more options for which show we're dealing with,
     // choose the best one and return it.
-    private static Show selectShowOption(String showName, List<Show> options) {
-        for (Show s : options) {
+    private static Series selectShowOption(String showName, List<Series> options) {
+        for (Series s : options) {
             logger.info("option: " + s.getName() + " for " + showName);
         }
         // TODO: might not always be option zero...
@@ -95,7 +95,7 @@ public class ShowStore {
         Callable<Boolean> showFetcher = new Callable<Boolean>() {
             @Override
             public Boolean call() throws InterruptedException {
-                List<Show> options;
+                List<Series> options;
                 try {
                     options = TheTVDBProvider.getShowOptions(showName);
                 } catch (TVRenamerIOException e) {
@@ -117,8 +117,8 @@ public class ShowStore {
         threadPool.submit(showFetcher);
     }
 
-    public static Show mapStringToShow(String showName) {
-        Show s = _shows.get(showName.toLowerCase());
+    public static Series mapStringToShow(String showName) {
+        Series s = _shows.get(showName.toLowerCase());
         if (s == null) {
             TVRenamerIOException e = new TVRenamerIOException("Show not found for show name: '"
                                                               + showName + "'");
@@ -148,7 +148,7 @@ public class ShowStore {
      *            the listener to notify or register
      */
     public static void mapStringToShow(String showName, ShowInformationListener listener) {
-        Show show = _shows.get(showName.toLowerCase());
+        Series show = _shows.get(showName.toLowerCase());
         if (show != null) {
             listener.downloadComplete(show);
         } else {

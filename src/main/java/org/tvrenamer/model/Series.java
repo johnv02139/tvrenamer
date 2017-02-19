@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Represents a TV Show, with a name, url and list of seasons.
+ * Represents a TV Series, with a name, url and list of seasons.
  */
-public class Show implements Comparable<Show> {
+public class Series implements Comparable<Series> {
     private final String id;
     private final String name;
     private final String dirName;
@@ -18,7 +18,7 @@ public class Show implements Comparable<Show> {
 
     private final Map<Integer, Season> seasons;
 
-    public Show(String id, String name, String imdb) {
+    public Series(String id, String name, String imdb) {
         this.id = id;
         this.name = name;
         this.imdb = imdb;
@@ -27,7 +27,7 @@ public class Show implements Comparable<Show> {
         seasons = new ConcurrentHashMap<>();
     }
 
-    public Show(String id, String name) {
+    public Series(String id, String name) {
         this(id, name, null);
     }
 
@@ -77,7 +77,7 @@ public class Show implements Comparable<Show> {
     }
 
     @Override
-    public int compareTo(Show other) {
+    public int compareTo(Series other) {
         return Integer.parseInt(other.id) - Integer.parseInt(this.id);
     }
 }

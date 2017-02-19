@@ -1,9 +1,9 @@
 package org.tvrenamer.controller;
 
-import org.tvrenamer.model.Show;
+import org.tvrenamer.model.Series;
 
 public interface ShowInformationListener {
-    void downloadComplete(Show show);
+    void downloadComplete(Series show);
 
-    void downloadFailed(Show show);
+    void downloadFailed(Series show);
 }

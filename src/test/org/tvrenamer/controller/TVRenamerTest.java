@@ -232,7 +232,7 @@ public class TVRenamerTest {
             FileEpisode retval = new FileEpisode(testInput.input);
             assertNotNull(retval);
             TVRenamer.parseFilename(retval);
-            assertEquals(testInput.input, testInput.queryString, retval.getFilenameShow());
+            assertEquals(testInput.input, testInput.queryString, retval.getFilenameSeries());
             assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getFilenameSeason());
             assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getFilenameEpisode());
             assertEquals(testInput.input, testInput.episodeResolution, retval.getFilenameResolution());
@@ -244,7 +244,7 @@ public class TVRenamerTest {
         FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertNotNull(episode);
         TVRenamer.parseFilename(episode);
-        assertEquals("warehouse 13", episode.getFilenameShow());
+        assertEquals("warehouse 13", episode.getFilenameSeries());
         assertEquals(5, episode.getFilenameSeason());
         assertEquals(4, episode.getFilenameEpisode());
     }

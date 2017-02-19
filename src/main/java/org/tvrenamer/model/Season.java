@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Season {
-    private final Show show;
+    private final Series series;
     private final int num;
     private final Map<Integer, Episode> episodes;
 
-    public Season(Show show, int num) {
-        this.show = show;
+    public Season(Series series, int num) {
+        this.series = series;
         this.num = num;
         episodes = new HashMap<>();
     }
@@ -28,7 +28,8 @@ public class Season {
     public String getTitle(int epNum) {
         Episode e = episodes.get(epNum);
         if (e == null) {
-            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + this.num);
+            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + this.num
+                                               + " of series " + series.getName());
         }
         return e.getTitle();
     }
@@ -36,7 +37,8 @@ public class Season {
     public LocalDate getAirDate(int epNum) {
         Episode e = episodes.get(epNum);
         if (e == null) {
-            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + this.num);
+            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + this.num
+                                               + " of series " + series.getName());
         }
         return e.getAirDate();
     }

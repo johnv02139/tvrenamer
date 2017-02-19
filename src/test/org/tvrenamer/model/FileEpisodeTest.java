@@ -51,14 +51,14 @@ public class FileEpisodeTest {
         File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
         createFile(file);
 
-        Show show = new Show("1", showName);
-        Season season5 = new Season(show, seasonNum);
+        Series series = new Series("1", showName);
+        Season season5 = new Season(series, seasonNum);
         season5.addEpisode(episodeNum, title, LocalDate.now());
-        show.setSeason(seasonNum, season5);
-        ShowStore.addShow(showName, show);
+        series.setSeason(seasonNum, season5);
+        ShowStore.addShow(showName, series);
 
         FileEpisode episode = new FileEpisode(filename);
-        episode.setFilenameShow(showName);
+        episode.setFilenameSeries(showName);
         episode.setFilenameSeason(seasonNum);
         episode.setFilenameEpisode(episodeNum);
         episode.setFilenameResolution(resolution);
@@ -87,14 +87,14 @@ public class FileEpisodeTest {
         File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
         createFile(file);
 
-        Show show = new Show("1", showName);
-        Season season1 = new Season(show, seasonNum);
+        Series series = new Series("1", showName);
+        Season season1 = new Season(series, seasonNum);
         season1.addEpisode(episodeNum, title, LocalDate.now());
-        show.setSeason(seasonNum, season1);
-        ShowStore.addShow(showName, show);
+        series.setSeason(seasonNum, season1);
+        ShowStore.addShow(showName, series);
 
         FileEpisode fileEpisode = new FileEpisode(filename);
-        fileEpisode.setFilenameShow(showName);
+        fileEpisode.setFilenameSeries(showName);
         fileEpisode.setFilenameSeason(seasonNum);
         fileEpisode.setFilenameEpisode(episodeNum);
         fileEpisode.setFilenameResolution(resolution);

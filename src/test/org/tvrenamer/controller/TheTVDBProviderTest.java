@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.Season;
-import org.tvrenamer.model.Show;
+import org.tvrenamer.model.Series;
 import org.tvrenamer.model.ShowStore;
 
 import java.util.LinkedList;
@@ -253,22 +253,22 @@ public class TheTVDBProviderTest {
                     final FileEpisode fileEpisode = new FileEpisode(testInput.input);
                     assertNotNull(fileEpisode);
                     TVRenamer.parseFilename(fileEpisode);
-                    String showName = fileEpisode.getFilenameShow();
+                    String showName = fileEpisode.getFilenameSeries();
 
-                    final CompletableFuture<Show> futureShow = new CompletableFuture<>();
+                    final CompletableFuture<Series> futureShow = new CompletableFuture<>();
                     ShowStore.mapStringToShow(showName, new ShowInformationListener() {
                             @Override
-                            public void downloadComplete(Show show) {
+                            public void downloadComplete(Series show) {
                                 futureShow.complete(show);
                             }
 
                             @Override
-                            public void downloadFailed(Show show) {
+                            public void downloadFailed(Series show) {
                                 futureShow.complete(null);
                             }
                         });
 
-                    Show gotShow = futureShow.get();
+                    Series gotShow = futureShow.get();
                     String gotShowName = (gotShow == null) ? null : gotShow.getName();
                     if (gotShowName == null) {
                         fail();
@@ -278,7 +278,7 @@ public class TheTVDBProviderTest {
                         final CompletableFuture<String> future = new CompletableFuture<>();
                         ListingsLookup.getListings(gotShow, new ShowListingsListener() {
                                 @Override
-                                public void downloadListingsComplete(Show show) {
+                                public void downloadListingsComplete(Series show) {
                                     int seasonNum = fileEpisode.getFilenameSeason();
                                     Season season = show.getSeason(seasonNum);
                                     if (season == null) {
@@ -294,7 +294,7 @@ public class TheTVDBProviderTest {
                                 }
 
                                 @Override
-                                public void downloadListingsFailed(Show show) {
+                                public void downloadListingsFailed(Series show) {
                                     future.complete("downloadFailed");
                                 }
                             });
@@ -310,7 +310,7 @@ public class TheTVDBProviderTest {
 
     @Test
     public void testGetShowOptions() throws Exception {
-        for (Show show : TheTVDBProvider.getShowOptions("Gossip Girl")) {
+        for (Series show : TheTVDBProvider.getShowOptions("Gossip Girl")) {
             assertNotNull(show);
             assertNotEquals(0, show.getId().length());
             assertNotEquals(0, show.getName().length());
@@ -319,6 +319,6 @@ public class TheTVDBProviderTest {
 
     @Test
     public void testGetShowListing() throws Exception {
-        TheTVDBProvider.getShowListing(new Show("80547", "Gossip Girl"));
+        TheTVDBProvider.getShowListing(new Series("80547", "Gossip Girl"));
     }
 }

@@ -54,7 +54,7 @@ import org.tvrenamer.controller.UpdateCompleteHandler;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.SWTMessageBoxType;
-import org.tvrenamer.model.Show;
+import org.tvrenamer.model.Series;
 import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UnresolvedShow;
 import org.tvrenamer.model.UserPreference;
@@ -155,7 +155,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private static String getFailMessage(final FileEpisode ep) {
         if (ep.isFailed()) {
-            final Show epShow = ep.getShow();
+            final Series epShow = ep.getSeries();
             // BROKEN_PLACEHOLDER_FILENAME;
             String failMsg = DOWNLOADING_FAILED_MESSAGE;
             if (epShow instanceof UnresolvedShow) {
@@ -175,7 +175,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             return getFailMessage(episode);
         } else if (episode.isReady()) {
             return episode.getNewFilename();
-        } else if (episode.isShowReady()) {
+        } else if (episode.isSeriesReady()) {
             return "Processing episodes...";
         } else {
             return ADDED_PLACEHOLDER_FILENAME;
@@ -331,7 +331,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             episode.listen(this);
             // We add the file to the table even if we couldn't parse the filename
             final TableItem item = createTableItem(episode);
-            episode.lookupShow();
+            episode.lookupSeries();
         }
     }
 
