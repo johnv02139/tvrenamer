@@ -52,11 +52,11 @@ import org.tvrenamer.controller.FileMover;
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.controller.UpdateCompleteHandler;
 import org.tvrenamer.model.EpisodeDb;
-import org.tvrenamer.model.FailedShow;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowStore;
+import org.tvrenamer.model.UnresolvedShow;
 import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.except.NotFoundException;
@@ -158,8 +158,8 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             final Show epShow = ep.getShow();
             // BROKEN_PLACEHOLDER_FILENAME;
             String failMsg = DOWNLOADING_FAILED_MESSAGE;
-            if (epShow instanceof FailedShow) {
-                FailedShow f = (FailedShow) epShow;
+            if (epShow instanceof UnresolvedShow) {
+                UnresolvedShow f = (UnresolvedShow) epShow;
                 if (f.getException() == null) {
                     failMsg = NO_SUCH_SHOW_MESSAGE + f.getName();
                 }

@@ -44,7 +44,7 @@ public class ShowStore {
 
         if (registrations != null) {
             for (ShowInformationListener informationListener : registrations.getListeners()) {
-                if (show instanceof FailedShow) {
+                if (show instanceof UnresolvedShow) {
                     informationListener.downloadFailed(show);
                 } else {
                     informationListener.downloadComplete(show);
@@ -72,7 +72,7 @@ public class ShowStore {
      *            the {@link Show}
      */
     static void addShow(String showName, Show show) {
-        if (show instanceof FailedShow) {
+        if (show instanceof UnresolvedShow) {
             logger.info("Failed to get options or episodes for '" + show.getName());
         } else {
             logger.info("Options and episodes for '" + show.getName() + "' acquired");
@@ -100,13 +100,13 @@ public class ShowStore {
                     options = TheTVDBProvider.getShowOptions(showName);
                 } catch (TVRenamerIOException e) {
                     logger.info("exception getting options for " + showName);
-                    addShow(showName, new FailedShow("", showName, e));
+                    addShow(showName, new UnresolvedShow(showName, e));
                     return true;
                 }
                 int nOptions = (options == null) ? 0 : options.size();
                 if (nOptions == 0) {
                     logger.info("did not find any options for " + showName);
-                    addShow(showName, new FailedShow("", showName, null));
+                    addShow(showName, new UnresolvedShow(showName));
                     return true;
                 }
                 addShow(showName, selectShowOption(showName, options));
@@ -122,7 +122,7 @@ public class ShowStore {
         if (s == null) {
             TVRenamerIOException e = new TVRenamerIOException("Show not found for show name: '"
                                                               + showName + "'");
-            FailedShow notFound = new FailedShow("", showName, e);
+            UnresolvedShow notFound = new UnresolvedShow(showName, e);
             addShow(showName, notFound);
             return notFound;
         }

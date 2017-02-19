@@ -305,7 +305,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
 
     public void setShow(Show show) {
         this.show = show;
-        if ((show == null) || (show instanceof FailedShow)) {
+        if ((show == null) || (show instanceof UnresolvedShow)) {
             setStatus(EpisodeStatus.UNFOUND);
         } else {
             setStatus(EpisodeStatus.GOT_SHOW);

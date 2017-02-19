@@ -2,7 +2,7 @@ package org.tvrenamer.model;
 
 import org.tvrenamer.model.except.TVRenamerIOException;
 
-public class FailedShow extends Show {
+public class UnresolvedShow extends Show {
 
     private final TVRenamerIOException ioe;
 
@@ -10,8 +10,12 @@ public class FailedShow extends Show {
         return ioe;
     }
 
-    public FailedShow(String id, String name, TVRenamerIOException err) {
-        super(id, name);
+    public UnresolvedShow(String name, TVRenamerIOException err) {
+        super("", name);
         ioe = err;
+    }
+
+    public UnresolvedShow(String name) {
+        this(name, null);
     }
 }
