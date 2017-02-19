@@ -39,6 +39,29 @@ public class ShowStore {
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
+    private static void notifyListeners(String showName, Show show) {
+        ShowRegistrations registrations = _showRegistrations.get(showName.toLowerCase());
+
+        if (registrations != null) {
+            for (ShowInformationListener informationListener : registrations.getListeners()) {
+                if (show instanceof FailedShow) {
+                    informationListener.downloadFailed(show);
+                } else {
+                    informationListener.downloadComplete(show);
+                }
+            }
+        }
+    }
+
+    public static void cleanUp() {
+        threadPool.shutdownNow();
+    }
+
+    public static void clear() {
+        _shows.clear();
+        _showRegistrations.clear();
+    }
+
     public static Show mapStringToShow(String showName) {
         Show s = _shows.get(showName.toLowerCase());
         if (s == null) {
@@ -120,29 +143,6 @@ public class ShowStore {
             }
         };
         threadPool.submit(showFetcher);
-    }
-
-    private static void notifyListeners(String showName, Show show) {
-        ShowRegistrations registrations = _showRegistrations.get(showName.toLowerCase());
-
-        if (registrations != null) {
-            for (ShowInformationListener informationListener : registrations.getListeners()) {
-                if (show instanceof FailedShow) {
-                    informationListener.downloadFailed(show);
-                } else {
-                    informationListener.downloadComplete(show);
-                }
-            }
-        }
-    }
-
-    public static void cleanUp() {
-        threadPool.shutdownNow();
-    }
-
-    public static void clear() {
-        _shows.clear();
-        _showRegistrations.clear();
     }
 
     /**
