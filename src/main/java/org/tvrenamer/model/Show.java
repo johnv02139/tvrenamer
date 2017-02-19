@@ -4,8 +4,8 @@ import static org.tvrenamer.model.util.Constants.IMDB_BASE_URL;
 
 import org.tvrenamer.controller.util.StringUtils;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents a TV Show, with a name, url and list of seasons.
@@ -24,7 +24,7 @@ public class Show implements Comparable<Show> {
         this.imdb = imdb;
         dirName = StringUtils.sanitiseTitle(name);
 
-        seasons = new HashMap<>();
+        seasons = new ConcurrentHashMap<>();
     }
 
     public Show(String id, String name) {
