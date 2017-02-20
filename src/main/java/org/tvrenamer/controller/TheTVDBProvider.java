@@ -183,16 +183,6 @@ public class TheTVDBProvider {
         }
     }
 
-    private static Season showSeason(Series show, String seasonId) {
-        int seasonNum = Integer.parseInt(seasonId);
-        Season season = show.getSeason(seasonNum);
-        if (season == null) {
-            season = new Season(show, seasonNum);
-            show.setSeason(seasonNum, season);
-        }
-        return season;
-    }
-
     private static Integer getEpisodeNumber(Node eNode, XPath xpath)
         throws XPathExpressionException
     {
@@ -236,7 +226,12 @@ public class TheTVDBProvider {
 
             LocalDate date = getEpisodeDate(eNode, xpath, dateFormatter);
 
-            Season season = showSeason(series, seasonNumString);
+            int seasonNum = Integer.parseInt(seasonNumString);
+            Season season = series.getSeason(seasonNum);
+            if (season == null) {
+                season = new Season(series, seasonNum);
+                series.setSeason(seasonNum, season);
+            }
             season.addEpisode(epNum, episodeName, date);
         } catch (Exception e) {
             logger.warning("exception parsing episode of " + series);
