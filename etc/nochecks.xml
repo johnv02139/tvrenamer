@@ -18,6 +18,7 @@
     <suppress files="src/main/java/org/tvrenamer/controller/util/FileUtilities.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/util/StringUtils.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/util/XPathUtilities.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/Episode.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/model/FileEpisode.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/model/GlobalOverrides.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/model/ProxySettings.java" checks="JavadocMethod"/>
