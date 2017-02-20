@@ -53,12 +53,12 @@ public class Show implements Comparable<Show> {
         return (seasons.size() > 0);
     }
 
-    public String toShortString() {
+    @Override
+    public String toString() {
         return "Show [" + name + ", id=" + id + ", url=" + url + ", " + seasons.size() + " seasons]";
     }
 
-    @Override
-    public String toString() {
+    public String toLongString() {
         return "Show [id=" + id + ", name=" + name + ", url=" + url + ", seasons=" + seasons + "]";
     }
 
