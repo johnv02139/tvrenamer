@@ -132,8 +132,8 @@ public class UserPreferences extends Observable {
         UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE);
 
         if (prefs != null) {
-            logger.finer("Sucessfully read preferences from: " + PREFERENCES_FILE.getAbsolutePath());
-            logger.info("Sucessfully read preferences: " + prefs.toString());
+            logger.fine("Sucessfully read preferences from: " + PREFERENCES_FILE.getAbsolutePath());
+            logger.fine("Sucessfully read preferences: " + prefs.toString());
         } else {
             prefs = new UserPreferences();
         }

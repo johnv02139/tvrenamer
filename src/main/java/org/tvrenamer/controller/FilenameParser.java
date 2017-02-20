@@ -66,7 +66,7 @@ public class FilenameParser {
             {
                 parentName = file.getParentFile().getParentFile().getName();
             }
-            logger.info("appending parent directory '" + parentName + "' to filename '" + fName + "'");
+            logger.fine("appending parent directory '" + parentName + "' to filename '" + fName + "'");
             return parentName + " " + fName;
         } else {
             return fName;

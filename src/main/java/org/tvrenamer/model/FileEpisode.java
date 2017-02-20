@@ -352,7 +352,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
                         + originalFilename);
         } else {
             ShowStore.mapStringToShow(filenameSeries, this);
-            logger.info("mapStringToShow returned for " + filenameSeries);
+            logger.fine("mapStringToShow returned for " + filenameSeries);
         }
     }
 

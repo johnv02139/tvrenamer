@@ -40,7 +40,7 @@ public class ProgressBarUpdater implements Runnable {
             try {
                 Future<Boolean> future = futures.remove();
                 Boolean success = future.get();
-                logger.info("future returned: " + success);
+                logger.finer("future returned: " + success);
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }

@@ -75,7 +75,7 @@ public class ShowStore {
         if (show instanceof UnresolvedShow) {
             logger.info("Failed to get options or episodes for '" + show.getName());
         } else {
-            logger.info("Options and episodes for '" + show.getName() + "' acquired");
+            logger.fine("Options and episodes for '" + show.getName() + "' acquired");
         }
         _shows.put(showName.toLowerCase(), show);
         notifyListeners(showName, show);
@@ -85,7 +85,7 @@ public class ShowStore {
     // choose the best one and return it.
     private static Series selectShowOption(String showName, List<Series> options) {
         for (Series s : options) {
-            logger.info("option: " + s.getName() + " for " + showName);
+            logger.fine("option: " + s.getName() + " for " + showName);
         }
         // TODO: might not always be option zero...
         return options.get(0);
