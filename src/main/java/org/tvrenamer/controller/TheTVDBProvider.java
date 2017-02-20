@@ -189,7 +189,7 @@ public class TheTVDBProvider {
         int seasonNum = Integer.parseInt(seasonId);
         Season season = show.getSeason(seasonNum);
         if (season == null) {
-            season = new Season(seasonNum);
+            season = new Season(show, seasonNum);
             show.setSeason(seasonNum, season);
         }
         return season;
