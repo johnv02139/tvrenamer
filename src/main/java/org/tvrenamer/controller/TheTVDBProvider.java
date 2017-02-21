@@ -108,8 +108,8 @@ public class TheTVDBProvider {
         return TvDbCache.resolve(StringUtils.sanitiseTitle(showName) + ".xml");
     }
 
-    private static Path episodeListingsCachePath(Series show) {
-        return TvDbCache.resolve(show.getIdString() + ".xml");
+    private static Path episodeListingsCachePath(Series series) {
+        return TvDbCache.resolve(series.getIdString() + ".xml");
     }
 
     private static File performShowQuery(String showName)
@@ -127,14 +127,14 @@ public class TheTVDBProvider {
         return cacheXml(cachePath, searchXml);
     }
 
-    private static File getXmlListings(Series show)
+    private static File getXmlListings(Series series)
         throws TVRenamerIOException
     {
-        Path cachePath = episodeListingsCachePath(show);
+        Path cachePath = episodeListingsCachePath(series);
         if (Files.exists(cachePath)) {
             return cachePath.toFile();
         }
-        String showURL = BASE_LIST_URL + show.getIdString() + BASE_LIST_FILENAME;
+        String showURL = BASE_LIST_URL + series.getIdString() + BASE_LIST_FILENAME;
 
         logger.info("Downloading episode listing from " + showURL);
 
