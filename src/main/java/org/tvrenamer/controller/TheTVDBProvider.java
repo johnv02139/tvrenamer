@@ -186,13 +186,13 @@ public class TheTVDBProvider {
     private static Integer getEpisodeNumber(Node eNode, XPath xpath)
         throws XPathExpressionException
     {
-        String epNumText = nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode, xpath);
+        String epNumText = nodeTextValue(XPATH_EPISODE_NUM, eNode, xpath);
         Integer epNum = StringUtils.stringToInt(epNumText);
         if (epNum != null) {
             return epNum;
         }
-        // Did not find DVD episode number, try "regular" episode number
-        epNumText = nodeTextValue(XPATH_EPISODE_NUM, eNode, xpath);
+        // Did not find "regular" episode number, try DVD episode number
+        epNumText = nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode, xpath);
         return StringUtils.stringToInt(epNumText);
     }
 

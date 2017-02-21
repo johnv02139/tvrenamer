@@ -191,20 +191,20 @@ public class TheTVDBProviderTest {
             values1.add(new TestInput("Warehouse.13.S05E04.HDTV.x264-2HD.mp4", "Warehouse 13", "5", "4",
                                         "Savage Seduction", ""));
             values1.add(new TestInput("the.100.208.hdtv-lol.mp4", "The 100", "2", "8", "Spacewalker", ""));
-            values1.add(new TestInput("firefly.1x01.hdtv-lol.mp4", "Firefly", "1", "1", "Serenity", ""));
-            values1.add(new TestInput("firefly.1x02.hdtv-lol.mp4", "Firefly", "1", "2", "The Train Job", ""));
-            values1.add(new TestInput("firefly.1x03.hdtv-lol.mp4", "Firefly", "1", "3", "Bushwhacked", ""));
-            values1.add(new TestInput("firefly.1x04.hdtv-lol.mp4", "Firefly", "1", "4", "Shindig", ""));
-            values1.add(new TestInput("firefly.1x05.hdtv-lol.mp4", "Firefly", "1", "5", "Safe", ""));
-            values1.add(new TestInput("firefly.1x06.hdtv-lol.mp4", "Firefly", "1", "6", "Our Mrs. Reynolds", ""));
-            values1.add(new TestInput("firefly.1x07.hdtv-lol.mp4", "Firefly", "1", "7", "Jaynestown", ""));
-            values1.add(new TestInput("firefly.1x08.hdtv-lol.mp4", "Firefly", "1", "8", "Out of Gas", ""));
-            values1.add(new TestInput("firefly.1x09.hdtv-lol.mp4", "Firefly", "1", "9", "Ariel", ""));
-            values1.add(new TestInput("firefly.1x10.hdtv-lol.mp4", "Firefly", "1", "10", "War Stories", ""));
-            values1.add(new TestInput("firefly.1x11.hdtv-lol.mp4", "Firefly", "1", "11", "Trash", ""));
-            values1.add(new TestInput("firefly.1x12.hdtv-lol.mp4", "Firefly", "1", "12", "The Message", ""));
-            values1.add(new TestInput("firefly.1x13.hdtv-lol.mp4", "Firefly", "1", "13", "Heart of Gold", ""));
-            values1.add(new TestInput("firefly.1x14.hdtv-lol.mp4", "Firefly", "1", "14", "Objects in Space", ""));
+            values1.add(new TestInput("firefly.1x01.hdtv-lol.mp4", "Firefly", "1", "1", "The Train Job", ""));
+            values1.add(new TestInput("firefly.1x02.hdtv-lol.mp4", "Firefly", "1", "2", "Bushwhacked", ""));
+            values1.add(new TestInput("firefly.1x03.hdtv-lol.mp4", "Firefly", "1", "3", "Our Mrs. Reynolds", ""));
+            values1.add(new TestInput("firefly.1x04.hdtv-lol.mp4", "Firefly", "1", "4", "Jaynestown", ""));
+            values1.add(new TestInput("firefly.1x05.hdtv-lol.mp4", "Firefly", "1", "5", "Out of Gas", ""));
+            values1.add(new TestInput("firefly.1x06.hdtv-lol.mp4", "Firefly", "1", "6", "Shindig", ""));
+            values1.add(new TestInput("firefly.1x07.hdtv-lol.mp4", "Firefly", "1", "7", "Safe", ""));
+            values1.add(new TestInput("firefly.1x08.hdtv-lol.mp4", "Firefly", "1", "8", "Ariel", ""));
+            values1.add(new TestInput("firefly.1x09.hdtv-lol.mp4", "Firefly", "1", "9", "War Stories", ""));
+            values1.add(new TestInput("firefly.1x10.hdtv-lol.mp4", "Firefly", "1", "10", "Objects in Space", ""));
+            values1.add(new TestInput("firefly.1x11.hdtv-lol.mp4", "Firefly", "1", "11", "Serenity", ""));
+            values1.add(new TestInput("firefly.1x12.hdtv-lol.mp4", "Firefly", "1", "12", "Heart of Gold", ""));
+            values1.add(new TestInput("firefly.1x13.hdtv-lol.mp4", "Firefly", "1", "13", "Trash", ""));
+            values1.add(new TestInput("firefly.1x14.hdtv-lol.mp4", "Firefly", "1", "14", "The Message", ""));
             values1.add(new TestInput("Strike.Back.S01E01.Mini.720p.HDTV.DD5.1.x264.mkv", "Strike Back", "1", "1",
                                         "Chris Ryan's Strike Back, Episode 1", "720p"));
             values1.add(new TestInput("ncis.1304.hdtv-lol", "NCIS", "13", "04", "Double Trouble", ""));
