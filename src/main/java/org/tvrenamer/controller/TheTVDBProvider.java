@@ -4,6 +4,7 @@ import static org.tvrenamer.controller.util.XPathUtilities.nodeListValue;
 import static org.tvrenamer.controller.util.XPathUtilities.nodeTextValue;
 
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.Episode;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.except.TVRenamerIOException;
 import org.tvrenamer.model.util.Constants;
@@ -225,6 +226,12 @@ public class TheTVDBProvider {
                          + episodeName);
 
             LocalDate date = getEpisodeDate(eNode, xpath, dateFormatter);
+
+            Episode ep = new Episode.Builder()
+                .episodeNum(epNum)
+                .title(episodeName)
+                .airDate(date)
+                .build();
 
             series.addEpisode(seasonNumString, epNum, episodeName, date);
         } catch (Exception e) {
