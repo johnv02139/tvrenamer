@@ -4,6 +4,7 @@ import static org.tvrenamer.model.util.Constants.IMDB_BASE_URL;
 
 import org.tvrenamer.controller.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,6 +42,21 @@ public class Series implements Comparable<Series> {
 
     public int getId() {
         return id;
+    }
+
+    public boolean addEpisode(String seasonNumber, int episodeNumber,
+                              String episodeName, LocalDate firstAired)
+    {
+        int seasonNum = Integer.parseInt(seasonNumber);
+        Season season;
+        if (seasons.containsKey(seasonNum)) {
+            season = seasons.get(seasonNum);
+        } else {
+            season = new Season(this, seasonNum);
+            setSeason(seasonNum, season);
+        }
+        season.addEpisode(episodeNumber, episodeName, firstAired);
+        return true;
     }
 
     public String getIdString() {
