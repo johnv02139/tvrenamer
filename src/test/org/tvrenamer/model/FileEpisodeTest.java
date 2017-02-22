@@ -69,7 +69,14 @@ public class FileEpisodeTest {
         episode.setSeason();
 
         String title = "$pringfield";
-        season5.addEpisode(episodeNum, title, LocalDate.now());
+        Episode ep = new Episode.Builder()
+            .season(season5)
+            .episodeNum(episodeNum)
+            .title(title)
+            .airDate(LocalDate.now())
+            .build();
+
+        season5.addEpisode(episodeNum, ep);
 
         String newFilename = episode.getProposedFilename();
         assertEquals("The Simpsons [5x10] $pringfield 720p.avi", newFilename);
@@ -106,7 +113,13 @@ public class FileEpisodeTest {
         fileEpisode.setSeason();
 
         String title = "The Way of the Gun";
-        season1.addEpisode(episodeNum, title, LocalDate.now());
+        Episode ep = new Episode.Builder()
+            .season(season1)
+            .episodeNum(episodeNum)
+            .title(title)
+            .airDate(LocalDate.now())
+            .build();
+        season1.addEpisode(episodeNum, ep);
 
         String newFilename = fileEpisode.getProposedFilename();
         assertFalse("Resulting filename must not contain a ':' as it breaks Windows", newFilename.contains(":"));

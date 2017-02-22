@@ -6,11 +6,11 @@ public class Episode {
     private static final int NO_SEASON = -1;
     private static final int NO_EPISODE = -1;
 
-    private final Season season;
     private final int seasonNum;
     private final int episodeNum;
     private final String title;
     private final LocalDate airDate;
+    private Season season = null;
 
     public static class Builder {
         private Season season = null;
@@ -52,7 +52,6 @@ public class Episode {
         }
     }
 
-
     public Episode(Builder builder) {
         season = builder.season;
         seasonNum = builder.seasonNum;
@@ -61,12 +60,8 @@ public class Episode {
         airDate = builder.airDate;
     }
 
-    public Episode(Season season, int seasonNum, int episodeNum, String title, LocalDate airDate) {
-        this.season = season;
-        this.seasonNum = seasonNum;
-        this.episodeNum = episodeNum;
-        this.title = title;
-        this.airDate = airDate;
+    public void setSeason(Season s) {
+        this.season = s;
     }
 
     public String getTitle() {

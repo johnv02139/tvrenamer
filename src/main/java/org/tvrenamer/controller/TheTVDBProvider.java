@@ -233,7 +233,7 @@ public class TheTVDBProvider {
                 .airDate(date)
                 .build();
 
-            series.addEpisode(seasonNumString, epNum, episodeName, date);
+            series.addEpisode(ep, seasonNumString, epNum);
         } catch (Exception e) {
             logger.warning("exception parsing episode of " + series);
             logger.warning(e.toString());

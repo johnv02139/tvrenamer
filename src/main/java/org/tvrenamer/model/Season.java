@@ -21,8 +21,8 @@ public class Season {
         return num;
     }
 
-    public void addEpisode(int epNum, String title, LocalDate airDate) {
-        episodes.put(epNum, new Episode(this, num, epNum, title, airDate));
+    public void addEpisode(int epNum, Episode episode) {
+        episodes.put(epNum, episode);
     }
 
     public Episode getEpisode(int epNum) {
