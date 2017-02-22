@@ -1,5 +1,6 @@
 package org.tvrenamer.controller;
 
+import org.tvrenamer.model.Season;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.except.TVRenamerIOException;
 
@@ -123,6 +124,50 @@ public class ListingsLookup {
             } else {
                 registrations.addListener(listener);
             }
+        }
+    }
+
+    /**
+     * Does what downloadListings does, and more, but in a single thread.
+     *
+     * Fetch the listings for a given series, and then look up the given season and episode,
+     * and return the title of the episode of found.
+     *
+     * This method is intended only for debugging.  Aside from debugging, there's no reason
+     * we'd want to limit downloading listings to a single thread; in fact, it would presumably
+     * make the UI unresponsive if we did.  But sometimes, it can be easier to debug a problem
+     * if it all goes on sequentially, in a single thread.
+     *
+     * It might be nice to have a way to structure downloadListings so that it could run in
+     * a single thread or not, but it's just too intertwined.  The best way to have a method
+     * to use a single thread is as a separate method.
+     *
+     * I'm marking the method deprecated.  That's not the exact right fit; it was never a
+     * supported method.  But it shouldn't be used, and "deprecated" serves that purpose.
+     *
+     * @param series the Series object, with ID and Name, to look up listings for
+     * @param seasonNum the season number, as a String, for the episode to look up
+     * @param episodeNum the episode number, as a String, for the episode to look up
+     * @return the title of the episode if found, or a very brief error message otherwise
+     */
+    @Deprecated
+    public static String episodeTitle(final Series series, String seasonNum, String episodeNum) {
+        try {
+            series.addEpisodes(TheTVDBProvider.getListings(series.getIdString(), series.getName()));
+            Season season = series.getSeason(seasonNum);
+            if (season == null) {
+                return "no season";
+            }
+            String title = season.getTitle(episodeNum);
+            if (title == null) {
+                return "no title";
+            } else {
+                return title;
+            }
+        } catch (TVRenamerIOException e) {
+            return "false";
+        } catch (Exception e) {
+            return "false";
         }
     }
 

@@ -318,6 +318,50 @@ public class TheTVDBProviderTest {
         }
     }
 
+    /**
+     * Does what testDownloadEpisode does, but in a single thread.
+     *
+     * For the given input, download the series, download the listings, and verify the
+     * downloaded information against the expected values (as given in the input).
+     *
+     * This method is intended only for debugging.  Aside from debugging, there's no
+     * reason we'd want to limit downloading shows to a single thread.  It just makes
+     * the test take longer.  But sometimes, it can be easier to debug a problem if it
+     * all goes on sequentially, in a single thread.
+     *
+     * It might be nice to have a way to structure testDownloadEpisode so that it
+     * could run in a single thread or not, but it's just too intertwined.  The best
+     * way to have a method to use a single thread is as a separate method.
+     *
+     * I'm marking the method deprecated.  That's not the exact right fit; it was
+     * never a supported method.  But it shouldn't be used, and "deprecated" serves
+     * that purpose.
+     *
+     */
+    @Deprecated
+    private boolean testDownloadEpisodeOneThread(TestInput testInput) {
+        try {
+            final FileEpisode fileEpisode = new FileEpisode(testInput.input);
+            assertTrue(fileEpisode.wasParsed());
+
+            String filenameSeries = fileEpisode.getFilenameSeries();
+            final Series series = SeriesLookup.getSeries(filenameSeries);
+            if (series == null) {
+                fail("could not parse series name input " + filenameSeries);
+                return false;
+            }
+            assertEquals(testInput.actualShowName, series.getName());
+            String title = ListingsLookup.episodeTitle(series,
+                                                       fileEpisode.getFilenameSeason(),
+                                                       fileEpisode.getFilenameEpisode());
+            assertEquals(testInput.episodeTitle, title);
+            return true;
+        } catch (Exception e) {
+            fail(e.getMessage());
+            return false;
+        }
+    }
+
     public void testDownloadEpisodes(List<TestInput> valList) {
         try {
             for (TestInput testInput : valList) {

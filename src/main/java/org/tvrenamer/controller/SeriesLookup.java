@@ -201,6 +201,50 @@ public class SeriesLookup {
     }
 
     /**
+     * Does what downloadShow does, but in a single thread.
+     *
+     * Fetch the best option for a given series name, and return a Series object that
+     * represents it.
+     *
+     * This method is intended only for debugging.  Aside from debugging, there's no reason
+     * we'd want to limit downloading shows to a single thread; in fact, it would presumably
+     * make the UI unresponsive if we did.  But sometimes, it can be easier to debug a problem
+     * if it all goes on sequentially, in a single thread.
+     *
+     * It might be nice to have a way to structure downloadShow so that it could run in
+     * a single thread or not, but it's just too intertwined.  The best way to have a method
+     * to use a single thread is as a separate method.
+     *
+     * I'm marking the method deprecated.  That's not the exact right fit; it was never a
+     * supported method.  But it shouldn't be used, and "deprecated" serves that purpose.
+     *
+     * @param showName series the name of the TV series (presumably from a filename) that we
+     *            are going to query for and try to figure out which show it refers to
+     * @return a Series object: either one representing the show we found which we think
+     *         is the correct option, or an UnresolvedShow instance if we didn't find anything.
+     */
+    @Deprecated
+    public static Series getSeries(final String showName) {
+        String queryString = makeQueryString(showName);
+        List<Series> options;
+        try {
+            options = TheTVDBProvider.querySeriesName(queryString);
+        } catch (TVRenamerIOException e) {
+            logger.info("exception getting options for " + showName);
+            return new UnresolvedShow(showName, e);
+        }
+        int nOptions = (options == null) ? 0 : options.size();
+        if (nOptions == 0) {
+            logger.info("did not find any options for " + showName);
+            return new UnresolvedShow(showName);
+        }
+        if (nOptions == 1) {
+            return options.get(0);
+        }
+        return selectShowOption(options, showName);
+    }
+
+    /**
      * <p>
      * Download the show details if required, otherwise notify listener.
      * </p>
