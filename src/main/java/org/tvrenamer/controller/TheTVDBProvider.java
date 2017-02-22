@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -191,29 +190,17 @@ public class TheTVDBProvider {
         return season;
     }
 
-    private static Integer getEpisodeNumberFromNode(String name, Node eNode, XPath xpath)
-        throws XPathExpressionException
-    {
-        String epNumText = nodeTextValue(name, eNode, xpath);
-        if (epNumText != null) {
-            try {
-                BigDecimal bd = new BigDecimal(epNumText);
-                return bd.intValueExact();
-            } catch (ArithmeticException | NumberFormatException e) {
-                // not an integer
-            }
-        }
-        return null;
-    }
-
     private static Integer getEpisodeNumber(Node eNode, XPath xpath)
         throws XPathExpressionException
     {
-        Integer epNum = getEpisodeNumberFromNode(XPATH_DVD_EPISODE_NUM, eNode, xpath);
+        String epNumText = nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode, xpath);
+        Integer epNum = StringUtils.stringToInt(epNumText);
         if (epNum != null) {
             return epNum;
         }
-        return getEpisodeNumberFromNode(XPATH_EPISODE_NUM, eNode, xpath);
+        // Did not find DVD episode number, try "regular" episode number
+        epNumText = nodeTextValue(XPATH_EPISODE_NUM, eNode, xpath);
+        return StringUtils.stringToInt(epNumText);
     }
 
     private static LocalDate getEpisodeDate(Node eNode, XPath xpath, DateTimeFormatter dateFormatter)
