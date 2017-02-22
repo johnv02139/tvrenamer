@@ -51,10 +51,9 @@ public class FileEpisodeTest {
 
         FileEpisode episode = new FileEpisode(filename);
         String showName = "The Simpsons";
-        int seasonNum = 5;
-        int episodeNum = 10;
+        String seasonNum = "5";
+        String episodeNum = "10";
         String resolution = "720p";
-
         episode.setRawSeries(showName);
         episode.setFilenameSeason(seasonNum);
         episode.setFilenameEpisode(episodeNum);
@@ -64,14 +63,14 @@ public class FileEpisodeTest {
         ShowStore.addSeriesToStore(showName, series);
         episode.setSeries(series);
 
-        Season season5 = new Season(series, String.valueOf(seasonNum));
+        Season season5 = new Season(series, seasonNum);
         series.setSeason(seasonNum, season5);
         episode.setSeason();
 
         String title = "$pringfield";
         Episode ep = new Episode.Builder()
-            .seasonNum(String.valueOf(seasonNum))
-            .episodeNum(String.valueOf(episodeNum))
+            .seasonNum(seasonNum)
+            .episodeNum(episodeNum)
             .title(title)
             .airDate(LocalDate.now())
             .build();
@@ -98,8 +97,8 @@ public class FileEpisodeTest {
         FileEpisode fileEpisode = new FileEpisode(filename);
 
         String showName = "Steven Seagal: Lawman";
-        int seasonNum = 1;
-        int episodeNum = 1;
+        String seasonNum = "1";
+        String episodeNum = "1";
         fileEpisode.setRawSeries(showName);
         fileEpisode.setFilenameSeason(seasonNum);
         fileEpisode.setFilenameEpisode(episodeNum);
@@ -108,14 +107,14 @@ public class FileEpisodeTest {
         ShowStore.addSeriesToStore(showName, series);
         fileEpisode.setSeries(series);
 
-        Season season1 = new Season(series, String.valueOf(seasonNum));
+        Season season1 = new Season(series, seasonNum);
         series.setSeason(seasonNum, season1);
         fileEpisode.setSeason();
 
         String title = "The Way of the Gun";
         Episode ep = new Episode.Builder()
-            .seasonNum(String.valueOf(seasonNum))
-            .episodeNum(String.valueOf(episodeNum))
+            .seasonNum(seasonNum)
+            .episodeNum(episodeNum)
             .title(title)
             .airDate(LocalDate.now())
             .build();

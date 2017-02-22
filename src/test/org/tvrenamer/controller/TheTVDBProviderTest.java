@@ -288,8 +288,8 @@ public class TheTVDBProviderTest {
 
             final Series series = testQuerySeries(testInput, fileEpisode);
 
-            final int seasonNum = fileEpisode.getFilenameSeason();
-            final int episode = fileEpisode.getFilenameEpisode();
+            final String seasonNum = fileEpisode.getFilenameSeason();
+            final String episode = fileEpisode.getFilenameEpisode();
             final CompletableFuture<String> future = new CompletableFuture<>();
             ListingsLookup.getListings(series, new ShowListingsListener() {
                     @Override

@@ -234,8 +234,12 @@ public class FilenameParserTest {
             assertTrue(retval.wasParsed());
             assertEquals(testInput.input, testInput.queryString,
                          ShowStore.makeQueryString(retval.getFilenameSeries()));
-            assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getFilenameSeason());
-            assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getFilenameEpisode());
+            assertEquals(testInput.input,
+                         Integer.parseInt(testInput.season),
+                         Integer.parseInt(retval.getFilenameSeason()));
+            assertEquals(testInput.input,
+                         Integer.parseInt(testInput.episode),
+                         Integer.parseInt(retval.getFilenameEpisode()));
             assertEquals(testInput.input, testInput.episodeResolution, retval.getFilenameResolution());
         }
     }
@@ -245,7 +249,7 @@ public class FilenameParserTest {
         FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertTrue(episode.wasParsed());
         assertEquals("warehouse 13", ShowStore.makeQueryString(episode.getFilenameSeries()));
-        assertEquals(5, episode.getFilenameSeason());
-        assertEquals(4, episode.getFilenameEpisode());
+        assertEquals("05", episode.getFilenameSeason());
+        assertEquals("04", episode.getFilenameEpisode());
     }
 }

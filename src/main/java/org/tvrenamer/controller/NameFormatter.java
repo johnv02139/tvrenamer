@@ -185,8 +185,8 @@ public class NameFormatter {
             throw new IllegalArgumentException("season must not be null");
         }
 
-        seasonNum = ep.getFilenameSeason();
-        episodeNum = ep.getFilenameEpisode();
+        seasonNum = StringUtils.stringToInt(ep.getFilenameSeason());
+        episodeNum = StringUtils.stringToInt(ep.getFilenameEpisode());
 
         // The resolution comes directly from the original filename, and therefore
         // cannot require "sanitising".

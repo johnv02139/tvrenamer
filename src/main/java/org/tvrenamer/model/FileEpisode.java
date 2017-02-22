@@ -68,8 +68,8 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // what the filename actually represents.
     private final String filenameSuffix;
     private String filenameSeries;
-    private int filenameSeason;
-    private int filenameEpisode;
+    private String filenameSeason;
+    private String filenameEpisode;
     private String filenameResolution = "";
 
     private String fileBasename = null;
@@ -197,28 +197,20 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         this.filenameSeries = filenameSeries;
     }
 
-    public int getFilenameSeason() {
+    public String getFilenameSeason() {
         return filenameSeason;
     }
 
-    public void setFilenameSeason(int filenameSeason) {
+    public void setFilenameSeason(String filenameSeason) {
         this.filenameSeason = filenameSeason;
     }
 
-    public void setFilenameSeason(String filenameSeasonString) {
-        this.filenameSeason = Integer.parseInt(filenameSeasonString);
-    }
-
-    public int getFilenameEpisode() {
+    public String getFilenameEpisode() {
         return filenameEpisode;
     }
 
-    public void setFilenameEpisode(int filenameEpisode) {
+    public void setFilenameEpisode(String filenameEpisode) {
         this.filenameEpisode = filenameEpisode;
-    }
-
-    public void setFilenameEpisode(String filenameEpisodeString) {
-        this.filenameEpisode = Integer.parseInt(filenameEpisodeString);
     }
 
     public String getFilenameResolution() {

@@ -34,6 +34,14 @@ public class Season {
         return episodes.get(epNum);
     }
 
+    public Episode getEpisode(String epNumText) {
+        Integer epNum = StringUtils.stringToInt(epNumText);
+        if (epNum == null) {
+            return null;
+        }
+        return getEpisode(epNum);
+    }
+
     public String getTitle(int epNum) {
         Episode e = episodes.get(epNum);
         if (e == null) {
@@ -41,6 +49,14 @@ public class Season {
                                                + " of series " + series.getName());
         }
         return e.getTitle();
+    }
+
+    public String getTitle(String epNumText) {
+        Integer epNum = StringUtils.stringToInt(epNumText);
+        if (epNum == null) {
+            return null;
+        }
+        return getTitle(epNum);
     }
 
     public LocalDate getAirDate(int epNum) {

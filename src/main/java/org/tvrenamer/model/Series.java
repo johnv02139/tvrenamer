@@ -107,6 +107,14 @@ public class Series implements Comparable<Series> {
         }
     }
 
+    public Season getSeason(String sNumText) {
+        Integer sNum = StringUtils.stringToInt(sNumText);
+        if (sNum == null) {
+            return null;
+        }
+        return getSeason(sNum);
+    }
+
     public int getSeasonCount() {
         return seasons.size();
     }
