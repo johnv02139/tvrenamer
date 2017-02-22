@@ -9,6 +9,7 @@ import static org.junit.Assert.fail;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import org.tvrenamer.model.Episode;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.Season;
 import org.tvrenamer.model.Series;
@@ -358,8 +359,10 @@ public class TheTVDBProviderTest {
 
     @Test
     public void testGetListings() throws Exception {
-        Series gossip = new Series("Gossip Girl", "80547");
-        TheTVDBProvider.getListings(gossip);
-        assertNotEquals(0, gossip.getSeasonCount());
+        String seriesName = "Gossip Girl";
+        String seriesId = "80547";
+        Series gossip = new Series(seriesName, seriesId);
+        Episode[] episodes = TheTVDBProvider.getListings(seriesId, seriesName);
+        assertNotEquals(0, episodes.length);
     }
 }

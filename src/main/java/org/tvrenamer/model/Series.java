@@ -1,5 +1,6 @@
 package org.tvrenamer.model;
 
+
 import static org.tvrenamer.model.util.Constants.IMDB_BASE_URL;
 
 import org.tvrenamer.controller.util.StringUtils;
@@ -11,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Represents a TV Series, with a name, url and list of seasons.
  */
 public class Series implements Comparable<Series> {
-    private final int id;
+    private final int idNum;
     private final String name;
     private final String nameKey;
     private final String dirName;
@@ -22,7 +23,7 @@ public class Series implements Comparable<Series> {
 
     public Series(String name, String idString, String imdb) {
         try {
-            id = Integer.parseInt(idString);
+            idNum = Integer.parseInt(idString);
         } catch (NumberFormatException nfe) {
             throw new IllegalArgumentException("series ID must be an integer, not " + idString);
         }
@@ -40,21 +41,33 @@ public class Series implements Comparable<Series> {
     }
 
     public int getId() {
-        return id;
+        return idNum;
     }
 
-    public boolean addEpisode(Episode ep, String seasonNumber, int episodeNumber) {
-        int seasonNum = Integer.parseInt(seasonNumber);
+    private boolean addEpisode(Episode ep) {
+        String seasonNumText = ep.getSeasonNumberText();
+        Integer seasonNum = StringUtils.stringToInt(seasonNumText);
+        if (seasonNum == null) {
+            return false;
+        }
         Season season;
         if (seasons.containsKey(seasonNum)) {
             season = seasons.get(seasonNum);
         } else {
-            season = new Season(this, seasonNum);
+            season = new Season(this, seasonNumText);
             setSeason(seasonNum, season);
         }
         ep.setSeason(season);
-        season.addEpisode(episodeNumber, ep);
+        season.addEpisode(ep);
         return true;
+    }
+
+    public void addEpisodes(Episode[] episodes) {
+        for (int i = 0; i < episodes.length; i++) {
+            if (episodes[i] != null) {
+                addEpisode(episodes[i]);
+            }
+        }
     }
 
     public String getIdString() {
@@ -104,15 +117,15 @@ public class Series implements Comparable<Series> {
 
     @Override
     public String toString() {
-        return "Series [" + name + ", id=" + id + ", imdb=" + imdb + ", " + seasons.size() + " seasons]";
+        return "Series [" + name + ", id=" + idString + ", imdb=" + imdb + ", " + seasons.size() + " seasons]";
     }
 
     public String toLongString() {
-        return "Series [id=" + id + ", name=" + name + ", imdb=" + imdb + ", seasons=" + seasons + "]";
+        return "Series [id=" + idString + ", name=" + name + ", imdb=" + imdb + ", seasons=" + seasons + "]";
     }
 
     @Override
     public int compareTo(Series other) {
-        return other.id - id;
+        return other.idNum - idNum;
     }
 }

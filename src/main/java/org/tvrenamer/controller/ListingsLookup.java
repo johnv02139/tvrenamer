@@ -68,7 +68,8 @@ public class ListingsLookup {
                 @Override
                 public Boolean call() throws InterruptedException {
                     try {
-                        TheTVDBProvider.getListings(series);
+                        series.addEpisodes(TheTVDBProvider.getListings(series.getIdString(),
+                                                                       series.getName()));
                         notifyListeners(series);
                         return true;
                     } catch (TVRenamerIOException e) {

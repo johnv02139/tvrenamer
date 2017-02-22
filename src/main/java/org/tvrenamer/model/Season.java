@@ -1,5 +1,6 @@
 package org.tvrenamer.model;
 
+import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.except.EpisodeNotFoundException;
 
 import java.time.LocalDate;
@@ -8,21 +9,25 @@ import java.util.Map;
 
 public class Season {
     private final Series series;
-    private final int num;
+    private final String seasonNumber;
     private final Map<Integer, Episode> episodes;
 
-    public Season(Series series, int num) {
+    public Season(Series series, String seasonNumber) {
         this.series = series;
-        this.num = num;
+        this.seasonNumber = seasonNumber;
         episodes = new HashMap<>();
     }
 
-    public int getNumber() {
-        return num;
+    public String getNumber() {
+        return seasonNumber;
     }
 
-    public void addEpisode(int epNum, Episode episode) {
-        episodes.put(epNum, episode);
+    public void addEpisode(Episode episode) {
+        String epNumText = episode.getEpisodeNumberText();
+        Integer epNum = StringUtils.stringToInt(epNumText);
+        if (epNum != null) {
+            episodes.put(epNum, episode);
+        }
     }
 
     public Episode getEpisode(int epNum) {
@@ -32,7 +37,7 @@ public class Season {
     public String getTitle(int epNum) {
         Episode e = episodes.get(epNum);
         if (e == null) {
-            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + this.num
+            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + seasonNumber
                                                + " of series " + series.getName());
         }
         return e.getTitle();
@@ -41,7 +46,7 @@ public class Season {
     public LocalDate getAirDate(int epNum) {
         Episode e = episodes.get(epNum);
         if (e == null) {
-            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + this.num
+            throw new EpisodeNotFoundException("Episode #" + epNum + " not found for season #" + seasonNumber
                                                + " of series " + series.getName());
         }
         return e.getAirDate();
@@ -49,10 +54,10 @@ public class Season {
 
     @Override
     public String toString() {
-        return "Season [num=" + num + ", " + episodes.size() + " episodes]";
+        return "Season [num=" + seasonNumber + ", " + episodes.size() + " episodes]";
     }
 
     public String toLongString() {
-        return "Season [num=" + num + ", episodes=" + episodes + "]";
+        return "Season [num=" + seasonNumber + ", episodes=" + episodes + "]";
     }
 }

@@ -108,8 +108,8 @@ public class TheTVDBProvider {
         return TvDbCache.resolve(StringUtils.sanitiseTitle(showName) + ".xml");
     }
 
-    private static Path episodeListingsCachePath(Series series) {
-        return TvDbCache.resolve(series.getIdString() + ".xml");
+    private static Path episodeListingsCachePath(String seriesId) {
+        return TvDbCache.resolve(seriesId + ".xml");
     }
 
     private static File performShowQuery(String showName)
@@ -127,14 +127,14 @@ public class TheTVDBProvider {
         return cacheXml(cachePath, searchXml);
     }
 
-    private static File getXmlListings(Series series)
+    private static File getXmlListings(String seriesId)
         throws TVRenamerIOException
     {
-        Path cachePath = episodeListingsCachePath(series);
+        Path cachePath = episodeListingsCachePath(seriesId);
         if (Files.exists(cachePath)) {
             return cachePath.toFile();
         }
-        String showURL = BASE_LIST_URL + series.getIdString() + BASE_LIST_FILENAME;
+        String showURL = BASE_LIST_URL + seriesId + BASE_LIST_FILENAME;
 
         logger.info("Downloading episode listing from " + showURL);
 
@@ -183,82 +183,86 @@ public class TheTVDBProvider {
         }
     }
 
-    private static Integer getEpisodeNumber(Node eNode, XPath xpath)
-        throws XPathExpressionException
-    {
-        String epNumText = nodeTextValue(XPATH_EPISODE_NUM, eNode, xpath);
-        Integer epNum = StringUtils.stringToInt(epNumText);
-        if (epNum != null) {
-            return epNum;
-        }
-        // Did not find "regular" episode number, try DVD episode number
-        epNumText = nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode, xpath);
-        return StringUtils.stringToInt(epNumText);
-    }
-
-    private static LocalDate getEpisodeDate(Node eNode, XPath xpath, DateTimeFormatter dateFormatter)
-        throws XPathExpressionException
-    {
-        String airdate = nodeTextValue(XPATH_AIRDATE, eNode, xpath);
-        if (StringUtils.isBlank(airdate)) {
-            return null;
-        }
-        try {
-            return (LocalDate) dateFormatter.parse(airdate, LocalDate::from);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-    }
-
-    private static void addEpisodeToSeries(Node eNode, Series series, XPath xpath,
-                                           DateTimeFormatter dateFormatter)
-    {
-        try {
-            Integer epNum = getEpisodeNumber(eNode, xpath);
-            if (epNum == null) {
-                logger.info("ignoring episode with no epnum: " + eNode);
-                return;
-            }
-
-            String seasonNumString = nodeTextValue(XPATH_SEASON_NUM, eNode, xpath);
-            String episodeName = nodeTextValue(XPATH_EPISODE_NAME, eNode, xpath);
-            logger.finer("[S" + seasonNumString + "E" + epNum + "] "
-                         + episodeName);
-
-            LocalDate date = getEpisodeDate(eNode, xpath, dateFormatter);
-
-            Episode ep = new Episode.Builder()
-                .episodeNum(epNum)
-                .title(episodeName)
-                .airDate(date)
-                .build();
-
-            series.addEpisode(ep, seasonNumString, epNum);
-        } catch (Exception e) {
-            logger.warning("exception parsing episode of " + series);
-            logger.warning(e.toString());
-        }
-    }
-
-    public static void getListings(Series series)
+    private static NodeList getEpisodeList(String seriesId, XPath xpath)
         throws TVRenamerIOException
     {
+        NodeList episodeList;
+
+        DocumentBuilder bld;
         try {
-            File listingsXml = getXmlListings(series);
+            bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        } catch (ParserConfigurationException e) {
+            logger.log(Level.WARNING, "could not create DocumentBuilder: " + e.getMessage(), e);
+            throw new TVRenamerIOException(ERROR_PARSING_XML, e);
+        }
 
-            DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        try {
+            File listingsXml = getXmlListings(seriesId);
             Document doc = bld.parse(new InputSource(new FileReader(listingsXml)));
-
-            XPath xpath = XPathFactory.newInstance().newXPath();
-
-            NodeList episodes = nodeListValue(XPATH_EPISODE_LIST, doc, xpath);
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
-            for (int i = 0; i < episodes.getLength(); i++) {
-                addEpisodeToSeries(episodes.item(i), series, xpath, dateFormatter);
-            }
-        } catch (ParserConfigurationException | XPathExpressionException | SAXException | IOException | NumberFormatException | DOMException e) {
+            episodeList = nodeListValue(XPATH_EPISODE_LIST, doc, xpath);
+        } catch (XPathExpressionException | SAXException | IOException | NumberFormatException | DOMException e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             throw new TVRenamerIOException(ERROR_PARSING_XML, e);
         }
+        return episodeList;
+    }
+
+    private static Episode createEpisode(Node eNode, XPath xpath, DateTimeFormatter dateFormatter)
+        throws XPathExpressionException
+    {
+        String airdate = nodeTextValue(XPATH_AIRDATE, eNode, xpath);
+        LocalDate date = null;
+        if (StringUtils.isNotBlank(airdate)) {
+            try {
+                date = LocalDate.parse(airdate, dateFormatter);
+            } catch (DateTimeParseException e) {
+                date = null;
+            }
+        }
+
+        String dvdEpNumText = nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode, xpath);
+        return new Episode.Builder()
+            .seasonNum(nodeTextValue(XPATH_SEASON_NUM, eNode, xpath))
+            .episodeNum(nodeTextValue(XPATH_EPISODE_NUM, eNode, xpath))
+            .title(nodeTextValue(XPATH_EPISODE_NAME, eNode, xpath))
+            .airDate(date)
+            .build();
+    }
+
+    private static Episode parseError(int i, Exception e, String seriesName) {
+        String msg = "exception parsing episode " + i;
+        if (seriesName != null) {
+            msg += " of " + seriesName;
+        }
+        logger.warning(msg);
+        logger.warning(e.toString());
+
+        return null;
+    }
+
+    public static Episode[] getListings(String seriesId, String seriesName)
+        throws TVRenamerIOException
+    {
+        XPath xpath = XPathFactory.newInstance().newXPath();
+        NodeList episodeList = getEpisodeList(seriesId, xpath);
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
+
+        int episodeCount = episodeList.getLength();
+        Episode[] episodes = new Episode[episodeCount];
+        for (int i = 0; i < episodeCount; i++) {
+            try {
+                episodes[i] = createEpisode(episodeList.item(i), xpath, dateFormatter);
+            } catch (Exception e) {
+                episodes[i] = parseError(i, e, seriesName);
+            }
+        }
+        return episodes;
+    }
+
+    public static Episode[] getListings(String seriesId)
+        throws TVRenamerIOException
+    {
+        return getListings(seriesId, null);
     }
 }
