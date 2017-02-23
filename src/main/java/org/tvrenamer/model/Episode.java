@@ -1,11 +1,18 @@
 package org.tvrenamer.model;
 
+import org.tvrenamer.controller.util.StringUtils;
+
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.logging.Logger;
 
 public class Episode {
 
     private static Logger logger = Logger.getLogger(Episode.class.getName());
+
+    private static final String EPISODE_DATE_FORMAT = "yyyy-MM-dd";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
 
     private final String seasonNumString;
     private final String episodeNumString;
@@ -45,8 +52,20 @@ public class Episode {
             return this;
         }
 
-        public Builder airDate(LocalDate val) {
-            airDate = val;
+        public Builder airDate(String val) {
+            if (StringUtils.isBlank(val)) {
+                airDate = LocalDate.now();
+            } else {
+                try {
+                    airDate = LocalDate.parse(val, DATE_FORMATTER);
+                } catch (DateTimeParseException e) {
+                    // While a null or empty string is taken to mean "now",
+                    // a badly formatted string is an error and will not
+                    // be translated into any date.
+                    logger.warning("could not parse as date: " + val);
+                    airDate = null;
+                }
+            }
             return this;
         }
 

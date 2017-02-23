@@ -12,7 +12,6 @@ import org.tvrenamer.controller.ShowInformationListener;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -72,7 +71,7 @@ public class FileEpisodeTest {
             .seasonNum(seasonNum)
             .episodeNum(episodeNum)
             .title(title)
-            .airDate(LocalDate.now())
+            .airDate("")
             .build();
 
         season5.addEpisode(ep);
@@ -116,7 +115,7 @@ public class FileEpisodeTest {
             .seasonNum(seasonNum)
             .episodeNum(episodeNum)
             .title(title)
-            .airDate(LocalDate.now())
+            .airDate("")
             .build();
         season1.addEpisode(ep);
 

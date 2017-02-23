@@ -24,9 +24,6 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -61,8 +58,6 @@ public class TheTVDBProvider {
     private static final String XPATH_AIRDATE = "FirstAired";
 
     private static final String XPATH_DVD_EPISODE_NUM = "DVD_episodenumber";
-
-    private static final String EPISODE_DATE_FORMAT = "yyyy-MM-dd";
 
     // Caching
     // This implements a very rudimentary file cache.  Files in the cache never expire.
@@ -207,25 +202,15 @@ public class TheTVDBProvider {
         return episodeList;
     }
 
-    private static Episode createEpisode(Node eNode, XPath xpath, DateTimeFormatter dateFormatter)
+    private static Episode createEpisode(Node eNode, XPath xpath)
         throws XPathExpressionException
     {
-        String airdate = nodeTextValue(XPATH_AIRDATE, eNode, xpath);
-        LocalDate date = null;
-        if (StringUtils.isNotBlank(airdate)) {
-            try {
-                date = LocalDate.parse(airdate, dateFormatter);
-            } catch (DateTimeParseException e) {
-                date = null;
-            }
-        }
-
         String dvdEpNumText = nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode, xpath);
         return new Episode.Builder()
             .seasonNum(nodeTextValue(XPATH_SEASON_NUM, eNode, xpath))
             .episodeNum(nodeTextValue(XPATH_EPISODE_NUM, eNode, xpath))
             .title(nodeTextValue(XPATH_EPISODE_NAME, eNode, xpath))
-            .airDate(date)
+            .airDate(nodeTextValue(XPATH_AIRDATE, eNode, xpath))
             .build();
     }
 
@@ -246,13 +231,11 @@ public class TheTVDBProvider {
         XPath xpath = XPathFactory.newInstance().newXPath();
         NodeList episodeList = getEpisodeList(seriesId, xpath);
 
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
-
         int episodeCount = episodeList.getLength();
         Episode[] episodes = new Episode[episodeCount];
         for (int i = 0; i < episodeCount; i++) {
             try {
-                episodes[i] = createEpisode(episodeList.item(i), xpath, dateFormatter);
+                episodes[i] = createEpisode(episodeList.item(i), xpath);
             } catch (Exception e) {
                 episodes[i] = parseError(i, e, seriesName);
             }
