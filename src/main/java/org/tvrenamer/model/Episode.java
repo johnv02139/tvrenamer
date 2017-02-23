@@ -87,6 +87,9 @@ public class Episode {
 
     @Override
     public String toString() {
-        return "Episode [title=" + title + ", airDate=" + airDate + "]";
+        return "Episode S" + seasonNumString
+            + "E" + episodeNumString
+            + "[title=" + title
+            + ", airDate=" + airDate + "]";
     }
 }
