@@ -47,11 +47,12 @@ public class TheTVDBProvider {
     private static final String BASE_LIST_URL = "http://thetvdb.com/api/" + API_KEY + "/series/";
     private static final String BASE_LIST_FILENAME = "/all/en.xml";
     private static final String XPATH_EPISODE_LIST = "/Data/Episode";
+
     private static final String XPATH_SEASON_NUM = "SeasonNumber";
     private static final String XPATH_EPISODE_NUM = "EpisodeNumber";
     private static final String XPATH_EPISODE_NAME = "EpisodeName";
     private static final String XPATH_AIRDATE = "FirstAired";
-
+    private static final String XPATH_LAST_UPDATE = "lastupdated";
     private static final String XPATH_DVD_EPISODE_NUM = "DVD_episodenumber";
 
     // Caching
@@ -203,6 +204,7 @@ public class TheTVDBProvider {
             .episodeNum(nodeTextValue(XPATH_EPISODE_NUM, eNode))
             .title(nodeTextValue(XPATH_EPISODE_NAME, eNode))
             .airDate(nodeTextValue(XPATH_AIRDATE, eNode))
+            .lastupdated(nodeTextValue(XPATH_LAST_UPDATE, eNode))
             .dvdEpisodeNumber(nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode))
             .build();
     }
