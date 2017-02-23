@@ -7,8 +7,8 @@ It will take an ugly filename like **Lost.S06E05.DD51.720p.WEB-DL.AVC-FUSiON.mkv
 ## [Screenshot](https://github.com/tvrenamer/tvrenamer/wiki/Screenshots)
 ![Screenshot](https://dl.dropboxusercontent.com/u/554441/Screenshots/tvrenamer-0.7.png)
 
-## Connectivity Issues
-If you are receiving errors about "unable to connect to internet" please [download version 0.8.1](https://github.com/tvrenamer/tvrenamer/releases/tag/0.8.1). Note that [Java 8](https://java.com/en/download) is required.
+## Platform
+Version 0.9b0 uses java.time and therefore requires [Java 8](https://java.com/en/download).
 
 ## Features
  * Rename many different shows at once from information from [TheTVDB](http://thetvdb.com/)
@@ -42,9 +42,9 @@ If you are receiving errors about "unable to connect to internet" please [downlo
 *Java version 8* is required..  Type `java -version` into your terminal and ensure that the output is similar to:
 
     $ java -version
-    java version "1.8.0_81"
-    Java(TM) SE Runtime Environment (build 1.8.0_81-b14)
-    Java HotSpot(TM) 64-Bit Server VM (build 24.81-b01, mixed mode)
+    java version "1.8.0_111"
+    Java(TM) SE Runtime Environment (build 1.8.0_111-b14)
+    Java HotSpot(TM) 64-Bit Server VM (build 25.111-b14, mixed mode)
    
 ### x86/ 64 bit architecture version
 Ensure that you are running the same architecture of TVRenamer as Java. `java -version` displays the version on the last line, as above. If you don't have it right, you get an unhelpful error message on startup (when running on the terminal), like below:
