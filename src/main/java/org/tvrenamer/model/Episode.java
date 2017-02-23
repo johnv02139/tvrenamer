@@ -18,18 +18,31 @@ public class Episode {
     private final String episodeNumber;
     private final String episodeName;
     private final LocalDate firstAired;
+    private final String overview;
+    private final String productionCode;
+    private final String id;
+    private final String seasonid;
     private final Integer lastupdated;
     private final String dvdSeason;
     private final String dvdEpisodeNumber;
+
+    private final String seriesid;
+    private final String language;
 
     public static class Builder {
         private String seasonNumber;
         private String episodeNumber;
         private String episodeName = null;
         private LocalDate firstAired = null;
+        private String overview = null;
+        private String productionCode = null;
+        private String id = null;
+        private String seasonid = null;
         private Integer lastupdated = null;
         private String dvdSeason;
         private String dvdEpisodeNumber;
+        private String seriesid = null;
+        private String language = null;
 
         public Builder() {
         }
@@ -66,6 +79,36 @@ public class Episode {
             return this;
         }
 
+        public Builder overview(String val) {
+            overview = val;
+            return this;
+        }
+
+        public Builder productionCode(String val) {
+            productionCode = val;
+            return this;
+        }
+
+        public Builder language(String val) {
+            language = val;
+            return this;
+        }
+
+        public Builder id(String val) {
+            id = val;
+            return this;
+        }
+
+        public Builder seriesid(String val) {
+            seriesid = val;
+            return this;
+        }
+
+        public Builder seasonid(String val) {
+            seasonid = val;
+            return this;
+        }
+
         public Builder lastupdated(String val) {
             lastupdated = StringUtils.stringToInt(val);
             return this;
@@ -91,6 +134,12 @@ public class Episode {
         episodeNumber = builder.episodeNumber;
         episodeName = builder.episodeName;
         firstAired = builder.firstAired;
+        overview = builder.overview;
+        productionCode = builder.productionCode;
+        language = builder.language;
+        id = builder.id;
+        seriesid = builder.seriesid;
+        seasonid = builder.seasonid;
         lastupdated = builder.lastupdated;
         dvdSeason = builder.dvdSeason;
         dvdEpisodeNumber = builder.dvdEpisodeNumber;

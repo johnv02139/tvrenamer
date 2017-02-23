@@ -52,6 +52,12 @@ public class TheTVDBProvider {
     private static final String XPATH_EPISODE_NUM = "EpisodeNumber";
     private static final String XPATH_EPISODE_NAME = "EpisodeName";
     private static final String XPATH_AIRDATE = "FirstAired";
+    private static final String XPATH_OVERVIEW = "Overview";
+    private static final String XPATH_PRODUCTION_CODE = "ProductionCode";
+    private static final String XPATH_LANGUAGE = "Language";
+    private static final String XPATH_EPISODE_ID = "id";
+    private static final String XPATH_SERIES_ID = "seriesid";
+    private static final String XPATH_SEASON_ID = "seasonid";
     private static final String XPATH_LAST_UPDATE = "lastupdated";
     private static final String XPATH_DVD_SEASON = "DVD_season";
     private static final String XPATH_DVD_EPISODE_NUM = "DVD_episodenumber";
@@ -205,6 +211,12 @@ public class TheTVDBProvider {
             .episodeNum(nodeTextValue(XPATH_EPISODE_NUM, eNode))
             .title(nodeTextValue(XPATH_EPISODE_NAME, eNode))
             .airDate(nodeTextValue(XPATH_AIRDATE, eNode))
+            .overview(nodeTextValue(XPATH_OVERVIEW, eNode))
+            .productionCode(nodeTextValue(XPATH_PRODUCTION_CODE, eNode))
+            .language(nodeTextValue(XPATH_LANGUAGE, eNode))
+            .id(nodeTextValue(XPATH_EPISODE_ID, eNode))
+            .seriesid(nodeTextValue(XPATH_SERIES_ID, eNode))
+            .seasonid(nodeTextValue(XPATH_SEASON_ID, eNode))
             .lastupdated(nodeTextValue(XPATH_LAST_UPDATE, eNode))
             .dvdSeason(nodeTextValue(XPATH_DVD_SEASON, eNode))
             .dvdEpisodeNumber(nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode))
