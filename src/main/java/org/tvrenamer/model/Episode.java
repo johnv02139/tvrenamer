@@ -19,10 +19,8 @@ public class Episode {
     private final String dvdEpisodeNumString;
     private final String title;
     private final LocalDate airDate;
-    private Season season = null;
 
     public static class Builder {
-        private Season season = null;
         private String seasonNumString;
         private String episodeNumString;
         private String dvdEpisodeNumString;
@@ -82,10 +80,6 @@ public class Episode {
         airDate = builder.airDate;
 
         logger.finer("[S" + seasonNumString + "E" + episodeNumString + "] " + title);
-    }
-
-    public void setSeason(Season s) {
-        this.season = s;
     }
 
     public String getSeasonNumberText() {

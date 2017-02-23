@@ -57,7 +57,6 @@ public class Series implements Comparable<Series> {
             season = new Season(this, seasonNumText);
             setSeason(seasonNum, season);
         }
-        ep.setSeason(season);
         season.addEpisode(ep);
         return true;
     }
