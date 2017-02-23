@@ -26,6 +26,9 @@ public class Constants {
 
     public static final String UNKNOWN_EXCEPTION = "An error occurred, please check "
         + "your internet connection, java version or run from the command line to show errors";
+    public static final String ERROR_PARSING_XML = "Error parsing XML";
+    public static final String ERROR_DOWNLOADING_SHOW_INFORMATION = "Error downloading "
+        + "show information. Check internet or proxy settings";
 
 
     public static final String DEFAULT_REPLACEMENT_MASK = "%S [%sx%0e] %t";

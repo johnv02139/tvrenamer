@@ -2,12 +2,12 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.controller.util.XPathUtilities.nodeListValue;
 import static org.tvrenamer.controller.util.XPathUtilities.nodeTextValue;
+import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.Episode;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.except.TVRenamerIOException;
-import org.tvrenamer.model.util.Constants;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
@@ -35,9 +35,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
 public class TheTVDBProvider {
-    private static final String ERROR_PARSING_XML = "Error parsing XML";
-    private static final String ERROR_DOWNLOADING_SHOW_INFORMATION = "Error downloading show information. Check internet or proxy settings";
-
     private static Logger logger = Logger.getLogger(TheTVDBProvider.class.getName());
 
     private static final String API_KEY = "4A9560FF0B2670B2";
@@ -74,7 +71,7 @@ public class TheTVDBProvider {
     // Although, right now, it's emitted without formatting, which is hard on a human.
     // TODO: if it's easy, would be nice to emit formatted XML.
     // Also TODO: use a real file cache, with eviction, etc.
-    private static final Path TvDbCache = Constants.THETVDB_CACHE.toPath();
+    private static final Path TvDbCache = THETVDB_CACHE.toPath();
 
     static {
         if (Files.notExists(TvDbCache)) {
