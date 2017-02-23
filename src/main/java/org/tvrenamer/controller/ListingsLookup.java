@@ -99,16 +99,14 @@ public class ListingsLookup {
             listener.downloadListingsComplete(show);
         } else {
             String key = show.getNameKey();
-            synchronized (listenersMap) {
-                ListingsRegistrations registrations = listenersMap.get(key);
-                if (registrations == null) {
-                    registrations = new ListingsRegistrations();
-                    registrations.addListener(listener);
-                    listenersMap.put(key, registrations);
-                    downloadListings(show);
-                } else {
-                    registrations.addListener(listener);
-                }
+            ListingsRegistrations registrations = listenersMap.get(key);
+            if (registrations == null) {
+                registrations = new ListingsRegistrations();
+                registrations.addListener(listener);
+                listenersMap.put(key, registrations);
+                downloadListings(show);
+            } else {
+                registrations.addListener(listener);
             }
         }
     }
