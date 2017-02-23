@@ -19,6 +19,7 @@ public class Episode {
     private final String episodeName;
     private final LocalDate firstAired;
     private final Integer lastupdated;
+    private final String dvdSeason;
     private final String dvdEpisodeNumber;
 
     public static class Builder {
@@ -27,6 +28,7 @@ public class Episode {
         private String episodeName = null;
         private LocalDate firstAired = null;
         private Integer lastupdated = null;
+        private String dvdSeason;
         private String dvdEpisodeNumber;
 
         public Builder() {
@@ -69,6 +71,11 @@ public class Episode {
             return this;
         }
 
+        public Builder dvdSeason(String val) {
+            dvdSeason = val;
+            return this;
+        }
+
         public Builder dvdEpisodeNumber(String val) {
             dvdEpisodeNumber = val;
             return this;
@@ -85,6 +92,7 @@ public class Episode {
         episodeName = builder.episodeName;
         firstAired = builder.firstAired;
         lastupdated = builder.lastupdated;
+        dvdSeason = builder.dvdSeason;
         dvdEpisodeNumber = builder.dvdEpisodeNumber;
 
         logger.finer("[S" + seasonNumber + "E" + episodeNumber + "] " + episodeName);

@@ -53,6 +53,7 @@ public class TheTVDBProvider {
     private static final String XPATH_EPISODE_NAME = "EpisodeName";
     private static final String XPATH_AIRDATE = "FirstAired";
     private static final String XPATH_LAST_UPDATE = "lastupdated";
+    private static final String XPATH_DVD_SEASON = "DVD_season";
     private static final String XPATH_DVD_EPISODE_NUM = "DVD_episodenumber";
 
     // Caching
@@ -205,6 +206,7 @@ public class TheTVDBProvider {
             .title(nodeTextValue(XPATH_EPISODE_NAME, eNode))
             .airDate(nodeTextValue(XPATH_AIRDATE, eNode))
             .lastupdated(nodeTextValue(XPATH_LAST_UPDATE, eNode))
+            .dvdSeason(nodeTextValue(XPATH_DVD_SEASON, eNode))
             .dvdEpisodeNumber(nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode))
             .build();
     }
