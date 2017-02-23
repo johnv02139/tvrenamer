@@ -4,8 +4,8 @@ import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.except.EpisodeNotFoundException;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Season {
     private final Series series;
@@ -15,7 +15,7 @@ public class Season {
     public Season(Series series, String seasonNumber) {
         this.series = series;
         this.seasonNumber = seasonNumber;
-        episodes = new HashMap<>();
+        episodes = new ConcurrentHashMap<>(30);
     }
 
     public String getNumber() {
