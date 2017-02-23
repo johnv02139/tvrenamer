@@ -32,9 +32,7 @@ import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 public class TheTVDBProvider {
     private static final String ERROR_PARSING_XML = "Error parsing XML";
@@ -137,16 +135,16 @@ public class TheTVDBProvider {
         return cacheXml(cachePath, listingXml);
     }
 
-    private static List<Series> collectShowOptions(NodeList shows, XPath xpath)
+    private static List<Series> collectShowOptions(NodeList shows)
         throws XPathExpressionException
     {
         List<Series> options = new ArrayList<>();
 
         for (int i = 0; i < shows.getLength(); i++) {
             Node eNode = shows.item(i);
-            String seriesName = nodeTextValue(XPATH_NAME, eNode, xpath);
-            String tvdbId = nodeTextValue(XPATH_SHOWID, eNode, xpath);
-            String imdbId = nodeTextValue(XPATH_IMDB, eNode, xpath);
+            String seriesName = nodeTextValue(XPATH_NAME, eNode);
+            String tvdbId = nodeTextValue(XPATH_SHOWID, eNode);
+            String imdbId = nodeTextValue(XPATH_IMDB, eNode);
 
             Series series = new Series(seriesName, tvdbId, imdbId);
             options.add(series);
@@ -164,10 +162,8 @@ public class TheTVDBProvider {
             DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = db.parse(new InputSource(new FileReader(searchXml)));
 
-            XPath xpath = XPathFactory.newInstance().newXPath();
-
-            NodeList shows = nodeListValue(XPATH_SHOW, doc, xpath);
-            return collectShowOptions(shows, xpath);
+            NodeList shows = nodeListValue(XPATH_SHOW, doc);
+            return collectShowOptions(shows);
 
         } catch (ConnectException | UnknownHostException e) {
             logger.log(Level.WARNING, e.getMessage(), e);
@@ -178,7 +174,7 @@ public class TheTVDBProvider {
         }
     }
 
-    private static NodeList getEpisodeList(String seriesId, XPath xpath)
+    private static NodeList getEpisodeList(String seriesId)
         throws TVRenamerIOException
     {
         NodeList episodeList;
@@ -194,7 +190,7 @@ public class TheTVDBProvider {
         try {
             File listingsXml = getXmlListings(seriesId);
             Document doc = bld.parse(new InputSource(new FileReader(listingsXml)));
-            episodeList = nodeListValue(XPATH_EPISODE_LIST, doc, xpath);
+            episodeList = nodeListValue(XPATH_EPISODE_LIST, doc);
         } catch (XPathExpressionException | SAXException | IOException | NumberFormatException | DOMException e) {
             logger.log(Level.WARNING, e.getMessage(), e);
             throw new TVRenamerIOException(ERROR_PARSING_XML, e);
@@ -202,15 +198,14 @@ public class TheTVDBProvider {
         return episodeList;
     }
 
-    private static Episode createEpisode(Node eNode, XPath xpath)
+    private static Episode createEpisode(Node eNode)
         throws XPathExpressionException
     {
-        String dvdEpNumText = nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode, xpath);
         return new Episode.Builder()
-            .seasonNum(nodeTextValue(XPATH_SEASON_NUM, eNode, xpath))
-            .episodeNum(nodeTextValue(XPATH_EPISODE_NUM, eNode, xpath))
-            .title(nodeTextValue(XPATH_EPISODE_NAME, eNode, xpath))
-            .airDate(nodeTextValue(XPATH_AIRDATE, eNode, xpath))
+            .seasonNum(nodeTextValue(XPATH_SEASON_NUM, eNode))
+            .episodeNum(nodeTextValue(XPATH_EPISODE_NUM, eNode))
+            .title(nodeTextValue(XPATH_EPISODE_NAME, eNode))
+            .airDate(nodeTextValue(XPATH_AIRDATE, eNode))
             .build();
     }
 
@@ -228,14 +223,13 @@ public class TheTVDBProvider {
     public static Episode[] getListings(String seriesId, String seriesName)
         throws TVRenamerIOException
     {
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        NodeList episodeList = getEpisodeList(seriesId, xpath);
+        NodeList episodeList = getEpisodeList(seriesId);
 
         int episodeCount = episodeList.getLength();
         Episode[] episodes = new Episode[episodeCount];
         for (int i = 0; i < episodeCount; i++) {
             try {
-                episodes[i] = createEpisode(episodeList.item(i), xpath);
+                episodes[i] = createEpisode(episodeList.item(i));
             } catch (Exception e) {
                 episodes[i] = parseError(i, e, seriesName);
             }

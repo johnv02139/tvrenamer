@@ -10,21 +10,27 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 public class XPathUtilities {
     private static Logger logger = Logger.getLogger(XPathUtilities.class.getName());
 
-    public static NodeList nodeListValue(String name, Document doc, XPath xpath)
+    private static XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
+    // We just create this one XPath object and use it for all shows, all episodes.
+    // TODO: is there any issue with this?
+    private static XPath STD_XPATH = XPATH_FACTORY.newXPath();
+
+    public static NodeList nodeListValue(String name, Document doc)
         throws XPathExpressionException
     {
-        XPathExpression expr = xpath.compile(name);
+        XPathExpression expr = STD_XPATH.compile(name);
         return (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
     }
 
-    public static String nodeTextValue(String name, Node eNode, XPath xpath)
+    public static String nodeTextValue(String name, Node eNode)
         throws XPathExpressionException
     {
-        XPathExpression expr = xpath.compile(name);
+        XPathExpression expr = STD_XPATH.compile(name);
         Node node = (Node) expr.evaluate(eNode, XPathConstants.NODE);
         if (node == null) {
             return null;
