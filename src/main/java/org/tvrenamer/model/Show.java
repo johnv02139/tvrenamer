@@ -2,6 +2,8 @@ package org.tvrenamer.model;
 
 import static org.tvrenamer.model.util.Constants.IMDB_BASE_URL;
 
+import org.tvrenamer.controller.util.StringUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import java.util.Map;
 public class Show implements Comparable<Show> {
     private final String id;
     private final String name;
+    private final String dirName;
     private final String imdb;
 
     private final Map<Integer, Season> seasons;
@@ -19,6 +22,7 @@ public class Show implements Comparable<Show> {
         this.id = id;
         this.name = name;
         this.imdb = imdb;
+        dirName = StringUtils.sanitiseTitle(name);
 
         seasons = new HashMap<>();
     }
@@ -37,6 +41,10 @@ public class Show implements Comparable<Show> {
 
     public String getNameKey() {
         return name.toLowerCase();
+    }
+
+    public String getDirName() {
+        return dirName;
     }
 
     public String getUrl() {

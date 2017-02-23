@@ -404,8 +404,9 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     }
 
     private String addDestinationDirectory(Show showObj, String basename) {
-        String show = (showObj == null) ? filenameShow : showObj.getName();
-        String dirname = StringUtils.sanitiseTitle(show);
+        String dirname = (showObj == null)
+            ? StringUtils.sanitiseTitle(filenameShow)
+            : showObj.getDirName();
         File destPath = new File(userPrefs.getDestinationDirectory(), dirname);
 
         // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root

@@ -4,11 +4,11 @@ import org.tvrenamer.model.Show;
 import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -33,7 +33,7 @@ public class ListingsLookup {
         }
     }
 
-    private static final Map<String, ListingsRegistrations> listenersMap = new HashMap<>();
+    private static final Map<String, ListingsRegistrations> listenersMap = new ConcurrentHashMap<>(100);
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
