@@ -203,6 +203,7 @@ public class TheTVDBProvider {
             .episodeNum(nodeTextValue(XPATH_EPISODE_NUM, eNode))
             .title(nodeTextValue(XPATH_EPISODE_NAME, eNode))
             .airDate(nodeTextValue(XPATH_AIRDATE, eNode))
+            .dvdEpisodeNumber(nodeTextValue(XPATH_DVD_EPISODE_NUM, eNode))
             .build();
     }
 

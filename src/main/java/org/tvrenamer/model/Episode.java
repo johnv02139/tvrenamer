@@ -14,54 +14,54 @@ public class Episode {
     private static final String EPISODE_DATE_FORMAT = "yyyy-MM-dd";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
 
-    private final String seasonNumString;
-    private final String episodeNumString;
-    private final String dvdEpisodeNumString;
-    private final String title;
-    private final LocalDate airDate;
+    private final String seasonNumber;
+    private final String episodeNumber;
+    private final String episodeName;
+    private final LocalDate firstAired;
+    private final String dvdEpisodeNumber;
 
     public static class Builder {
-        private String seasonNumString;
-        private String episodeNumString;
-        private String dvdEpisodeNumString;
-        private String title = null;
-        private LocalDate airDate = null;
+        private String seasonNumber;
+        private String episodeNumber;
+        private String dvdEpisodeNumber;
+        private String episodeName = null;
+        private LocalDate firstAired = null;
 
         public Builder() {
         }
 
         public Builder seasonNum(String val) {
-            seasonNumString = val;
+            seasonNumber = val;
             return this;
         }
 
         public Builder episodeNum(String val) {
-            episodeNumString = val;
+            episodeNumber = val;
             return this;
         }
 
-        public Builder dvdEpisodeNum(String val) {
-            dvdEpisodeNumString = val;
+        public Builder dvdEpisodeNumber(String val) {
+            dvdEpisodeNumber = val;
             return this;
         }
 
         public Builder title(String val) {
-            title = val;
+            episodeName = val;
             return this;
         }
 
         public Builder airDate(String val) {
             if (StringUtils.isBlank(val)) {
-                airDate = LocalDate.now();
+                firstAired = LocalDate.now();
             } else {
                 try {
-                    airDate = LocalDate.parse(val, DATE_FORMATTER);
+                    firstAired = LocalDate.parse(val, DATE_FORMATTER);
                 } catch (DateTimeParseException e) {
                     // While a null or empty string is taken to mean "now",
                     // a badly formatted string is an error and will not
                     // be translated into any date.
                     logger.warning("could not parse as date: " + val);
-                    airDate = null;
+                    firstAired = null;
                 }
             }
             return this;
@@ -73,36 +73,36 @@ public class Episode {
     }
 
     public Episode(Builder builder) {
-        seasonNumString = builder.seasonNumString;
-        episodeNumString = builder.episodeNumString;
-        dvdEpisodeNumString = builder.dvdEpisodeNumString;
-        title = builder.title;
-        airDate = builder.airDate;
+        seasonNumber = builder.seasonNumber;
+        episodeNumber = builder.episodeNumber;
+        dvdEpisodeNumber = builder.dvdEpisodeNumber;
+        episodeName = builder.episodeName;
+        firstAired = builder.firstAired;
 
-        logger.finer("[S" + seasonNumString + "E" + episodeNumString + "] " + title);
+        logger.finer("[S" + seasonNumber + "E" + episodeNumber + "] " + episodeName);
     }
 
     public String getSeasonNumberText() {
-        return seasonNumString;
+        return seasonNumber;
     }
 
     public String getEpisodeNumberText() {
-        return episodeNumString;
+        return episodeNumber;
     }
 
     public String getTitle() {
-        return title;
+        return episodeName;
     }
 
     public LocalDate getAirDate() {
-        return airDate;
+        return firstAired;
     }
 
     @Override
     public String toString() {
-        return "Episode S" + seasonNumString
-            + "E" + episodeNumString
-            + "[title=" + title
-            + ", airDate=" + airDate + "]";
+        return "Episode S" + seasonNumber
+            + "E" + episodeNumber
+            + "[episodeName=" + episodeName
+            + ", firstAired=" + firstAired + "]";
     }
 }
