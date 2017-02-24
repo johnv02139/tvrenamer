@@ -60,7 +60,7 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src.main}" destdir="${build}" classpathref="classpath" debug="true" debuglevel="lines,vars,source" includeantruntime="false" target="1.7" source="1.7" />
+    <javac srcdir="${src.main}" destdir="${build}" classpathref="classpath" debug="true" debuglevel="lines,vars,source" includeantruntime="false" target="1.8" source="1.8" />
     <copy file="${version.file}" todir="${build}" />
     <copy file="${logging.file}" todir="${build}" />
   </target>
@@ -134,7 +134,7 @@
       <build.jar platform="@{platform}" />
 
       <bundleapp
-        jvmrequired="1.7"
+        jvmrequired="1.8"
         jrepreferred="true"
         outputdirectory="${build}/@{platform}"
         name="${rel.name}"
