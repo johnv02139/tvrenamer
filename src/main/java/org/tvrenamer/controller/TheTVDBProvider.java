@@ -25,11 +25,10 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -220,7 +219,7 @@ public class TheTVDBProvider {
         return getEpisodeNumberFromNode(XPATH_EPISODE_NUM, eNode, xpath);
     }
 
-    private static Date getEpisodeDate(Node eNode, XPath xpath, DateFormat dateFormatter)
+    private static LocalDate getEpisodeDate(Node eNode, XPath xpath, DateTimeFormatter dateFormatter)
         throws XPathExpressionException
     {
         String airdate = nodeTextValue(XPATH_AIRDATE, eNode, xpath);
@@ -228,14 +227,14 @@ public class TheTVDBProvider {
             return null;
         }
         try {
-            return dateFormatter.parse(airdate);
-        } catch (ParseException e) {
+            return (LocalDate) dateFormatter.parse(airdate, LocalDate::from);
+        } catch (DateTimeParseException e) {
             return null;
         }
     }
 
     private static void addEpisodeToSeason(Node eNode, Show show, XPath xpath,
-                                           DateFormat dateFormatter)
+                                           DateTimeFormatter dateFormatter)
     {
         try {
             Integer epNum = getEpisodeNumber(eNode, xpath);
@@ -248,7 +247,7 @@ public class TheTVDBProvider {
             String episodeName = nodeTextValue(XPATH_EPISODE_NAME, eNode, xpath);
             logger.finer("[" + seasonNumString + "x" + epNum + "] " + episodeName);
 
-            Date date = getEpisodeDate(eNode, xpath, dateFormatter);
+            LocalDate date = getEpisodeDate(eNode, xpath, dateFormatter);
 
             Season season = showSeason(show, seasonNumString);
             season.addEpisode(epNum, episodeName, date);
@@ -270,7 +269,7 @@ public class TheTVDBProvider {
             XPath xpath = XPathFactory.newInstance().newXPath();
 
             NodeList episodes = nodeListValue(XPATH_EPISODE_LIST, doc, xpath);
-            DateFormat dateFormatter = new SimpleDateFormat(EPISODE_DATE_FORMAT);
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
             for (int i = 0; i < episodes.getLength(); i++) {
                 addEpisodeToSeason(episodes.item(i), show, xpath, dateFormatter);
             }
