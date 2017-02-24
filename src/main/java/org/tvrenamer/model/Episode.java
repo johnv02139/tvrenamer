@@ -1,15 +1,15 @@
 package org.tvrenamer.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Episode {
     private final Season season;
     private final int seasonNum;
     private final int episodeNum;
     private final String title;
-    private final Date airDate;
+    private final LocalDate airDate;
 
-    public Episode(Season season, int seasonNum, int episodeNum, String title, Date airDate) {
+    public Episode(Season season, int seasonNum, int episodeNum, String title, LocalDate airDate) {
         this.season = season;
         this.seasonNum = seasonNum;
         this.episodeNum = episodeNum;
@@ -21,7 +21,7 @@ public class Episode {
         return this.title;
     }
 
-    public Date getAirDate() {
+    public LocalDate getAirDate() {
         return this.airDate;
     }
 

@@ -13,9 +13,9 @@ import org.tvrenamer.model.except.ShowNotFoundException;
 
 import java.io.File;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -134,7 +134,7 @@ public class FileEpisode {
                 String showName = "";
                 String seasonNum = "";
                 String titleString = "";
-                Calendar airDate = Calendar.getInstance();
+                LocalDate airDate = null;
 
                 try {
                     Show show = ShowStore.mapStringToShow(queryString);
@@ -149,10 +149,8 @@ public class FileEpisode {
 
                         try {
                             titleString = season.getTitle(filenameEpisode);
-                            Date date = season.getAirDate(filenameEpisode);
-                            if (date != null) {
-                                airDate.setTime(date);
-                            } else {
+                            airDate = season.getAirDate(filenameEpisode);
+                            if (airDate == null) {
                                 logger.log(Level.WARNING, "Episode air date not found for '" + toString() + "'");
                             }
                         } catch (EpisodeNotFoundException e) {
@@ -191,18 +189,20 @@ public class FileEpisode {
                                                      filenameResolution);
 
                 // Date and times
-                newFilename = newFilename
-                    .replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(), formatDate(airDate, "d"));
-                newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(),
-                                                     formatDate(airDate, "dd"));
-                newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(),
-                                                     formatDate(airDate, "M"));
-                newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(),
-                                                     formatDate(airDate, "MM"));
-                newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(),
-                                                     formatDate(airDate, "yyyy"));
-                newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
-                                                     formatDate(airDate, "yy"));
+                if (airDate != null) {
+                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(),
+                                                         formatDate(airDate, "d"));
+                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(),
+                                                         formatDate(airDate, "dd"));
+                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(),
+                                                         formatDate(airDate, "M"));
+                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(),
+                                                         formatDate(airDate, "MM"));
+                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(),
+                                                         formatDate(airDate, "yyyy"));
+                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
+                                                         formatDate(airDate, "yy"));
+                }
 
                 String resultingFilename = newFilename.concat(StringUtils.getExtension(fileObj.getName()));
                 return StringUtils.sanitiseTitle(resultingFilename);
@@ -214,9 +214,9 @@ public class FileEpisode {
         }
     }
 
-    private String formatDate(Calendar cal, String format) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
-        return dateFormat.format(cal.getTime());
+    private String formatDate(LocalDate date, String format) {
+        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(format);
+        return dateFormat.format(date);
     }
 
     /**
