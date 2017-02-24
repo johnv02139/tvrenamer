@@ -61,7 +61,7 @@ public class FileEpisodeTest {
         episode.setFilenameResolution(resolution);
 
         Series series = new Series(showName, "1");
-        ShowStore.addShow(showName, series);
+        ShowStore.addSeriesToStore(showName, series);
         episode.setSeries(series);
 
         Season season5 = new Season(series, seasonNum);
@@ -98,7 +98,7 @@ public class FileEpisodeTest {
         fileEpisode.setFilenameEpisode(episodeNum);
 
         Series series = new Series(showName, "1");
-        ShowStore.addShow(showName, series);
+        ShowStore.addSeriesToStore(showName, series);
         fileEpisode.setSeries(series);
 
         Season season1 = new Season(series, seasonNum);

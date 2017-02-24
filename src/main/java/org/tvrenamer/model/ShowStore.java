@@ -21,23 +21,24 @@ public class ShowStore {
     private static Logger logger = Logger.getLogger(ShowStore.class.getName());
 
     private static class ShowRegistrations {
-        private final List<ShowInformationListener> mListeners;
+        private final List<ShowInformationListener> listeners;
 
         public ShowRegistrations() {
-            this.mListeners = new LinkedList<>();
+            listeners = new LinkedList<>();
         }
 
         public void addListener(ShowInformationListener listener) {
-            this.mListeners.add(listener);
+            listeners.add(listener);
         }
 
         public List<ShowInformationListener> getListeners() {
-            return Collections.unmodifiableList(mListeners);
+            return Collections.unmodifiableList(listeners);
         }
     }
 
-    private static final Map<String, Series> _shows = new ConcurrentHashMap<>(100);
-    private static final Map<String, ShowRegistrations> _showRegistrations = new ConcurrentHashMap<>();
+    private static final Map<String, Series> SERIES_MAP = new ConcurrentHashMap<>(100);
+
+    private static final Map<String, ShowRegistrations> SHOW_LISTENERS = new ConcurrentHashMap<>();
 
     private static final ExecutorService THREAD_POOL
         = Executors.newCachedThreadPool(new ThreadFactory() {
@@ -51,7 +52,6 @@ public class ShowStore {
                     return t;
                 }
             });
-
 
     /**
      * Transform a string which we believe represents a show name, to the string we will
@@ -72,15 +72,15 @@ public class ShowStore {
         return StringUtils.replacePunctuation(showName).toLowerCase();
     }
 
-    private static void notifyListeners(String showName, Series show) {
-        ShowRegistrations registrations = _showRegistrations.get(showName);
+    private static void notifyListeners(String queryString, Series series) {
+        ShowRegistrations registrations = SHOW_LISTENERS.get(queryString);
 
         if (registrations != null) {
             for (ShowInformationListener informationListener : registrations.getListeners()) {
-                if (show instanceof UnresolvedShow) {
-                    informationListener.downloadFailed(show);
+                if (series instanceof UnresolvedShow) {
+                    informationListener.downloadFailed(series);
                 } else {
-                    informationListener.downloadComplete(show);
+                    informationListener.downloadComplete(series);
                 }
             }
         }
@@ -91,34 +91,35 @@ public class ShowStore {
     }
 
     public static void clear() {
-        _shows.clear();
-        _showRegistrations.clear();
+        SERIES_MAP.clear();
+        SHOW_LISTENERS.clear();
     }
 
     /**
-     * Add a show to the store, registered by the show name.<br />
+     * Add a series to the store, registered by the show name.<br />
      * Added this distinct method to enable unit testing
      *
      * @param showName
      *            the show name
-     * @param show
+     * @param series
      *            the {@link Series}
      */
-    static void addShow(String showName, Series show) {
-        if (show instanceof UnresolvedShow) {
-            logger.info("Failed to get options or episodes for '" + show.getName());
+    public static void addSeriesToStore(String showName, Series series) {
+        String queryString = makeQueryString(showName);
+        if (series instanceof UnresolvedShow) {
+            logger.info("Failed to get options or episodes for '" + showName);
         } else {
-            logger.fine("Options and episodes for '" + show.getName() + "' acquired");
+            logger.fine("Options and episodes for '" + showName + "' acquired");
         }
-        _shows.put(makeQueryString(showName), show);
-        notifyListeners(showName, show);
+        SERIES_MAP.put(queryString, series);
+        notifyListeners(queryString, series);
     }
 
-    // Given a list of one or more options for which show we're dealing with,
+    // Given a list of two or more options for which show we're dealing with,
     // choose the best one and return it.
     private static Series selectShowOption(String showName, List<Series> options) {
         for (Series s : options) {
-            logger.fine("option: " + s.getName() + " for " + showName);
+            logger.info("option: " + s.getName() + " for " + showName);
         }
         // TODO: might not always be option zero...
         return options.get(0);
@@ -133,16 +134,20 @@ public class ShowStore {
                     options = TheTVDBProvider.querySeriesName(showName);
                 } catch (TVRenamerIOException e) {
                     logger.info("exception getting options for " + showName);
-                    addShow(showName, new UnresolvedShow(showName, e));
+                    addSeriesToStore(showName, new UnresolvedShow(showName, e));
                     return true;
                 }
                 int nOptions = (options == null) ? 0 : options.size();
                 if (nOptions == 0) {
                     logger.info("did not find any options for " + showName);
-                    addShow(showName, new UnresolvedShow(showName));
+                    addSeriesToStore(showName, new UnresolvedShow(showName));
                     return true;
+                } else if (nOptions == 1) {
+                    addSeriesToStore(showName, options.get(0));
+                } else {
+                    logger.info("got " + nOptions + " options for " + showName);
+                    addSeriesToStore(showName, selectShowOption(showName, options));
                 }
-                addShow(showName, selectShowOption(showName, options));
 
                 return true;
             }
@@ -155,8 +160,8 @@ public class ShowStore {
      * Download the show details if required, otherwise notify listener.
      * </p>
      * <ul>
-     * <li>if we have already downloaded the show (exists in _shows) then just call the method on the listener</li>
-     * <li>if we don't have the show, but are in the process of downloading the show (exists in _showRegistrations) then
+     * <li>if we have already downloaded the show (exists in SERIES_MAP) then just call the method on the listener</li>
+     * <li>if we don't have the show, but are in the process of downloading the show (exists in SHOW_LISTENERS) then
      * add the listener to the registration</li>
      * <li>if we don't have the show and aren't downloading, then create the registration, add the listener and kick off
      * the download</li>
@@ -168,19 +173,27 @@ public class ShowStore {
      *            the listener to notify or register
      */
     public static void mapStringToShow(String showName, ShowInformationListener listener) {
-        String showKey = makeQueryString(showName);
-        Series show = _shows.get(showKey);
+        String queryString = makeQueryString(showName);
+        Series show = SERIES_MAP.get(queryString);
         if (show != null) {
             listener.downloadComplete(show);
         } else {
-            ShowRegistrations registrations = _showRegistrations.get(showKey);
-            if (registrations != null) {
+            boolean needToDownload = true;
+            synchronized (SHOW_LISTENERS) {
+                ShowRegistrations registrations = SHOW_LISTENERS.get(queryString);
+                if (registrations == null) {
+                    registrations = new ShowRegistrations();
+                    SHOW_LISTENERS.put(queryString, registrations);
+                } else {
+                    // If we already have listeners for the show key, that means we're
+                    // already looking up the show, so all we need to do is add another
+                    // listener.
+                    needToDownload = false;
+                }
                 registrations.addListener(listener);
-            } else {
-                registrations = new ShowRegistrations();
-                registrations.addListener(listener);
-                _showRegistrations.put(showKey, registrations);
-                downloadShow(showKey);
+            }
+            if (needToDownload) {
+                downloadShow(queryString);
             }
         }
     }
