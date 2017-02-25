@@ -1,6 +1,6 @@
 package org.tvrenamer.model;
 
-import org.tvrenamer.controller.ShowInformationListener;
+import org.tvrenamer.controller.SeriesLookupListener;
 import org.tvrenamer.controller.TheTVDBProvider;
 import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.except.TVRenamerIOException;
@@ -21,17 +21,17 @@ public class ShowStore {
     private static Logger logger = Logger.getLogger(ShowStore.class.getName());
 
     private static class ShowRegistrations {
-        private final List<ShowInformationListener> listeners;
+        private final List<SeriesLookupListener> listeners;
 
         public ShowRegistrations() {
             listeners = new LinkedList<>();
         }
 
-        public void addListener(ShowInformationListener listener) {
+        public void addListener(SeriesLookupListener listener) {
             listeners.add(listener);
         }
 
-        public List<ShowInformationListener> getListeners() {
+        public List<SeriesLookupListener> getListeners() {
             return Collections.unmodifiableList(listeners);
         }
     }
@@ -76,7 +76,7 @@ public class ShowStore {
         ShowRegistrations registrations = SHOW_LISTENERS.get(queryString);
 
         if (registrations != null) {
-            for (ShowInformationListener informationListener : registrations.getListeners()) {
+            for (SeriesLookupListener informationListener : registrations.getListeners()) {
                 if (series instanceof UnresolvedShow) {
                     informationListener.downloadFailed(series);
                 } else {
@@ -172,7 +172,7 @@ public class ShowStore {
      * @param listener
      *            the listener to notify or register
      */
-    public static void mapStringToShow(String showName, ShowInformationListener listener) {
+    public static void mapStringToShow(String showName, SeriesLookupListener listener) {
         String queryString = makeQueryString(showName);
         Series show = SERIES_MAP.get(queryString);
         if (show != null) {

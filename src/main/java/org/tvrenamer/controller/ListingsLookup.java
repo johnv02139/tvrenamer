@@ -19,17 +19,17 @@ public class ListingsLookup {
     private static Logger logger = Logger.getLogger(ListingsLookup.class.getName());
 
     private static class ListingsRegistrations {
-        private final List<ShowListingsListener> listeners;
+        private final List<EpisodeListListener> listeners;
 
         public ListingsRegistrations() {
             this.listeners = new LinkedList<>();
         }
 
-        public void addListener(ShowListingsListener listener) {
+        public void addListener(EpisodeListListener listener) {
             this.listeners.add(listener);
         }
 
-        public List<ShowListingsListener> getListeners() {
+        public List<EpisodeListListener> getListeners() {
             return Collections.unmodifiableList(listeners);
         }
     }
@@ -53,7 +53,7 @@ public class ListingsLookup {
         ListingsRegistrations registrations = listenersMap.get(series.getNameKey());
 
         if (registrations != null) {
-            for (ShowListingsListener listener : registrations.getListeners()) {
+            for (EpisodeListListener listener : registrations.getListeners()) {
                 if (series.hasSeasons()) {
                     listener.downloadListingsComplete(series);
                 } else {
@@ -107,7 +107,7 @@ public class ListingsLookup {
      * @param listener
      *            the listener to notify or register
      */
-    public static void getListings(final Series series, ShowListingsListener listener) {
+    public static void getListings(final Series series, EpisodeListListener listener) {
         if (series.hasSeasons()) {
             listener.downloadListingsComplete(series);
         } else {

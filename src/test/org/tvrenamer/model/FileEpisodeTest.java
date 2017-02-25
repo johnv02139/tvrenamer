@@ -8,7 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.tvrenamer.controller.ShowInformationListener;
+import org.tvrenamer.controller.SeriesLookupListener;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,14 +26,14 @@ public class FileEpisodeTest {
     private List<Path> testFiles;
 
     private UserPreferences prefs;
-    private ShowInformationListener mockListener;
+    private SeriesLookupListener mockListener;
 
     @Before
     public void setUp() throws Exception {
         testFiles = new ArrayList<>();
         prefs = UserPreferences.getInstance();
         prefs.setMoveEnabled(false);
-        mockListener = mock(ShowInformationListener.class);
+        mockListener = mock(SeriesLookupListener.class);
     }
 
     @Test

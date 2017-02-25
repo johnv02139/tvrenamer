@@ -257,7 +257,7 @@ public class TheTVDBProviderTest {
             String filenameSeries = fileEpisode.getFilenameSeries();
 
             final CompletableFuture<Series> futureShow = new CompletableFuture<>();
-            ShowStore.mapStringToShow(filenameSeries, new ShowInformationListener() {
+            ShowStore.mapStringToShow(filenameSeries, new SeriesLookupListener() {
                     @Override
                     public void downloadComplete(Series show) {
                         futureShow.complete(show);
@@ -291,7 +291,7 @@ public class TheTVDBProviderTest {
             final String seasonNum = fileEpisode.getFilenameSeason();
             final String episode = fileEpisode.getFilenameEpisode();
             final CompletableFuture<String> future = new CompletableFuture<>();
-            ListingsLookup.getListings(series, new ShowListingsListener() {
+            ListingsLookup.getListings(series, new EpisodeListListener() {
                     @Override
                     public void downloadListingsComplete(Series show) {
                         Season season = show.getSeason(seasonNum);

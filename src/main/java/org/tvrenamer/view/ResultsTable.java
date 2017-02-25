@@ -471,7 +471,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
             item.setData(null);
 
-            String filename = ep.getFilepath();
+            String filename = ep.getFilename();
             episodeMap.remove(filename);
 
             resultsTable.remove(index);

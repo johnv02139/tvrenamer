@@ -11,11 +11,11 @@ import static org.tvrenamer.model.util.Constants.ADDED_PLACEHOLDER_FILENAME;
 
 import org.eclipse.swt.widgets.TableItem;
 import org.tvrenamer.controller.EpisodeInformationListener;
+import org.tvrenamer.controller.EpisodeListListener;
 import org.tvrenamer.controller.FilenameParser;
 import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.NameFormatter;
-import org.tvrenamer.controller.ShowInformationListener;
-import org.tvrenamer.controller.ShowListingsListener;
+import org.tvrenamer.controller.SeriesLookupListener;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,29 +23,35 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.logging.Logger;
 
-public class FileEpisode implements ShowInformationListener, ShowListingsListener {
+public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
 
     private static Logger logger = Logger.getLogger(FileEpisode.class.getName());
 
-    private enum EpisodeStatus {
+    private enum ParseStatus {
         UNPARSED,
         PARSED,
-        BAD_PARSE,
+        BAD_PARSE
+    }
 
+    private enum SeriesStatus {
+        NOT_STARTED,
+        QUERYING,
         GOT_SERIES,
-        DOWNLOADED,
         UNFOUND,
+        DOWNLOADED,
         NO_LISTINGS,
+        PARSED_ALL
+    }
 
+    private enum FileStatus {
+        NO_FILE,
+        UNCHECKED,
         MOVING,
         RENAMED,
         FAIL_TO_MOVE
-        // Should we have a status for if the file does not (any longer) exist?
     }
 
-    // The EpisodeStatus enum refers to aspects of how we've parsed the filename
-    // and how we've processed the file.  This separate enum refers to whether or
-    // not the FileEpisode is showing in the UI.
+    // This separate enum refers to whether or not the FileEpisode is showing in the UI.
     private enum EpisodeUIStatus {
         NEW,
         ADDED,
@@ -91,7 +97,9 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
 
     // The state of this object, not the state of the actual TV episode.  This is
     // about how far we've processed the filename.
-    private EpisodeStatus episodeStatus;
+    private ParseStatus parseStatus;
+    private SeriesStatus seriesStatus;
+    private FileStatus fileStatus;
     private Series series;
     private Season season;
 
@@ -121,7 +129,9 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // Initially we create the FileEpisode with nothing more than the filename.
     // Other information will flow in.
     public FileEpisode(String filename) {
-        episodeStatus = EpisodeStatus.UNPARSED;
+        parseStatus = ParseStatus.UNPARSED;
+        seriesStatus = SeriesStatus.NOT_STARTED;
+        fileStatus = FileStatus.UNCHECKED;
         originalFilename = filename;
         pathObj = Paths.get(filename);
         filenameSuffix = getExtension(pathObj);
@@ -132,57 +142,54 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         listeners.push(o);
     }
 
-    public String getEpisodeStatusString() {
-        return episodeStatus.toString();
-    }
-
     public boolean wasNotParsed() {
-        return (episodeStatus == EpisodeStatus.BAD_PARSE);
+        return (parseStatus == ParseStatus.BAD_PARSE);
     }
 
     public boolean wasParsed() {
-        return (episodeStatus != EpisodeStatus.BAD_PARSE)
-            && (episodeStatus != EpisodeStatus.UNPARSED);
+        return (parseStatus == ParseStatus.PARSED);
     }
 
     public boolean isRenameInProgress() {
-        return (episodeStatus == EpisodeStatus.MOVING);
+        return (fileStatus == FileStatus.MOVING);
     }
 
     public boolean isFailToParse() {
-        return (episodeStatus == EpisodeStatus.BAD_PARSE);
+        return (parseStatus == ParseStatus.BAD_PARSE);
     }
 
     public boolean isFailed() {
-        return ((episodeStatus == EpisodeStatus.BAD_PARSE)
-                || (episodeStatus == EpisodeStatus.UNFOUND)
-                || (episodeStatus == EpisodeStatus.NO_LISTINGS)
-                || (episodeStatus == EpisodeStatus.FAIL_TO_MOVE));
+        return ((parseStatus == ParseStatus.BAD_PARSE)
+                || (seriesStatus == SeriesStatus.UNFOUND)
+                || (seriesStatus == SeriesStatus.NO_LISTINGS)
+                || (fileStatus == FileStatus.FAIL_TO_MOVE));
     }
 
     public boolean isInvestigating() {
-        return (episodeStatus == EpisodeStatus.PARSED);
+        return ((seriesStatus == SeriesStatus.QUERYING)
+                || (seriesStatus == SeriesStatus.GOT_SERIES));
     }
 
     public boolean isNewlyAdded() {
-        return (episodeStatus == EpisodeStatus.UNPARSED);
+        return (parseStatus == ParseStatus.UNPARSED);
     }
 
     public boolean isDownloaded() {
-        return (episodeStatus == EpisodeStatus.DOWNLOADED);
+        return (seriesStatus == SeriesStatus.PARSED_ALL);
     }
 
     public boolean isReady() {
         if ((seasonNum == 0) || (episodeNum == 0)) {
             return false;
         }
-        return ((episodeStatus == EpisodeStatus.DOWNLOADED)
-                || (episodeStatus == EpisodeStatus.RENAMED));
+        // TODO: not sure
+        return ((seriesStatus == SeriesStatus.PARSED_ALL)
+                && (fileStatus != FileStatus.MOVING));
     }
 
     public boolean isSeriesReady() {
-        // should include isReady()?
-        return (episodeStatus == EpisodeStatus.GOT_SERIES);
+        // TODO: should include isReady()?
+        return (seriesStatus == SeriesStatus.GOT_SERIES);
     }
 
     public String getFilename() {
@@ -255,35 +262,52 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         this.pathObj = pathObj;
     }
 
-    private void setStatus(EpisodeStatus newStatus) {
-        episodeStatus = newStatus;
+    private void update() {
         for (EpisodeInformationListener l : listeners) {
             l.onEpisodeUpdate(this);
         }
     }
 
     public void setParsed() {
-        setStatus(EpisodeStatus.PARSED);
+        if (parseStatus != ParseStatus.PARSED) {
+            parseStatus = ParseStatus.PARSED;
+            update();
+        }
     }
 
     public void setBadParse() {
-        setStatus(EpisodeStatus.BAD_PARSE);
+        if (parseStatus != ParseStatus.BAD_PARSE) {
+            parseStatus = ParseStatus.BAD_PARSE;
+            update();
+        }
     }
 
     public void setMoving() {
-        setStatus(EpisodeStatus.MOVING);
+        if (fileStatus != FileStatus.MOVING) {
+            fileStatus = FileStatus.MOVING;
+            update();
+        }
     }
 
     public void setRenamed() {
-        setStatus(EpisodeStatus.RENAMED);
+        if (fileStatus != FileStatus.RENAMED) {
+            fileStatus = FileStatus.RENAMED;
+            update();
+        }
     }
 
     public void setFailToMove() {
-        setStatus(EpisodeStatus.FAIL_TO_MOVE);
+        if (fileStatus != FileStatus.FAIL_TO_MOVE) {
+            fileStatus = FileStatus.FAIL_TO_MOVE;
+            update();
+        }
     }
 
     public void setDoesNotExist() {
-        setStatus(EpisodeStatus.FAIL_TO_MOVE);
+        if (fileStatus != FileStatus.NO_FILE) {
+            fileStatus = FileStatus.NO_FILE;
+            update();
+        }
     }
 
     public Series getSeries() {
@@ -293,9 +317,15 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     public void setSeries(Series series) {
         this.series = series;
         if ((series == null) || (series instanceof UnresolvedShow)) {
-            setStatus(EpisodeStatus.UNFOUND);
+            if (seriesStatus != SeriesStatus.UNFOUND) {
+                seriesStatus = SeriesStatus.UNFOUND;
+                update();
+            }
         } else {
-            setStatus(EpisodeStatus.GOT_SERIES);
+            if (seriesStatus != SeriesStatus.GOT_SERIES) {
+                seriesStatus = SeriesStatus.GOT_SERIES;
+                update();
+            }
         }
     }
 
@@ -325,13 +355,17 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         // TODO: we already have the series.  We don't need to return it.
         setSeason();
         // Only thing we could do would be to verify it.
-        setStatus(EpisodeStatus.DOWNLOADED);
+        seriesStatus = SeriesStatus.PARSED_ALL;
+        update();
     }
 
     @Override
     public void downloadListingsFailed(Series series) {
         logger.warning("failed to download listings for " + series);
-        setStatus(EpisodeStatus.NO_LISTINGS);
+        if (seriesStatus != SeriesStatus.NO_LISTINGS) {
+            seriesStatus = SeriesStatus.NO_LISTINGS;
+            update();
+        }
     }
 
     // It would be nice to call this on our own.  But if we do, we have
