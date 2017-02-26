@@ -10,8 +10,9 @@ import org.junit.Test;
 
 import org.tvrenamer.controller.ShowInformationListener;
 
-import java.io.File;
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -20,9 +21,9 @@ public class FileEpisodeTest {
     private static Logger logger = Logger.getLogger(FileEpisodeTest.class.getName());
 
     private static final String TEMP_DIR_NAME = System.getProperty("java.io.tmpdir");
-    private static final File TEMP_DIR = new File(TEMP_DIR_NAME);
+    private static final Path TEMP_DIR = Paths.get(TEMP_DIR_NAME);
 
-    private List<File> testFiles;
+    private List<Path> testFiles;
 
     private UserPreferences prefs;
     private ShowInformationListener mockListener;
@@ -45,8 +46,9 @@ public class FileEpisodeTest {
         prefs.setRenameReplacementString(testReplacementPattern);
 
         String filename = "the.simpsons.5.10.720p.avi";
-        File file = new File(TEMP_DIR, filename);
-        createFile(file);
+        Path path = TEMP_DIR.resolve(filename);
+        Files.createFile(path);
+        testFiles.add(path);
 
         FileEpisode episode = new FileEpisode(filename);
         String showName = "The Simpsons";
@@ -90,8 +92,9 @@ public class FileEpisodeTest {
         prefs.setRenameReplacementString(testReplacementPattern);
 
         String filename = "steven.segal.lawman.1.01.avi";
-        File file = new File(TEMP_DIR, filename);
-        createFile(file);
+        Path path = TEMP_DIR.resolve(filename);
+        Files.createFile(path);
+        testFiles.add(path);
 
         FileEpisode fileEpisode = new FileEpisode(filename);
 
@@ -123,19 +126,11 @@ public class FileEpisodeTest {
         assertFalse("Resulting filename must not contain a ':' as it breaks Windows", newFilename.contains(":"));
     }
 
-    /**
-     * Helper method to physically create the file and add to file list for later deletion.
-     */
-    private void createFile(File file) throws IOException {
-        file.createNewFile();
-        testFiles.add(file);
-    }
-
     @After
     public void teardown() throws Exception {
-        for (File file : testFiles) {
-            logger.info("Deleting " + file);
-            file.delete();
+        for (Path path : testFiles) {
+            logger.info("Deleting " + path);
+            Files.delete(path);
         }
     }
 }
