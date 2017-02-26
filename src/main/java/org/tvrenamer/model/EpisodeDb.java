@@ -1,6 +1,9 @@
 package org.tvrenamer.model;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -60,25 +63,30 @@ public class EpisodeDb {
         return ep;
     }
 
-    public void add(File file) {
+    public void add(Path file) {
+        // unused and untested, but compiles and looks right!
         boolean descend = prefs.isRecursivelyAddFolders();
-        if (file.exists()) {
-            if (file.isHidden()) {
-                logger.finer("ignoring hidden file " + file);
-            } else if (file.isDirectory()) {
-                if (descend) {
-                    String[] fileNames = file.list();
-                    if (fileNames != null) {
-                        for (final String fileName : fileNames) {
+        if (Files.exists(file)) {
+            try {
+                if (Files.isHidden(file)) {
+                    logger.finer("ignoring hidden file " + file);
+                } else if (Files.isDirectory(file)) {
+                    if (descend) {
+                        DirectoryStream<Path> contents = Files.newDirectoryStream(file);
+                        if (contents != null) {
                             // recursive call
-                            add(new File(file, fileName));
+                            contents.forEach(pth -> add(pth));
+                            contents.close();
                         }
                     }
+                } else {
+                    add(file.toAbsolutePath());
                 }
-            } else {
-                add(file.getAbsolutePath());
+            } catch (IOException e) {
+                // TODO: catch other exceptions, and handle gracefully
+                logger.warning("error trying to descend directories adding to EpisodeDb");
+                return;
             }
         }
     }
-
 }
