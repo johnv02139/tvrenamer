@@ -12,9 +12,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UserPreferences extends Observable {
@@ -40,18 +42,18 @@ public class UserPreferences extends Observable {
     private UserPreferences() {
         super();
 
-        this.destDir = DEFAULT_DESTINATION_DIRECTORY;
-        this.preloadFolder = null;
-        this.seasonPrefix = DEFAULT_SEASON_PREFIX;
-        this.seasonPrefixLeadingZero = false;
-        this.moveEnabled = false;
-        this.renameEnabled = true;
-        this.renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
-        this.proxy = new ProxySettings();
-        this.checkForUpdates = true;
-        this.recursivelyAddFolders = true;
-        this.ignoreKeywords = new ArrayList<>();
-        this.ignoreKeywords.add("sample");
+        destDir = DEFAULT_DESTINATION_DIRECTORY.toFile();
+        preloadFolder = null;
+        seasonPrefix = DEFAULT_SEASON_PREFIX;
+        seasonPrefixLeadingZero = false;
+        moveEnabled = false;
+        renameEnabled = true;
+        renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
+        proxy = new ProxySettings();
+        checkForUpdates = true;
+        recursivelyAddFolders = true;
+        ignoreKeywords = new ArrayList<>();
+        ignoreKeywords.add("sample");
 
         ensurePath();
     }
@@ -64,64 +66,83 @@ public class UserPreferences extends Observable {
      * Deal with legacy files and set up
      */
     public static void initialize() {
-        File temp = null;
+        Path temp = null;
         logger.fine("configuration directory = "
-                    + CONFIGURATION_DIRECTORY.getAbsolutePath());
-        if (CONFIGURATION_DIRECTORY.exists()) {
+                    + CONFIGURATION_DIRECTORY.toAbsolutePath().toString());
+        if (Files.exists(CONFIGURATION_DIRECTORY)) {
             // Older versions used the same name as a preferences file
-            if (!CONFIGURATION_DIRECTORY.isDirectory()) {
+            if (!Files.isDirectory(CONFIGURATION_DIRECTORY)) {
                 try {
-                    temp = File.createTempFile(APPLICATION_NAME, null, null);
-                } catch (IOException ioe) {
+                    temp = Files.createTempDirectory(APPLICATION_NAME);
+                } catch (Exception ioe) {
                     temp = null;
                 }
-                if ((temp == null) || !temp.exists()) {
+                if ((temp == null) || Files.notExists(temp)) {
                     throw new RuntimeException("Could not create temp file");
                 }
-                temp.delete();
-                CONFIGURATION_DIRECTORY.renameTo(temp);
+                try {
+                    Files.delete(temp);
+                    Files.move(CONFIGURATION_DIRECTORY, temp);
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, e.getMessage(), e);
+                }
             }
         }
-        if (!CONFIGURATION_DIRECTORY.exists()) {
-            boolean success = CONFIGURATION_DIRECTORY.mkdir();
-            if (!success) {
+        if (Files.notExists(CONFIGURATION_DIRECTORY)) {
+            try {
+                Path created = Files.createDirectories(CONFIGURATION_DIRECTORY);
+            } catch (Exception e) {
                 throw new RuntimeException("Could not create configuration directory");
             }
         }
         if (temp != null) {
-            boolean success = temp.renameTo(PREFERENCES_FILE);
-            if (!success) {
+            try {
+                Files.move(temp, PREFERENCES_FILE);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, e.getMessage(), e);
                 throw new RuntimeException("Could not rename old prefs file from "
-                                           + temp.getPath()
-                                           + " to " + PREFERENCES_FILE.getPath());
+                                           + temp + " to " + PREFERENCES_FILE);
             }
         }
-        if (PREFERENCES_FILE_LEGACY.exists()) {
-            if (PREFERENCES_FILE.exists()) {
+        if (Files.exists(PREFERENCES_FILE_LEGACY)) {
+            if (Files.exists(PREFERENCES_FILE)) {
                 throw new RuntimeException("Found two legacy preferences files!!");
             } else {
-                PREFERENCES_FILE_LEGACY.renameTo(PREFERENCES_FILE);
+                try {
+                    Files.move(PREFERENCES_FILE_LEGACY, PREFERENCES_FILE);
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, e.getMessage(), e);
+                }
             }
         }
-        if (OVERRIDES_FILE_LEGACY.exists()) {
-            OVERRIDES_FILE_LEGACY.renameTo(OVERRIDES_FILE);
-        } else if (!OVERRIDES_FILE.exists()) {
+        if (Files.exists(OVERRIDES_FILE_LEGACY)) {
+            try {
+                Files.move(OVERRIDES_FILE_LEGACY, OVERRIDES_FILE);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, e.getMessage(), e);
+            }
+
+        } else if (Files.notExists(OVERRIDES_FILE)) {
             // Previously the GlobalOverrides class was hard-coded to write some
             // overrides to the file.  I don't think that's right, but to try to
             // preserve the default behavior, if the user doesn't have any other
             // overrides file, we'll try to copy one from the source code into
             // place.  If it doesn't work, so be it.
-            File defOver = new File(DEVELOPER_DEFAULT_OVERRIDES_FILENAME);
-            if (defOver.exists()) {
+            Path defOver = Paths.get(DEVELOPER_DEFAULT_OVERRIDES_FILENAME);
+            if (Files.exists(defOver)) {
                 try {
-                    Files.copy(defOver.toPath(), OVERRIDES_FILE.toPath());
+                    Files.copy(defOver, OVERRIDES_FILE);
                 } catch (IOException ioe) {
                     logger.info("unable to copy default overrides file.");
                 }
             }
         }
-        if (!THETVDB_CACHE.exists()) {
-            THETVDB_CACHE.mkdir();
+        if (Files.notExists(THETVDB_CACHE)) {
+            try {
+                Files.createDirectories(THETVDB_CACHE);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, e.getMessage(), e);
+            }
         }
     }
 
@@ -132,10 +153,10 @@ public class UserPreferences extends Observable {
         initialize();
 
         // retrieve from file and update in-memory copy
-        UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE);
+        UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE.toFile());
 
         if (prefs != null) {
-            logger.fine("Sucessfully read preferences from: " + PREFERENCES_FILE.getAbsolutePath());
+            logger.fine("Sucessfully read preferences from: " + PREFERENCES_FILE.toAbsolutePath());
             logger.fine("Sucessfully read preferences: " + prefs.toString());
         } else {
             prefs = new UserPreferences();
@@ -156,7 +177,7 @@ public class UserPreferences extends Observable {
     }
 
     public static void store(UserPreferences prefs) {
-        UserPreferencesPersistence.persist(prefs, PREFERENCES_FILE);
+        UserPreferencesPersistence.persist(prefs, PREFERENCES_FILE.toFile());
         logger.fine("Sucessfully saved/updated preferences");
     }
 
@@ -185,8 +206,8 @@ public class UserPreferences extends Observable {
      * @param dir the directory to use as destination
      */
     public void setDestinationDirectory(File dir) throws TVRenamerIOException {
-        if (valuesAreDifferent(this.destDir, dir)) {
-            this.destDir = dir;
+        if (valuesAreDifferent(destDir, dir)) {
+            destDir = dir;
             ensurePath();
 
             preferenceChanged(UserPreference.DEST_DIR, dir);
@@ -200,8 +221,8 @@ public class UserPreferences extends Observable {
      * @param dir the path to the directory
      */
     public void setDestinationDirectory(String dir) throws TVRenamerIOException {
-        if (valuesAreDifferent(this.destDir.getAbsolutePath(), dir)) {
-            this.destDir = new File(dir);
+        if (valuesAreDifferent(destDir.getAbsolutePath(), dir)) {
+            destDir = new File(dir);
             ensurePath();
 
             preferenceChanged(UserPreference.DEST_DIR, dir);
@@ -214,7 +235,7 @@ public class UserPreferences extends Observable {
      * @return File object representing the directory.
      */
     public File getPreloadFolder() {
-        return this.preloadFolder;
+        return preloadFolder;
     }
 
     /**
@@ -223,7 +244,7 @@ public class UserPreferences extends Observable {
      * @return File object representing the directory.
      */
     public File getDestinationDirectory() {
-        return this.destDir;
+        return destDir;
     }
 
     /**
@@ -252,7 +273,7 @@ public class UserPreferences extends Observable {
      * @return true if selected destination exists, false otherwise
      */
     public boolean isMoveEnabled() {
-        return this.moveEnabled;
+        return moveEnabled;
     }
 
     public void setRenameEnabled(boolean renameEnabled) {
@@ -286,7 +307,7 @@ public class UserPreferences extends Observable {
      * @return true if adding subdirectories, false otherwise
      */
     public boolean isRecursivelyAddFolders() {
-        return this.recursivelyAddFolders;
+        return recursivelyAddFolders;
     }
 
     public void setIgnoreKeywords(List<String> ignoreKeywords) {
@@ -308,30 +329,30 @@ public class UserPreferences extends Observable {
     }
 
     public List<String> getIgnoreKeywords() {
-        return this.ignoreKeywords;
+        return ignoreKeywords;
     }
 
     public void setSeasonPrefix(String prefix) {
         // Remove the displayed "
         prefix = prefix.replaceAll("\"", "");
 
-        if (valuesAreDifferent(this.seasonPrefix, prefix)) {
-            this.seasonPrefix = StringUtils.sanitiseTitle(prefix);
+        if (valuesAreDifferent(seasonPrefix, prefix)) {
+            seasonPrefix = StringUtils.sanitiseTitle(prefix);
 
             preferenceChanged(UserPreference.SEASON_PREFIX, prefix);
         }
     }
 
     public String getSeasonPrefix() {
-        return this.seasonPrefix;
+        return seasonPrefix;
     }
 
     public String getSeasonPrefixForDisplay() {
-        return ("\"" + this.seasonPrefix + "\"");
+        return ("\"" + seasonPrefix + "\"");
     }
 
     public boolean isSeasonPrefixLeadingZero() {
-        return this.seasonPrefixLeadingZero;
+        return seasonPrefixLeadingZero;
     }
 
     public void setSeasonPrefixLeadingZero(boolean seasonPrefixLeadingZero) {
@@ -390,10 +411,10 @@ public class UserPreferences extends Observable {
      * Create the directory if it doesn't exist.
      */
     public void ensurePath() {
-        if (this.moveEnabled && !this.destDir.mkdirs()) {
-            if (!this.destDir.exists()) {
-                this.moveEnabled = false;
-                String message = "Couldn't create path: '" + this.destDir.getAbsolutePath() + "'. Move is now disabled";
+        if (moveEnabled && !destDir.mkdirs()) {
+            if (!destDir.exists()) {
+                moveEnabled = false;
+                String message = "Couldn't create path: '" + destDir.getAbsolutePath() + "'. Move is now disabled";
                 logger.warning(message);
                 UIUtils.showMessageBox(SWTMessageBoxType.ERROR, "Error", message);
             }

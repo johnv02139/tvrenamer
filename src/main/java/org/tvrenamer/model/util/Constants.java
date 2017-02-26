@@ -1,6 +1,7 @@
 package org.tvrenamer.model.util;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 
 public class Constants {
@@ -46,23 +47,24 @@ public class Constants {
 
     public static final String IMDB_BASE_URL = "http://www.imdb.com/title/";
 
-    public static final File USER_HOME_DIR = new File(Environment.USER_HOME);
+    public static final Path USER_HOME_DIR = Paths.get(Environment.USER_HOME);
 
-    public static final File DEFAULT_DESTINATION_DIRECTORY = new File(USER_HOME_DIR, "TV");
-    public static final File CONFIGURATION_DIRECTORY
-        = new File(USER_HOME_DIR, CONFIGURATION_DIRECTORY_NAME);
-    public static final File PREFERENCES_FILE
-        = new File(CONFIGURATION_DIRECTORY, PREFERENCES_FILENAME);
-    public static final File OVERRIDES_FILE
-        = new File(CONFIGURATION_DIRECTORY, OVERRIDES_FILENAME);
-    public static final File THETVDB_CACHE
-        = new File(CONFIGURATION_DIRECTORY, TVDB_CACHE_DIRNAME);
-    public static final File KNOWN_SHOWS_FILE
-        = new File(CONFIGURATION_DIRECTORY, KNOWN_SHOWS_FILENAME);
+    public static final Path DEFAULT_DESTINATION_DIRECTORY = USER_HOME_DIR.resolve("TV");
+    public static final Path CONFIGURATION_DIRECTORY
+        = USER_HOME_DIR.resolve(CONFIGURATION_DIRECTORY_NAME);
+    public static final Path PREFERENCES_FILE
+        = CONFIGURATION_DIRECTORY.resolve(PREFERENCES_FILENAME);
+    public static final Path OVERRIDES_FILE
+        = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
+    public static final Path THETVDB_CACHE
+        = CONFIGURATION_DIRECTORY.resolve(TVDB_CACHE_DIRNAME);
+    public static final Path KNOWN_SHOWS_FILE
+        = CONFIGURATION_DIRECTORY.resolve(KNOWN_SHOWS_FILENAME);
 
-    public static final File PREFERENCES_FILE_LEGACY
-        = new File(USER_HOME_DIR, "tvrenamer.preferences");
-    public static final File OVERRIDES_FILE_LEGACY
-        = new File(USER_HOME_DIR, ".tvrenameroverrides");
+    public static final Path PREFERENCES_FILE_LEGACY
+        = USER_HOME_DIR.resolve("tvrenamer.preferences");
+    public static final Path OVERRIDES_FILE_LEGACY
+        = USER_HOME_DIR.resolve(".tvrenameroverrides");
 
+    public static final String EMPTY_STRING = "";
 }

@@ -79,7 +79,7 @@ public class TheTVDBProvider {
     // Although, right now, it's emitted without formatting, which is hard on a human.
     // TODO: if it's easy, would be nice to emit formatted XML.
     // Also TODO: use a real file cache, with eviction, etc.
-    private static final Path TvDbCache = THETVDB_CACHE.toPath();
+    private static final Path TvDbCache = THETVDB_CACHE;
 
     static {
         if (Files.notExists(TvDbCache)) {

@@ -24,10 +24,10 @@ public class GlobalOverrides {
     }
 
     private static GlobalOverrides load() {
-        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE);
+        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE.toFile());
 
         if (overrides != null) {
-            logger.fine("Sucessfully read overrides from: " + OVERRIDES_FILE.getAbsolutePath());
+            logger.fine("Sucessfully read overrides from: " + OVERRIDES_FILE.toAbsolutePath());
             logger.fine("Sucessfully read overrides: " + overrides.toString());
         } else {
             overrides = new GlobalOverrides();
@@ -38,7 +38,7 @@ public class GlobalOverrides {
     }
 
     public static void store(GlobalOverrides overrides) {
-        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE);
+        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE.toFile());
         logger.fine("Sucessfully saved/updated overrides");
     }
 
