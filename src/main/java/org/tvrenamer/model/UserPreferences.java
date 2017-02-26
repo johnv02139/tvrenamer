@@ -153,7 +153,7 @@ public class UserPreferences extends Observable {
         initialize();
 
         // retrieve from file and update in-memory copy
-        UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE.toFile());
+        UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE);
 
         if (prefs != null) {
             logger.fine("Sucessfully read preferences from: " + PREFERENCES_FILE.toAbsolutePath());
@@ -177,7 +177,7 @@ public class UserPreferences extends Observable {
     }
 
     public static void store(UserPreferences prefs) {
-        UserPreferencesPersistence.persist(prefs, PREFERENCES_FILE.toFile());
+        UserPreferencesPersistence.persist(prefs, PREFERENCES_FILE);
         logger.fine("Sucessfully saved/updated preferences");
     }
 
