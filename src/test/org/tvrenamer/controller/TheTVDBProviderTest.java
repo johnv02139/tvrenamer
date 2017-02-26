@@ -368,7 +368,7 @@ public class TheTVDBProviderTest {
                 if (testInput.episodeTitle == null) {
                     fail("bad test input: no title");
                 } else {
-                    assertTrue(testDownloadEpisode(testInput));
+                    assertTrue(testDownloadEpisodeOneThread(testInput));
                 }
             }
         } catch (Exception e) {
