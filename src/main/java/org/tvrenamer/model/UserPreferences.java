@@ -64,6 +64,8 @@ public class UserPreferences extends Observable {
      */
     public static void initialize() {
         File temp = null;
+        logger.warning("configuration directory = "
+                       + CONFIGURATION_DIRECTORY.getAbsolutePath());
         if (CONFIGURATION_DIRECTORY.exists()) {
             // Older versions used the same name as a preferences file
             if (!CONFIGURATION_DIRECTORY.isDirectory()) {
