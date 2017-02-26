@@ -40,7 +40,7 @@ public class FilenameParser {
         }
     }
 
-    private static String removeLast(String input, String match) {
+    static String removeLast(String input, String match) {
         int idx = input.toLowerCase().lastIndexOf(match);
         if (idx > 0) {
             input = input.substring(0, idx) + input.substring(idx + match.length(), input.length());
@@ -48,14 +48,14 @@ public class FilenameParser {
         return input;
     }
 
-    private static String stripJunk(String input) {
+    static String stripJunk(String input) {
         String output = input;
         output = removeLast(output, "hdtv");
         output = removeLast(output, "dvdrip");
         return output;
     }
 
-    private static String insertShowNameIfNeeded(File file) {
+    static String insertShowNameIfNeeded(File file) {
         String fName = file.getName();
         // TODO: don't inline these patterns; can we use same ones
         // as used by UserPreferences?
