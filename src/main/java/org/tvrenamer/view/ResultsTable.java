@@ -266,7 +266,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             if (episode == null) {
                 failToParseTableItem(item, fileName);
             } else {
-                String newFileName = episode.getFile().getAbsolutePath();
+                String newFileName = episode.getFile().toAbsolutePath().toString();
                 episodeMap.put(newFileName, episode);
                 item.setText(CURRENT_FILE_COLUMN, newFileName);
                 item.setText(NEW_FILENAME_COLUMN, valueForNewFilename(episode));

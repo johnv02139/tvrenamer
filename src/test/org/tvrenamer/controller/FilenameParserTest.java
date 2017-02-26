@@ -16,7 +16,8 @@ import org.junit.Test;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.ShowStore;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -208,8 +209,8 @@ public class FilenameParserTest {
     }
 
     private void testInsertingShowName(String filepath, String expected) {
-        File file = new File(filepath);
-        String actual = FilenameParser.insertShowNameIfNeeded(file);
+        Path path = Paths.get(filepath);
+        String actual = FilenameParser.insertShowNameIfNeeded(path);
         assertEquals(expected, actual);
     }
 

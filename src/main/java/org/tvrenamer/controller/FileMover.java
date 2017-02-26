@@ -31,7 +31,7 @@ public class FileMover implements Callable<Boolean> {
 
     @Override
     public Boolean call() {
-        File srcFile = episode.getFile();
+        File srcFile = episode.getFile().toFile();
         if (!srcFile.exists()) {
             logger.info("File no longer exists: " + srcFile);
             episode.setDoesNotExist();
@@ -58,7 +58,7 @@ public class FileMover implements Callable<Boolean> {
                 long timestamp = System.currentTimeMillis();
                 episode.setRenamed();
                 logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFileName);
-                episode.setFile(destFile);
+                episode.setFile(destFile.toPath());
                 updateFileModifiedDate(destFile, timestamp);
                 return true;
             } else {

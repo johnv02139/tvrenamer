@@ -2,7 +2,7 @@ package org.tvrenamer.controller;
 
 import org.tvrenamer.model.FileEpisode;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -55,27 +55,28 @@ public class FilenameParser {
         return output;
     }
 
-    static String insertShowNameIfNeeded(File file) {
-        String fName = file.getName();
+    static String insertShowNameIfNeeded(Path path) {
+        String pName = path.getFileName().toString();
         // TODO: don't inline these patterns; can we use same ones
         // as used by UserPreferences?
-        if (fName.matches("[sS]\\d\\d?[eE]\\d\\d?.*")) {
-            String parentName = file.getParentFile().getName();
+        if (pName.matches("[sS]\\d\\d?[eE]\\d\\d?.*")) {
+            Path parent = path.getParent();
+            String parentName = parent.getFileName().toString();
             if (parentName.toLowerCase().startsWith("season")
                 || parentName.matches("[sS][0-3][0-9]"))
             {
-                parentName = file.getParentFile().getParentFile().getName();
+                parentName = path.getParent().getParent().getFileName().toString();
             }
-            logger.fine("appending parent directory '" + parentName + "' to filename '" + fName + "'");
-            return parentName + " " + fName;
+            logger.fine("appending parent directory '" + parentName + "' to filename '" + pName + "'");
+            return parentName + " " + pName;
         } else {
-            return fName;
+            return pName;
         }
     }
 
     public static boolean parseFilename(FileEpisode episode) {
-        File f = episode.getFile();
-        String withShow = insertShowNameIfNeeded(f);
+        Path p = episode.getFile();
+        String withShow = insertShowNameIfNeeded(p);
         String fName = stripJunk(withShow);
 
         int idx = 0;

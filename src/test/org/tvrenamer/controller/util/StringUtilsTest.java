@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.tvrenamer.model.FileEpisode;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 public class StringUtilsTest {
 
@@ -61,10 +61,10 @@ public class StringUtilsTest {
 
     @Test
     public void testGetExtension() {
-        assertEquals(".mkv", FileEpisode.getExtension(new File("dexter.407.720p.hdtv.x264-sys.mkv")));
-        assertEquals(".avi", FileEpisode.getExtension(new File("Marvels.Agents.of.S.H.I.E.L.D.S04E03.1080p.HDTV.x264-KILLERS[ettv].avi")));
-        assertEquals(".mp4", FileEpisode.getExtension(new File("/TV/Dexter/S05E05 First Blood.mp4")));
-        assertEquals("", FileEpisode.getExtension(new File("Supernatural")));
+        assertEquals(".mkv", FileEpisode.getExtension(Paths.get("dexter.407.720p.hdtv.x264-sys.mkv")));
+        assertEquals(".avi", FileEpisode.getExtension(Paths.get("Marvels.Agents.of.S.H.I.E.L.D.S04E03.1080p.HDTV.x264-KILLERS[ettv].avi")));
+        assertEquals(".mp4", FileEpisode.getExtension(Paths.get("/TV/Dexter/S05E05 First Blood.mp4")));
+        assertEquals("", FileEpisode.getExtension(Paths.get("Supernatural")));
     }
 
     @Test

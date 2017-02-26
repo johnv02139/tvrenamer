@@ -17,7 +17,8 @@ import org.tvrenamer.controller.NameFormatter;
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.ShowListingsListener;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.logging.Logger;
@@ -74,7 +75,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     private int seasonNum = 0;
     private int episodeNum = 0;
 
-    // The "fileObj" is the java.io.File object representing the file that this
+    // The "pathObj" is the java.nio.files.Path object representing the file that this
     // object is concerned with.  Note that it is non-final, as the FileMover
     // class may change the file associated with this episode.  After all, the
     // whole point here is to rename files.  Nevertheless, not sure that detail
@@ -86,7 +87,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     // is moved, we actually create a new FileEpisode object for it, and replace the
     // old FileEpisode in the EpisodeDb and in the TableItem, and then drop the old
     // FileEpisode.  TODO?
-    private File fileObj;
+    private Path pathObj;
 
     // The state of this object, not the state of the actual TV episode.  This is
     // about how far we've processed the filename.
@@ -108,8 +109,8 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
 
     private NameFormatter formatter = null;
 
-    public static String getExtension(File file) {
-        String filename = file.getName();
+    public static String getExtension(Path path) {
+        String filename = path.getFileName().toString();
         int dot = filename.lastIndexOf('.');
         if (dot >= 0) {
             return filename.substring(dot);
@@ -122,8 +123,8 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     public FileEpisode(String filename) {
         episodeStatus = EpisodeStatus.UNPARSED;
         originalFilename = filename;
-        fileObj = new File(filename);
-        filenameSuffix = getExtension(fileObj);
+        pathObj = Paths.get(filename);
+        filenameSuffix = getExtension(pathObj);
         FilenameParser.parseFilename(this);
     }
 
@@ -246,12 +247,12 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         }
     }
 
-    public File getFile() {
-        return fileObj;
+    public Path getFile() {
+        return pathObj;
     }
 
-    public void setFile(File fileObj) {
-        this.fileObj = fileObj;
+    public void setFile(Path pathObj) {
+        this.pathObj = pathObj;
     }
 
     private void setStatus(EpisodeStatus newStatus) {
@@ -401,7 +402,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
             fileBasename = formatter.getNewBasename();
             return formatter.getProposedFilename(fileBasename + filenameSuffix);
         } else {
-            return formatter.getProposedFilename(fileObj.getName());
+            return formatter.getProposedFilename(pathObj.getFileName().toString());
         }
     }
 
@@ -414,7 +415,7 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
                 + ", episode:"
                 + filenameEpisode
                 + ", file:"
-                + fileObj.getName()
+                + pathObj.getFileName()
                 + " }";
     }
 }
