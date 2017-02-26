@@ -220,12 +220,16 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     public void onEpisodeUpdate(final FileEpisode ep) {
-        if (!isUIRunning || display.isDisposed() || (ep == null)) {
+        if (ep == null) {
+            logger.severe("got update for a null episode (makes no sense)");
+            return;
+        }
+        if (!isUIRunning || display.isDisposed()) {
             return;
         }
         final TableItem item = ep.getViewItem();
         if (item == null) {
-            logger.info("episode not associated with table item: " + ep);
+            logger.warning("episode not associated with table item: " + ep);
             return;
         }
         display.asyncExec(new Runnable() {
@@ -233,8 +237,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 public void run() {
                     synchronized (ep) {
                         final TableItem item = ep.getViewItem();
-                        if ((item == null) || item.isDisposed()) {
-                            logger.info("episode not associated with table item: " + ep);
+                        if (item == null) {
+                            logger.info("item has disappeared from episode: " + ep);
+                            return;
+                        }
+                        if (item.isDisposed()) {
+                            logger.info("item has been displosed from episode: " + ep);
                             ep.setViewItem(null);
                             return;
                         }
