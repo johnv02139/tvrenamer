@@ -591,11 +591,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         if (!isUIRunning) {
             return;
         }
-        if (prefs.isMoveEnabled()) {
-            destinationColumn.setText("Proposed File Path");
-        } else {
-            destinationColumn.setText("Proposed File Name");
-        }
+        destinationColumn.setText(destColumnText(prefs.isMoveEnabled()));
     }
 
     private void setRenameButtonText() {
