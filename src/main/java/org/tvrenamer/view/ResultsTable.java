@@ -125,14 +125,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         final Image icon;
 
         FileMoveIcon(String path) {
-            InputStream stream = getClass().getResourceAsStream(path);
+            InputStream stream = UIStarter.class.getResourceAsStream(path);
             if (stream != null) {
                 icon = new Image(Display.getCurrent(), stream);
             } else {
                 icon = new Image(Display.getCurrent(),
-                                 ICON_PARENT_DIRECTORY
-                                 + File.separator
-                                 + path);
+                                 ICON_PARENT_DIRECTORY + path);
             }
         }
     }
