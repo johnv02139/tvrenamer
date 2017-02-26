@@ -225,8 +225,8 @@ public class FilenameParserTest {
                               "Veep S4E3 Data.api");
         testInsertingShowName("/Sitcoms/Veep/Season 4/S04E03 Data.api",
                               "Veep S04E03 Data.api");
-        testInsertingShowName("/Drama/24/S02/S02E18 Day 2: 1:00 A.M. - 2:00 A.M..api",
-                              "24 S02E18 Day 2: 1:00 A.M. - 2:00 A.M..api");
+        testInsertingShowName("/Drama/24/S02/S02E18 Day 2 - 1 -00 A.M. - 2 -00 A.M..api",
+                              "24 S02E18 Day 2 - 1 -00 A.M. - 2 -00 A.M..api");
         testInsertingShowName("/Animation/AmericanDad/S11/S11E1 Roger Passes the Bar.mp4",
                               "AmericanDad S11E1 Roger Passes the Bar.mp4");
     }
