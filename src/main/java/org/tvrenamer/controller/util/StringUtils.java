@@ -67,14 +67,6 @@ public class StringUtils {
         return rval;
     }
 
-    public static String getExtension(String filename) {
-        int dot = filename.lastIndexOf('.');
-        if (dot >= 0) {
-            return filename.substring(dot);
-        }
-        return "";
-    }
-
     /**
      * Formats the given file size into a nice string (123 Bytes, 10.6 kB, 1.2 MB).<p>
      *
