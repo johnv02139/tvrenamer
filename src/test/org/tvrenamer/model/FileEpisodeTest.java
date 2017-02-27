@@ -36,12 +36,22 @@ public class FileEpisodeTest {
         mockListener = mock(SeriesLookupListener.class);
     }
 
+    // Helper method to generate a Path for use in testing FileEpisode.getExtension.
+    private void testGetExtensionString(String filepath, String extension) {
+        Path testPath = Paths.get(filepath);
+        String suffix = FileEpisode.getExtension(testPath);
+        assertEquals(extension, suffix);
+    }
+
     @Test
     public void testGetExtension() {
-        assertEquals(".mkv", FileEpisode.getExtension(Paths.get("dexter.407.720p.hdtv.x264-sys.mkv")));
-        assertEquals(".avi", FileEpisode.getExtension(Paths.get("Marvels.Agents.of.S.H.I.E.L.D.S04E03.1080p.HDTV.x264-KILLERS[ettv].avi")));
-        assertEquals(".mp4", FileEpisode.getExtension(Paths.get("/TV/Dexter/S05E05 First Blood.mp4")));
-        assertEquals("", FileEpisode.getExtension(Paths.get("Supernatural")));
+        testGetExtensionString("dexter.407.720p.hdtv.x264-sys.mkv", ".mkv");
+        testGetExtensionString("Marvels.Agents.of.S.H.I.E.L.D.S04E03.1080p.HDTV.x264-KILLERS[ettv].avi",
+                               ".avi");
+        testGetExtensionString("/TV/Dexter/S05E05 First Blood.mp4", ".mp4");
+        testGetExtensionString("Supernatural", "");
+        testGetExtensionString(".gitignore", "");
+        testGetExtensionString("foo/bar/.gitignore", "");
     }
 
     /**

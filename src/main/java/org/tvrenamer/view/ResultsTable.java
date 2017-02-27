@@ -62,7 +62,12 @@ import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Environment;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.Collator;
 import java.util.LinkedList;
 import java.util.List;
@@ -109,7 +114,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final UserPreferences prefs;
-    private final File preloadFolder;
+    private final Path preloadFolder;
     private final EpisodeDb episodeMap;
 
     private enum FileMoveIcon {
@@ -266,7 +271,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             if (episode == null) {
                 failToParseTableItem(item, fileName);
             } else {
-                String newFileName = episode.getFile().toAbsolutePath().toString();
+                String newFileName = episode.getPath().toAbsolutePath().toString();
                 episodeMap.put(newFileName, episode);
                 item.setText(CURRENT_FILE_COLUMN, newFileName);
                 item.setText(NEW_FILENAME_COLUMN, valueForNewFilename(episode));
@@ -283,16 +288,13 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return false;
     }
 
-    private TableItem createTableItem(FileEpisode episode) {
-        TableItem item = new TableItem(resultsTable, SWT.NONE);
-        item.setData(episode);
-        episode.setViewItem(item);
-
-        String fileName = episode.getFilename();
+    private void addItemToTable(TableItem item, FileEpisode episode) {
+        String fileName = episode.getFilepath();
         item.setText(CURRENT_FILE_COLUMN, fileName);
 
         if (episode.wasNotParsed()) {
-            return failToParseTableItem(item, fileName);
+            failToParseTableItem(item, fileName);
+            return;
         }
         String newFilename = fileName;
         // Set if the item is checked or not according
@@ -303,87 +305,73 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         newFilename = valueForNewFilename(episode);
         item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
         item.setText(NEW_FILENAME_COLUMN, newFilename);
-        return item;
     }
 
-    private int getTableItemIndex(TableItem item) {
+    private void addFileToRenamer(final Path path) {
+        TableItem item = new TableItem(resultsTable, SWT.NONE);
+        final FileEpisode episode = new FileEpisode(path, item, this);
+        episodeMap.add(episode);
+        // We add the file to the table even if we couldn't parse the filename
+        addItemToTable(item, episode);
+    }
+
+    private boolean fileIsVisible(Path path) {
+        boolean isVisible = false;
         try {
-            return resultsTable.indexOf(item);
-        } catch (IllegalArgumentException | SWTException ignored) {
-            // We'll just fall through and return the sentinel.
+            if (Files.exists(path)) {
+                if (Files.isHidden(path)) {
+                    logger.finer("ignoring hidden file " + path);
+                } else {
+                    isVisible = true;
+                }
+            }
+        } catch (IOException | SecurityException e) {
+            logger.finer("could not access file; treating as hidden: " + path);
         }
-        return ITEM_NOT_IN_TABLE;
+        return isVisible;
     }
 
-    private void addListOfFiles(final List<String> fileNames) {
-        // Update the list of ignored keywords
-        ignoreKeywords = prefs.getIgnoreKeywords();
-
-        for (final String fileName : fileNames) {
-            final FileEpisode episode = episodeMap.add(fileName);
-            episode.listen(this);
-            // We add the file to the table even if we couldn't parse the filename
-            final TableItem item = createTableItem(episode);
-            episode.lookupSeries();
+    private void addFileIfVisible(Path path) {
+        if (fileIsVisible(path) && Files.isRegularFile(path)) {
+            addFileToRenamer(path);
         }
     }
 
-    private void addFilesToList(File file, List<String> fileList, boolean descend) {
-        if (file.exists()) {
-            if (file.isHidden()) {
-                logger.finer("ignoring hidden file " + file);
-            } else if (file.isDirectory()) {
-                if (descend) {
-                    String[] fileNames = file.list();
-                    if (fileNames != null) {
-                        for (final String fileName : fileNames) {
-                            // recursive call
-                            addFilesToList(new File(file, fileName), fileList, true);
-                        }
+    private void addFilesRecursively(final Path path) {
+        if (fileIsVisible(path)) {
+            if (Files.isDirectory(path)) {
+                try (DirectoryStream<Path> contents = Files.newDirectoryStream(path)) {
+                    if (contents != null) {
+                        // recursive call
+                        contents.forEach(pth -> addFilesRecursively(pth));
+                        contents.close();
                     }
+                } catch (IOException ioe) {
+                    logger.log(Level.WARNING, "IO Exception descending " + path, ioe);
                 }
             } else {
-                fileList.add(file.getAbsolutePath());
+                addFileToRenamer(path);
             }
         }
     }
 
-    private void initiateRenamer(final String[] fileNames) {
-        final List<String> files = new LinkedList<>();
+    private void addFolderToRenamer(final Path path) {
+        if (prefs.isRecursivelyAddFolders()) {
+            addFilesRecursively(path);
+        } else {
+            addFileIfVisible(path);
+        }
+    }
+
+    private void addArrayOfStringsToRenamer(final String[] fileNames) {
+        boolean descend = prefs.isRecursivelyAddFolders();
         for (final String fileName : fileNames) {
-            addFilesToList(new File(fileName), files,
-                           prefs.isRecursivelyAddFolders());
-        }
-        addListOfFiles(files);
-    }
-
-    private void initiateRenamer(final File file) {
-        String[] fileArray = new String[1];
-        fileArray[0] = file.getAbsolutePath();
-        initiateRenamer(fileArray);
-    }
-
-    private void addSelectedFiles(FileDialog fd) {
-        String pathPrefix = fd.open();
-        if (pathPrefix != null) {
-            File file = new File(pathPrefix);
-            String parent = file.getParent();
-
-            String[] fileNames = fd.getFileNames();
-            for (int i = 0; i < fileNames.length; i++) {
-                fileNames[i] = parent + File.separatorChar + fileNames[i];
+            Path path = Paths.get(fileName);
+            if (descend) {
+                addFilesRecursively(path);
+            } else {
+                addFileIfVisible(path);
             }
-
-            initiateRenamer(fileNames);
-        }
-    }
-
-    private void addSelectedFolder(DirectoryDialog dd) {
-        String directory = dd.open();
-        if (directory != null) {
-            // load all of the files in the dir
-            File file = new File(directory);
-            initiateRenamer(file);
         }
     }
 
@@ -457,6 +445,15 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.setSortDirection(newSortDirection);
     }
 
+    private int getTableItemIndex(TableItem item) {
+        try {
+            return resultsTable.indexOf(item);
+        } catch (IllegalArgumentException | SWTException ignored) {
+            // We'll just fall through and return the sentinel.
+        }
+        return ITEM_NOT_IN_TABLE;
+    }
+
     private void deleteSelectedTableItems() {
         int index = ITEM_NOT_IN_TABLE;
         for (final TableItem item : resultsTable.getSelection()) {
@@ -471,7 +468,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
             item.setData(null);
 
-            String filename = ep.getFilename();
+            String filename = ep.getFilepath();
             episodeMap.remove(filename);
 
             resultsTable.remove(index);
@@ -838,7 +835,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                         FileTransfer ft = FileTransfer.getInstance();
                         if (ft.isSupportedType(e.currentDataType)) {
                             fileList = (String[]) e.data;
-                            initiateRenamer(fileList);
+                            addArrayOfStringsToRenamer(fileList);
                         }
                     }
                 });
@@ -957,15 +954,31 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         addFilesButton.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent e) {
-                    addSelectedFiles(fd);
+                    String pathPrefix = fd.open();
+                    if (pathPrefix != null) {
+                        Path path = Paths.get(pathPrefix);
+                        Path parent = path.getParent();
+
+                        String[] fileNames = fd.getFileNames();
+                        for (int i = 0; i < fileNames.length; i++) {
+                            path = parent.resolve(fileNames[i]);
+                            addFileIfVisible(path);
+                        }
+                    }
                 }
             });
+    }
 
+    private void setupAddFolderDialog() {
         final DirectoryDialog dd = new DirectoryDialog(shell, SWT.SINGLE);
         addFolderButton.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent e) {
-                    addSelectedFolder(dd);
+                    String directory = dd.open();
+                    if (directory != null) {
+                        // load all of the files in the dir
+                        addFolderToRenamer(Paths.get(directory));
+                    }
                 }
             });
     }
@@ -1112,6 +1125,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         // Add controls to main shell
         setupMainWindow();
         setupAddFilesDialog();
+        setupAddFolderDialog();
         setupClearFilesButton();
         setupSelectButtons();
         setupMenuBar();
@@ -1142,8 +1156,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             // sufficient, so leave it in here.
             Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
+            // Update the list of ignored keywords
+            ignoreKeywords = prefs.getIgnoreKeywords();
+
             if (preloadFolder != null) {
-                initiateRenamer(preloadFolder);
+                addFolderToRenamer(preloadFolder);
             }
 
             while (!shell.isDisposed()) {
@@ -1169,7 +1186,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         launch();
     }
 
-    public UIStarter(File preloadFolder) {
+    public UIStarter(Path preloadFolder) {
         prefs = UserPreferences.getInstance();
         this.preloadFolder = preloadFolder;
         episodeMap = new EpisodeDb();

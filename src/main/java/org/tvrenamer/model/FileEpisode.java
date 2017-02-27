@@ -7,7 +7,7 @@
 
 package org.tvrenamer.model;
 
-import static org.tvrenamer.model.util.Constants.ADDED_PLACEHOLDER_FILENAME;
+import static org.tvrenamer.model.util.Constants.*;
 
 import org.eclipse.swt.widgets.TableItem;
 import org.tvrenamer.controller.EpisodeInformationListener;
@@ -59,11 +59,12 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         ERROR
     }
 
-    // Although we also store the file object that clearly gives us all the information
+    // Although we also store the path object that clearly gives us all the information
     // about the file's name, store this explicitly to know what we were given.  Note,
     // even after the file is moved, this value remains the same.  Note also this could
     // be a non-normalized, relative pathstring, for example.
-    private final String originalFilename;
+    private final String originalFilepath;
+    private final String pathString;
 
     // "filename" instance vars -- these are the results of parsing the filename.
     // The "filenameSeries" is the precise string from the filename, that we think
@@ -100,6 +101,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     private ParseStatus parseStatus;
     private SeriesStatus seriesStatus;
     private FileStatus fileStatus;
+
     private Series series;
     private Season season;
 
@@ -118,24 +120,63 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     private NameFormatter formatter = null;
 
     public static String getExtension(Path path) {
-        String filename = path.getFileName().toString();
+        Path basename = path.getFileName();
+        if (basename == null) {
+            return EMPTY_STRING;
+        }
+        String filename = basename.toString();
         int dot = filename.lastIndexOf('.');
-        if (dot >= 0) {
+        // We assume that an "extension" only exists if there's something to extend --
+        // i.e., a base name.  If the last dot is the first character
+        if (dot > 0) {
             return filename.substring(dot);
         }
-        return "";
+        return EMPTY_STRING;
+    }
+
+    // Initially we create the FileEpisode with nothing more than the file and
+    // possibly a listener.  Other information will flow in.
+    public FileEpisode(Path path,
+                       TableItem item,
+                       EpisodeInformationListener listener)
+    {
+        fileStatus = FileStatus.UNCHECKED;
+        pathObj = path;
+        viewItem = item;
+        originalFilepath = path.toString();
+        pathString = path.toAbsolutePath().toString();
+        filenameSuffix = getExtension(path);
+
+        if (item != null) {
+            item.setData(this);
+        }
+
+        boolean isParsed = FilenameParser.parseFilename(this);
+        if (isParsed) {
+            parseStatus = ParseStatus.PARSED;
+        } else {
+            parseStatus = ParseStatus.BAD_PARSE;
+        }
+        if (listener != null) {
+            listeners.push(listener);
+            listener.onEpisodeUpdate(this);
+            if (isParsed) {
+                seriesStatus = SeriesStatus.QUERYING;
+                lookupSeries();
+            } else {
+                seriesStatus = SeriesStatus.NOT_STARTED;
+            }
+        }
     }
 
     // Initially we create the FileEpisode with nothing more than the filename.
     // Other information will flow in.
+    public FileEpisode(Path path) {
+        this(path, null, null);
+    }
+
     public FileEpisode(String filename) {
-        parseStatus = ParseStatus.UNPARSED;
-        seriesStatus = SeriesStatus.NOT_STARTED;
-        fileStatus = FileStatus.UNCHECKED;
-        originalFilename = filename;
-        pathObj = Paths.get(filename);
-        filenameSuffix = getExtension(pathObj);
-        FilenameParser.parseFilename(this);
+        this(Paths.get(filename));
     }
 
     public void listen(EpisodeInformationListener o) {
@@ -192,8 +233,12 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (seriesStatus == SeriesStatus.GOT_SERIES);
     }
 
-    public String getFilename() {
-        return originalFilename;
+    public String getFilepath() {
+        return originalFilepath;
+    }
+
+    public String getPathString() {
+        return pathString;
     }
 
     public String getFilenameSuffix() {
@@ -254,31 +299,17 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         }
     }
 
-    public Path getFile() {
+    public Path getPath() {
         return pathObj;
     }
 
-    public void setFile(Path pathObj) {
+    public void setPath(Path pathObj) {
         this.pathObj = pathObj;
     }
 
     private void update() {
         for (EpisodeInformationListener l : listeners) {
             l.onEpisodeUpdate(this);
-        }
-    }
-
-    public void setParsed() {
-        if (parseStatus != ParseStatus.PARSED) {
-            parseStatus = ParseStatus.PARSED;
-            update();
-        }
-    }
-
-    public void setBadParse() {
-        if (parseStatus != ParseStatus.BAD_PARSE) {
-            parseStatus = ParseStatus.BAD_PARSE;
-            update();
         }
     }
 
@@ -388,7 +419,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     public void lookupSeries() {
         if (filenameSeries == null) {
             logger.info("cannot lookup series; did not extract a series name: "
-                        + originalFilename);
+                        + originalFilepath);
         } else {
             ShowStore.mapStringToShow(filenameSeries, this);
             logger.fine("mapStringToShow returned for " + filenameSeries);

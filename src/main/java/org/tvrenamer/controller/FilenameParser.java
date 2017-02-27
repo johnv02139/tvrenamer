@@ -76,7 +76,7 @@ public class FilenameParser {
     }
 
     public static boolean parseFilename(FileEpisode episode) {
-        Path p = episode.getFile();
+        Path p = episode.getPath();
         String withShow = insertShowNameIfNeeded(p);
         String fName = stripJunk(withShow);
 
@@ -97,11 +97,9 @@ public class FilenameParser {
                 episode.setFilenameSeason(matcher.group(2));
                 episode.setFilenameEpisode(matcher.group(3));
                 episode.setFilenameResolution(resolution);
-                episode.setParsed();
                 return true;
             }
         }
-        episode.setBadParse();
         return false;
     }
 

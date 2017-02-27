@@ -232,10 +232,13 @@ public class UserPreferences extends Observable {
     /**
      * Gets the directory to preload into the table.
      *
-     * @return File object representing the directory.
+     * @return Path object representing the directory.
      */
-    public File getPreloadFolder() {
-        return preloadFolder;
+    public Path getPreloadPath() {
+        if (preloadFolder == null) {
+            return null;
+        }
+        return preloadFolder.toPath();
     }
 
     /**

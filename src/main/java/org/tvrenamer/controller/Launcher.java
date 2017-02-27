@@ -35,7 +35,7 @@ public class Launcher {
         // folder, when the UIStarter could do so itself, but the idea is that
         // really, loading the files and looking up the info should be outside
         // of the UI.  This is just a first tiny step in that direction.
-        UIStarter ui = new UIStarter(prefs.getPreloadFolder());
+        UIStarter ui = new UIStarter(prefs.getPreloadPath());
         ui.run();
         // The application doesn't seem to exit without this line.  I assume
         // this means that there are other threads that have not been shut
