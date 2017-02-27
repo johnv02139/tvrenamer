@@ -282,51 +282,51 @@ public class FilenameParserTest {
                        "warehouse.13.", "1", "01", "720p");
         testRegexParse(COMPILED_REGEX[1], "24.S07.E18.720p.BlueRay.x264-SiNNERS.mkv",
                        "24.", "07", "18", "720p");
-        testRegexParse(COMPILED_REGEX[2], "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv",
+        testRegexParse(COMPILED_REGEX[3], "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv",
                        "human.target.2010.", "01", "02", "720p");
         testRegexParse(COMPILED_REGEX[1], "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv",
                        "human.target.2010.", "01", "02", "720p");
-        testRegexParse(COMPILED_REGEX[3], "game.of.thrones.5x01.1080p.mp4",
+        testRegexParse(COMPILED_REGEX[4], "game.of.thrones.5x01.1080p.mp4",
                        "game.of.thrones.", "5", "01", "1080p");
-        testRegexParse(COMPILED_REGEX[4], "dexter.407.720p.hdtv.x264-sys.mkv",
+        testRegexParse(COMPILED_REGEX[5], "dexter.407.720p.hdtv.x264-sys.mkv",
                        "dexter.", "4", "07", "720p");
 
-        testRegexParse(COMPILED_REGEX[5], "American.Dad.S09E17.HDTV.x264-2HD.mp4",
+        testRegexParse(COMPILED_REGEX[6], "American.Dad.S09E17.HDTV.x264-2HD.mp4",
                        "American.Dad.", "09", "17", null);
-        testRegexParse(COMPILED_REGEX[6], "24.s08.e01.hdtv.x264-immerse.mkv",
+        testRegexParse(COMPILED_REGEX[7], "24.s08.e01.hdtv.x264-immerse.mkv",
                        "24.", "08", "01", null);
-        testRegexParse(COMPILED_REGEX[7], "House.Of.Cards.2013.S01E06.HDTV.x264-EVOLVE.mp4",
+        testRegexParse(COMPILED_REGEX[9], "House.Of.Cards.2013.S01E06.HDTV.x264-EVOLVE.mp4",
                        "House.Of.Cards.2013.", "01", "06", null);
-        testRegexParse(COMPILED_REGEX[8], "/TV/Lost/Lost [2x07].mkv",
+        testRegexParse(COMPILED_REGEX[10], "/TV/Lost/Lost [2x07].mkv",
                        "/TV/Lost/Lost [", "2", "07", null);
-        testRegexParse(COMPILED_REGEX[9], "ncis.1304.hdtv-lol",
+        testRegexParse(COMPILED_REGEX[11], "ncis.1304.hdtv-lol",
                        "ncis.", "13", "04", null);
 
-        testRegexParse(COMPILED_REGEX[5], "warehouse.13.s1e01.720p.hdtv.x264-dimension.mkv",
+        testRegexParse(COMPILED_REGEX[6], "warehouse.13.s1e01.720p.hdtv.x264-dimension.mkv",
                        "warehouse.13.", "1", "01", null);
-        testRegexParse(COMPILED_REGEX[5], "Frasier_S11E12.avi",
+        testRegexParse(COMPILED_REGEX[7], "Frasier_S11E12.avi",
                        "Frasier_", "11", "12", null);
-        testRegexParse(COMPILED_REGEX[6], "24.S07.E18.720p.BlueRay.x264-SiNNERS.mkv",
+        testRegexParse(COMPILED_REGEX[7], "24.S07.E18.720p.BlueRay.x264-SiNNERS.mkv",
                        "24.", "07", "18", null);
-        testRegexParse(COMPILED_REGEX[7], "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv",
+        testRegexParse(COMPILED_REGEX[9], "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv",
                        "human.target.2010.", "01", "02", null);
-        testRegexParse(COMPILED_REGEX[8], "game.of.thrones.5x01.1080p.mp4",
+        testRegexParse(COMPILED_REGEX[10], "game.of.thrones.5x01.1080p.mp4",
                        "game.of.thrones.", "5", "01", null);
-        testRegexParse(COMPILED_REGEX[9], "dexter.407.hdtv.x264-sys.mkv",
+        testRegexParse(COMPILED_REGEX[11], "dexter.407.hdtv.x264-sys.mkv",
                        "dexter.", "4", "07", null);
         // This is clearly wrong.  But add it as a test to document the current behavior.
-        testRegexParse(COMPILED_REGEX[9], "dexter.407.720p.hdtv.x264-sys.mkv",
+        testRegexParse(COMPILED_REGEX[11], "dexter.407.720p.hdtv.x264-sys.mkv",
                        "dexter.407.", "7", "20", null);
 
         testRegexUnparseable(COMPILED_REGEX[0], "24.S07.E18.720p.BlueRay.x264-SiNNERS.mkv");
         testRegexUnparseable(COMPILED_REGEX[0], "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv");
         testRegexUnparseable(COMPILED_REGEX[0], "game.of.thrones.5x01.1080p.mp4");
         testRegexUnparseable(COMPILED_REGEX[1], "game.of.thrones.5x01.1080p.mp4");
-        testRegexUnparseable(COMPILED_REGEX[2], "game.of.thrones.5x01.1080p.mp4");
+        testRegexUnparseable(COMPILED_REGEX[3], "game.of.thrones.5x01.1080p.mp4");
         testRegexUnparseable(COMPILED_REGEX[0], "dexter.407.720p.hdtv.x264-sys.mkv");
         testRegexUnparseable(COMPILED_REGEX[1], "dexter.407.720p.hdtv.x264-sys.mkv");
-        testRegexUnparseable(COMPILED_REGEX[2], "dexter.407.720p.hdtv.x264-sys.mkv");
         testRegexUnparseable(COMPILED_REGEX[3], "dexter.407.720p.hdtv.x264-sys.mkv");
+        testRegexUnparseable(COMPILED_REGEX[4], "dexter.407.720p.hdtv.x264-sys.mkv");
     }
 
     @Test

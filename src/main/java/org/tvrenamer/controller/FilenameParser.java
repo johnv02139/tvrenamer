@@ -24,6 +24,7 @@ public class FilenameParser {
     public static final String[] REGEX = {
             "(.+?[^a-zA-Z0-9]\\D*?)[sS](\\d\\d?)[eE](\\d\\d?).*", // this one matches SXXEXX
             "(.+[^a-zA-Z0-9]\\D*?)[sS](\\d\\d?)\\D*?[eE](\\d\\d).*", // this one matches sXX.eXX
+            "(.+?[^a-zA-Z0-9]\\D*?)[sS](\\d\\d)(\\d\\d).*", // this one matches SXXYY
             "(.+?\\d{4}[^a-zA-Z0-9]\\D*?)[sS]?(\\d\\d?)\\D*?(\\d\\d).*", // this one works for titles with years
             "(.+[^a-zA-Z0-9]\\D*?)(\\d\\d?)\\D+(\\d\\d).*", // this one matches everything else
             "(.+[^a-zA-Z0-9]+)(\\d\\d?)(\\d\\d).*" // truly last resort
@@ -63,7 +64,7 @@ public class FilenameParser {
             Path parent = path.getParent();
             String parentName = parent.getFileName().toString();
             if (parentName.toLowerCase().startsWith("season")
-                || parentName.matches("[sS][0-3][0-9]"))
+                || parentName.matches("[sS][0-3]\\d"))
             {
                 parentName = path.getParent().getParent().getFileName().toString();
             }
