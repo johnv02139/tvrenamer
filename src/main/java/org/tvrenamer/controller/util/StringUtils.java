@@ -50,14 +50,6 @@ public class StringUtils {
         return rval;
     }
 
-    public static String getExtension(String filename) {
-        int dot = filename.lastIndexOf('.');
-        if (dot >= 0) {
-            return filename.substring(dot);
-        }
-        return "";
-    }
-
     /**
      * Replaces unsafe HTML Characters with HTML Entities
      *

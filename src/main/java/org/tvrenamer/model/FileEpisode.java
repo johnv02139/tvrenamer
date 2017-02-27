@@ -43,6 +43,15 @@ public class FileEpisode {
     // a link to the user preferences to know how the user wants the file renamed.
     private UserPreferences userPrefs = UserPreferences.getInstance();
 
+    public static String getExtension(File file) {
+        String filename = file.getName();
+        int dot = filename.lastIndexOf('.');
+        if (dot >= 0) {
+            return filename.substring(dot);
+        }
+        return "";
+    }
+
     // Initially we create the FileEpisode with nothing more than the filename.
     // Other information will flow in.
     public FileEpisode(String filename) {
@@ -203,7 +212,7 @@ public class FileEpisode {
                                                          formatDate(airDate, "yy"));
                 }
 
-                String resultingFilename = newFilename.concat(StringUtils.getExtension(fileObj.getName()));
+                String resultingFilename = newFilename.concat(getExtension(fileObj));
                 return StringUtils.sanitiseTitle(resultingFilename);
             }
             case UNPARSED:
