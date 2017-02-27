@@ -164,6 +164,16 @@ public class FilenameParserTest {
         values.add(new TestInput("firefly.1x13.hdtv-lol.mp4", "firefly", "1", "13"));
         values.add(new TestInput("firefly.1x14.hdtv-lol.mp4", "firefly", "1", "14"));
         values.add(new TestInput("ncis.1304.hdtv-lol", "ncis", "13", "04"));
+        values.add(new TestInput("Frasier.S11E12.avi", "frasier", "11", "12"));
+        values.add(new TestInput("Frasier-S11E12.avi", "frasier", "11", "12"));
+        values.add(new TestInput("Frasier S11E12.avi", "frasier", "11", "12"));
+        values.add(new TestInput("Frasier_S11E12.avi", "frasier", "11", "12"));
+        values.add(new TestInput("Frasier/Frasier_S11E12.avi", "frasier", "11", "12"));
+        values.add(new TestInput("dups/Frasier/Frasier_S11E12.avi", "frasier", "11", "12"));
+        values.add(new TestInput("excellent/dups/Frasier/Frasier_S11E12.avi",
+                                 "frasier", "11", "12"));
+        values.add(new TestInput("testdir/excellent/dups/Frasier/Frasier_S11E12.avi",
+                                 "frasier", "11", "12"));
     }
 
     @Test
@@ -294,6 +304,8 @@ public class FilenameParserTest {
 
         testRegexParse(COMPILED_REGEX[5], "warehouse.13.s1e01.720p.hdtv.x264-dimension.mkv",
                        "warehouse.13.", "1", "01", null);
+        testRegexParse(COMPILED_REGEX[5], "Frasier_S11E12.avi",
+                       "Frasier_", "11", "12", null);
         testRegexParse(COMPILED_REGEX[6], "24.S07.E18.720p.BlueRay.x264-SiNNERS.mkv",
                        "24.", "07", "18", null);
         testRegexParse(COMPILED_REGEX[7], "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv",
@@ -321,7 +333,7 @@ public class FilenameParserTest {
     public void testParseFileName() {
         for (TestInput testInput : values) {
             FileEpisode retval = new FileEpisode(testInput.input);
-            assertTrue(retval.wasParsed());
+            assertTrue(testInput.input + " could not be parsed", retval.wasParsed());
             assertEquals(testInput.input, testInput.queryString,
                          ShowStore.makeQueryString(retval.getFilenameSeries()));
             assertEquals(testInput.input,
