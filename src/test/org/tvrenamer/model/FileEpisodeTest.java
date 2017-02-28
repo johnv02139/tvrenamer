@@ -36,6 +36,14 @@ public class FileEpisodeTest {
         mockListener = mock(ShowInformationListener.class);
     }
 
+    @Test
+    public void testGetExtension() {
+        assertEquals(".mkv", FileEpisode.getExtension(Paths.get("dexter.407.720p.hdtv.x264-sys.mkv")));
+        assertEquals(".avi", FileEpisode.getExtension(Paths.get("Marvels.Agents.of.S.H.I.E.L.D.S04E03.1080p.HDTV.x264-KILLERS[ettv].avi")));
+        assertEquals(".mp4", FileEpisode.getExtension(Paths.get("/TV/Dexter/S05E05 First Blood.mp4")));
+        assertEquals("", FileEpisode.getExtension(Paths.get("Supernatural")));
+    }
+
     /**
      * Test case for <a href="https://github.com/tvrenamer/tvrenamer/issues/36">Issue 36</a> where the title
      * "$pringfield" breaks the regex used for String.replaceAll()
