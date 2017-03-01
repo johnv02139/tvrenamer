@@ -20,8 +20,8 @@ public class EpisodeDb {
         episodes.clear();
     }
 
-    public boolean containsKey(Object key) {
-        return episodes.containsValue(key);
+    public boolean containsKey(String key) {
+        return episodes.containsKey(key);
     }
 
     public FileEpisode get(String key) {
@@ -54,7 +54,7 @@ public class EpisodeDb {
     }
 
     public FileEpisode add(FileEpisode ep) {
-        String filename = ep.getPathString();
+        String filename = ep.getFilepath();
         put(filename, ep);
         return ep;
     }

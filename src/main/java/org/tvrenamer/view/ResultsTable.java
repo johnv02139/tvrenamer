@@ -1,3 +1,36 @@
+/**
+ * UIStarter -- creates and manages the table of episodes.
+ *
+ * This is the process the code executes when adding files to the table:
+ * - verify that the file exists, is not hidden, and is not already in the table
+ * - create a TableItem to go in the table
+ * - create a FileEpisode to hold all the information about the file
+ *   - upon creation, the FileEpisode will have its filename parsed
+ *   - we pass the TableItem to the FileEpisode constructor, which establishes
+ *     pointers back and forth
+ *   - we also pass the FileEpisode the instance of the UIStarter, which implements
+ *     EpisodeInformationListener.  The FileEpisode will register the listener, and
+ *     notify us when it gets more information about the episode.
+ *   - assuming the filename parsed correctly (basically meaning that we were able
+ *     to find a season number and episode number in the filename), the FileEpisode
+ *     constructor will spawn a thread to look up the show and episode information
+ * - once the FileEpisode constructor returns, we add the table item to the table;
+ *   for the "Proposed File Name" field, we have a status text rather than an actual
+ *   new filename.  Files start out un-selected, and with a status that indicates
+ *   they have not been processed yet.
+ * - we also add the FileEpisode to a filename-to-object mapping in case the same
+ *   file is added again later
+ * - then, when the spawned thread gets information about the TV series that the
+ *   file is an episode of, it updates the listener, which updates the information
+ *   displayed in the table
+ * - after we know which series it is, information about the particular episode is
+ *   looked up; when that information becomes available, we again get a callback
+ *   and update the table again
+ * - at that point, we know the "new" name of the file, and it is ready to be renamed
+ *   on demand
+ *
+ */
+
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
@@ -266,15 +299,31 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     private void refreshTable() {
         logger.info("Refreshing table");
         for (TableItem item : getTableItems()) {
+            FileEpisode episode = (FileEpisode) item.getData();
+
             String fileName = item.getText(CURRENT_FILE_COLUMN);
-            FileEpisode episode = episodeMap.remove(fileName);
-            if (episode == null) {
-                failToParseTableItem(item, fileName);
-            } else {
-                String newFileName = episode.getPath().toAbsolutePath().toString();
+            FileEpisode removed = episodeMap.remove(fileName);
+
+            if ((episode != null) && (episode == removed)) {
+                String newFileName = episode.getFilepath();
                 episodeMap.put(newFileName, episode);
                 item.setText(CURRENT_FILE_COLUMN, newFileName);
                 item.setText(NEW_FILENAME_COLUMN, valueForNewFilename(episode));
+            } else {
+                failToParseTableItem(item, fileName);
+                if (episode == null) {
+                    if (removed == null) {
+                        logger.warning("table item without FileEpisode: " + fileName);
+                    } else {
+                        logger.warning("table item with no FileEpisode data: " + fileName);
+                    }
+                } else {
+                    if (removed == null) {
+                        logger.warning("table item with no episodeMap mapping: " + fileName);
+                    } else {
+                        logger.warning("table item mapped to two different episodes: " + fileName);
+                    }
+                }
             }
         }
     }
@@ -308,11 +357,17 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void addFileToRenamer(final Path path) {
-        TableItem item = new TableItem(resultsTable, SWT.NONE);
-        final FileEpisode episode = new FileEpisode(path, item, this);
-        episodeMap.add(episode);
-        // We add the file to the table even if we couldn't parse the filename
-        addItemToTable(item, episode);
+        final Path absPath = path.toAbsolutePath();
+        final String key = absPath.toString();
+        if (episodeMap.containsKey(key)) {
+            logger.info("already in table: " + key);
+        } else {
+            final TableItem item = new TableItem(resultsTable, SWT.NONE);
+            final FileEpisode episode = new FileEpisode(absPath, item, this);
+            // We add the file to the table even if we couldn't parse the filename
+            addItemToTable(item, episode);
+            episodeMap.add(episode);
+        }
     }
 
     private boolean fileIsVisible(Path path) {
@@ -493,14 +548,15 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
         for (final TableItem item : getTableItems()) {
             if (item.getChecked()) {
-                final String fileName = item.getText(CURRENT_FILE_COLUMN);
-                final File currentFile = new File(fileName);
-                final FileEpisode episode = episodeMap.get(fileName);
+                final FileEpisode episode = (FileEpisode) item.getData();
 
                 // Skip files not successfully downloaded
                 if (!episode.isDownloaded()) {
                     continue;
                 }
+
+                final String fileName = item.getText(CURRENT_FILE_COLUMN);
+                final File currentFile = new File(fileName);
 
                 String newName = item.getText(NEW_FILENAME_COLUMN);
                 File newFile = null;
