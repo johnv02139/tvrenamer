@@ -160,6 +160,20 @@ public class UserPreferences extends Observable {
     private void preferenceChanged(UserPreference preference, Object newValue) {
         setChanged();
         notifyObservers(preference);
+        clearChanged();
+    }
+
+
+    /**
+     * Simply the complement of equals(), but with the specific purpose of detecting
+     * if the value of a preference has been changed.
+     *
+     * @param originalValue the value of the UserPreference before the dialog was opened
+     * @param newValue the value of the UserPreference as set in the dialog
+     * @return true if the values are different
+     */
+    private boolean valuesAreDifferent(Object originalValue, Object newValue) {
+        return !originalValue.equals(newValue);
     }
 
     /**
@@ -168,7 +182,7 @@ public class UserPreferences extends Observable {
      * @param dir the directory to use as destination
      */
     public void setDestinationDirectory(File dir) throws TVRenamerIOException {
-        if (hasChanged(this.destDir, dir)) {
+        if (valuesAreDifferent(this.destDir, dir)) {
             this.destDir = dir;
             ensurePath();
 
@@ -183,7 +197,7 @@ public class UserPreferences extends Observable {
      * @param dir the path to the directory
      */
     public void setDestinationDirectory(String dir) throws TVRenamerIOException {
-        if (hasChanged(this.destDir.getAbsolutePath(), dir)) {
+        if (valuesAreDifferent(this.destDir.getAbsolutePath(), dir)) {
             this.destDir = new File(dir);
             ensurePath();
 
@@ -210,7 +224,7 @@ public class UserPreferences extends Observable {
     }
 
     public void setMoveEnabled(boolean moveEnabled) {
-        if (hasChanged(this.moveEnabled, moveEnabled)) {
+        if (valuesAreDifferent(this.moveEnabled, moveEnabled)) {
             this.moveEnabled = moveEnabled;
 
             preferenceChanged(UserPreference.MOVE_ENABLED, moveEnabled);
@@ -227,7 +241,7 @@ public class UserPreferences extends Observable {
     }
 
     public void setRenameEnabled(boolean renameEnabled) {
-        if (hasChanged(this.renameEnabled, renameEnabled)) {
+        if (valuesAreDifferent(this.renameEnabled, renameEnabled)) {
             this.renameEnabled = renameEnabled;
 
             preferenceChanged(UserPreference.RENAME_ENABLED, renameEnabled);
@@ -244,7 +258,7 @@ public class UserPreferences extends Observable {
     }
 
     public void setRecursivelyAddFolders(boolean recursivelyAddFolders) {
-        if (hasChanged(this.recursivelyAddFolders, recursivelyAddFolders)) {
+        if (valuesAreDifferent(this.recursivelyAddFolders, recursivelyAddFolders)) {
             this.recursivelyAddFolders = recursivelyAddFolders;
 
             preferenceChanged(UserPreference.ADD_SUBDIRS, recursivelyAddFolders);
@@ -261,7 +275,7 @@ public class UserPreferences extends Observable {
     }
 
     public void setIgnoreKeywords(List<String> ignoreKeywords) {
-        if (hasChanged(this.ignoreKeywords, ignoreKeywords)) {
+        if (valuesAreDifferent(this.ignoreKeywords, ignoreKeywords)) {
             this.ignoreKeywords.clear();
             for (String ignorable : ignoreKeywords) {
                 // Be careful not to allow empty string as a "keyword."
@@ -286,7 +300,7 @@ public class UserPreferences extends Observable {
         // Remove the displayed "
         prefix = prefix.replaceAll("\"", "");
 
-        if (hasChanged(this.seasonPrefix, prefix)) {
+        if (valuesAreDifferent(this.seasonPrefix, prefix)) {
             this.seasonPrefix = StringUtils.sanitiseTitle(prefix);
 
             preferenceChanged(UserPreference.SEASON_PREFIX, prefix);
@@ -306,7 +320,7 @@ public class UserPreferences extends Observable {
     }
 
     public void setSeasonPrefixLeadingZero(boolean seasonPrefixLeadingZero) {
-        if (hasChanged(this.seasonPrefixLeadingZero, seasonPrefixLeadingZero)) {
+        if (valuesAreDifferent(this.seasonPrefixLeadingZero, seasonPrefixLeadingZero)) {
             this.seasonPrefixLeadingZero = seasonPrefixLeadingZero;
 
             preferenceChanged(UserPreference.LEADING_ZERO, seasonPrefixLeadingZero);
@@ -315,7 +329,7 @@ public class UserPreferences extends Observable {
     }
 
     public void setRenameReplacementString(String renameReplacementMask) {
-        if (hasChanged(this.renameReplacementMask, renameReplacementMask)) {
+        if (valuesAreDifferent(this.renameReplacementMask, renameReplacementMask)) {
             this.renameReplacementMask = renameReplacementMask;
 
             preferenceChanged(UserPreference.REPLACEMENT_MASK, renameReplacementMask);
@@ -331,7 +345,7 @@ public class UserPreferences extends Observable {
     }
 
     public void setProxy(ProxySettings proxy) {
-        if (hasChanged(this.proxy, proxy)) {
+        if (valuesAreDifferent(this.proxy, proxy)) {
             this.proxy = proxy;
             proxy.apply();
 
@@ -350,7 +364,7 @@ public class UserPreferences extends Observable {
      * @param checkForUpdates the checkForUpdates to set
      */
     public void setCheckForUpdates(boolean checkForUpdates) {
-        if (hasChanged(this.checkForUpdates, checkForUpdates)) {
+        if (valuesAreDifferent(this.checkForUpdates, checkForUpdates)) {
             this.checkForUpdates = checkForUpdates;
 
             preferenceChanged(UserPreference.UPDATE_CHECK, checkForUpdates);
@@ -377,9 +391,5 @@ public class UserPreferences extends Observable {
             + ", moveEnabled=" + moveEnabled + ", renameEnabled=" + renameEnabled
             + ", renameReplacementMask=" + renameReplacementMask + ", proxy=" + proxy
             + ", checkForUpdates=" + checkForUpdates + ", setRecursivelyAddFolders=" + recursivelyAddFolders + "]";
-    }
-
-    private boolean hasChanged(Object originalValue, Object newValue) {
-        return !originalValue.equals(newValue);
     }
 }
