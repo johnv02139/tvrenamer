@@ -43,7 +43,7 @@ public class GlobalOverrides {
     }
 
     public String applyTitleOverride(String showName) {
-        String name = this.showNames.get(showName);
+        String name = showNames.get(showName);
         if (name == null) {
             name = showName;
         }
