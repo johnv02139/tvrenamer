@@ -76,6 +76,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     private String filenameEpisode;
     private String filenameResolution = "";
 
+    private String seriesName = null;
     private String fileBasename = null;
 
     private int seasonNum = 0;
@@ -224,8 +225,8 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         if ((seasonNum == 0) || (episodeNum == 0)) {
             return false;
         }
-        // TODO: not sure
-        return ((seriesStatus == SeriesStatus.PARSED_ALL)
+        return ((parseStatus == ParseStatus.PARSED)
+                && (seriesStatus == SeriesStatus.PARSED_ALL)
                 && (fileStatus != FileStatus.MOVING));
     }
 
@@ -251,7 +252,9 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     }
 
     public void setSeriesName(String seriesName) {
-        logger.warning("setSeriesName not implemented yet: " + seriesName);
+        this.seriesName = seriesName;
+        seriesStatus = SeriesStatus.QUERYING;
+        lookupSeries();
     }
 
     public String getFilenameSeason() {
