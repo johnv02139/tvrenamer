@@ -49,7 +49,6 @@ public class Constants {
     public static final String ICON_PARENT_DIRECTORY = "res";
     public static final String TVRENAMER_ICON_PATH = "/icons/tvrenamer.png";
     public static final String LOGGING_PROPERTIES = "/logging.properties";
-    public static final String DEVELOPER_DEFAULT_OVERRIDES_FILENAME = "etc/default-overrides.xml";
 
     public static final String QUIT_LABEL = "Quit";
     public static final String CANCEL_LABEL = "Cancel";
@@ -150,7 +149,6 @@ public class Constants {
 
     private static final String CONFIGURATION_DIRECTORY_NAME = ".tvrenamer";
     private static final String PREFERENCES_FILENAME = "prefs.xml";
-    private static final String OVERRIDES_FILENAME = "overrides.xml";
     private static final String TVDB_DOWNLOAD_DIRNAME = "thetvdb";
     private static final String EPLIST_CACHE_NAME = "episodes";
 
@@ -162,12 +160,16 @@ public class Constants {
     public static final Path DEFAULT_DESTINATION_DIRECTORY = USER_HOME_DIR.resolve("TV");
     public static final Path CONFIGURATION_DIRECTORY = USER_HOME_DIR.resolve(CONFIGURATION_DIRECTORY_NAME);
     public static final Path PREFERENCES_FILE = CONFIGURATION_DIRECTORY.resolve(PREFERENCES_FILENAME);
-    public static final Path OVERRIDES_FILE = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
     public static final Path THETVDB_DL_DIR = CONFIGURATION_DIRECTORY.resolve(TVDB_DOWNLOAD_DIRNAME);
     public static final Path EPLIST_CACHE = CONFIGURATION_DIRECTORY.resolve(EPLIST_CACHE_NAME);
 
     public static final Path PREFERENCES_FILE_LEGACY = USER_HOME_DIR.resolve("tvrenamer.preferences");
-    public static final Path OVERRIDES_FILE_LEGACY = USER_HOME_DIR.resolve(".tvrenameroverrides");
+
+    public static final String DEVELOPER_DEFAULT_OVERRIDES_FILENAME = "etc/default-overrides.xml";
+    private static final String OVERRIDES_FILENAME = "overrides.xml";
+    public static final Path OVERRIDES_FILE = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
+    public static final Path CONFIGDIR_OVERRIDES = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
+    public static final Path FREE_STANDING_OVERRIDES = USER_HOME_DIR.resolve(".tvrenameroverrides");
 
     @SuppressWarnings("unused")
     public static final String EMPTY_STRING = "";

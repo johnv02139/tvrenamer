@@ -138,7 +138,7 @@ public class ShowName {
          */
         static QueryString lookupQueryString(String foundName) {
             String queryString = StringUtils.makeQueryString(foundName);
-            queryString = GlobalOverrides.getInstance().getQueryOverride(queryString);
+            // TODO: process queryString through standard filter?
             QueryString queryObj = QUERY_STRINGS.get(queryString);
             if (queryObj == null) {
                 queryObj = new QueryString(queryString);

@@ -6,7 +6,6 @@ import org.tvrenamer.controller.UserPreferencesPersistence;
 import org.tvrenamer.controller.util.FileUtilities;
 import org.tvrenamer.controller.util.StringUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -115,29 +114,13 @@ public class UserPreferences extends Observable {
                 }
             }
         }
-        if (Files.notExists(OVERRIDES_FILE)) {
-            if (Files.exists(OVERRIDES_FILE_LEGACY)) {
-                try {
-                    Files.move(OVERRIDES_FILE_LEGACY, OVERRIDES_FILE);
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, e.getMessage(), e);
-                    throw new RuntimeException("Could not rename old overrides file from "
-                                               + OVERRIDES_FILE_LEGACY + " to " + OVERRIDES_FILE);
-                }
-            } else {
-                // Previously the GlobalOverrides class was hard-coded to write some
-                // overrides to the file.  I don't think that's right, but to try to
-                // preserve the default behavior, if the user doesn't have any other
-                // overrides file, we'll try to copy one from the source code into
-                // place.  If it doesn't work, so be it.
-                Path defOver = Paths.get(DEVELOPER_DEFAULT_OVERRIDES_FILENAME);
-                if (Files.exists(defOver)) {
-                    try {
-                        Files.copy(defOver, OVERRIDES_FILE);
-                    } catch (IOException ioe) {
-                        logger.info("unable to copy default overrides file.");
-                    }
-                }
+        if (Files.exists(FREE_STANDING_OVERRIDES)) {
+            try {
+                Files.move(FREE_STANDING_OVERRIDES, CONFIGDIR_OVERRIDES);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, e.getMessage(), e);
+                throw new RuntimeException("Could not rename old overrides file from "
+                                           + FREE_STANDING_OVERRIDES + " to " + CONFIGDIR_OVERRIDES);
             }
         }
         if (Files.notExists(THETVDB_DL_DIR)) {
