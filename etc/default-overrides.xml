@@ -5,8 +5,16 @@
       <string>House of Cards</string>
     </entry>
     <entry>
+      <string>archer</string>
+      <string>Archer%20(2009)</string>
+    </entry>
+    <entry>
       <string>Archer (2009)</string>
       <string>Archer</string>
+    </entry>
+    <entry>
+      <string>the%20newsroom</string>
+      <string>The%20%20Newsroom%20(2012)</string>
     </entry>
     <entry>
       <string>The Newsroom (2012)</string>
@@ -50,12 +58,20 @@
       <string>Lost</string>
     </entry>
     <entry>
+      <string>louie</string>
+      <string>Louie%20(2010)</string>
+    </entry>
+    <entry>
       <string>Louie (2010)</string>
       <string>Louie</string>
     </entry>
     <entry>
       <string>The Cape (2011)</string>
       <string>The Cape</string>
+    </entry>
+    <entry>
+      <string>the%20goldbergs</string>
+      <string>The%20Goldbergs%20(2013)</string>
     </entry>
     <entry>
       <string>The Goldbergs (2013)</string>
