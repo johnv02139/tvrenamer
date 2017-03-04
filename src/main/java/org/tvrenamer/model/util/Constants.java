@@ -40,6 +40,8 @@ public class Constants {
 
     public static final String DEVELOPER_DEFAULT_OVERRIDES_FILENAME = "etc/default-overrides.xml";
 
+    public static final String IMDB_BASE_URL = "http://www.imdb.com/title/";
+
     public static final File USER_HOME_DIR = new File(Environment.USER_HOME);
 
     public static final File DEFAULT_DESTINATION_DIRECTORY = new File(USER_HOME_DIR, "TV");

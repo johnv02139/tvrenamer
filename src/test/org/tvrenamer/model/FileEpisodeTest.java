@@ -49,7 +49,7 @@ public class FileEpisodeTest {
         File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
         createFile(file);
 
-        Show show = new Show("1", showName, "http://thetvdb.com/?tab=series&id=71663");
+        Show show = new Show("1", showName);
         Season season5 = new Season(show, seasonNum);
         season5.addEpisode(episodeNum, title, LocalDate.now());
         show.setSeason(seasonNum, season5);
@@ -82,7 +82,7 @@ public class FileEpisodeTest {
         File file = new File(new File(System.getProperty("java.io.tmpdir")), filename);
         createFile(file);
 
-        Show show = new Show("1", showName, "http://thetvdb.com/?tab=series&id=126841&lid=7");
+        Show show = new Show("1", showName);
         Season season1 = new Season(show, seasonNum);
         season1.addEpisode(episodeNum, title, LocalDate.now());
         show.setSeason(seasonNum, season1);

@@ -1,5 +1,7 @@
 package org.tvrenamer.model;
 
+import static org.tvrenamer.model.util.Constants.IMDB_BASE_URL;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,16 +11,20 @@ import java.util.Map;
 public class Show implements Comparable<Show> {
     private final String id;
     private final String name;
-    private final String url;
+    private final String imdb;
 
     private final Map<Integer, Season> seasons;
 
-    public Show(String id, String name, String url) {
+    public Show(String id, String name, String imdb) {
         this.id = id;
         this.name = name;
-        this.url = url;
+        this.imdb = imdb;
 
         seasons = new HashMap<>();
+    }
+
+    public Show(String id, String name) {
+        this(id, name, null);
     }
 
     public String getId() {
@@ -34,7 +40,7 @@ public class Show implements Comparable<Show> {
     }
 
     public String getUrl() {
-        return url;
+        return (imdb == null) ? "" : IMDB_BASE_URL + imdb;
     }
 
     public void setSeason(int sNum, Season season) {
@@ -55,11 +61,11 @@ public class Show implements Comparable<Show> {
 
     @Override
     public String toString() {
-        return "Show [" + name + ", id=" + id + ", url=" + url + ", " + seasons.size() + " seasons]";
+        return "Show [" + name + ", id=" + id + ", imdb=" + imdb + ", " + seasons.size() + " seasons]";
     }
 
     public String toLongString() {
-        return "Show [id=" + id + ", name=" + name + ", url=" + url + ", seasons=" + seasons + "]";
+        return "Show [id=" + id + ", name=" + name + ", imdb=" + imdb + ", seasons=" + seasons + "]";
     }
 
     @Override

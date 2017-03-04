@@ -79,14 +79,14 @@ public class ShowStore {
                     int nOptions = (options == null) ? 0 : options.size();
                     if (nOptions == 0) {
                         logger.info("did not find any options for " + showName);
-                        thisShow = new FailedShow("", showName, "", null);
+                        thisShow = new FailedShow("", showName, null);
                     } else {
                         thisShow = options.get(0);
 
                         TheTVDBProvider.getShowListing(thisShow);
                     }
                 } catch (TVRenamerIOException e) {
-                    thisShow = new FailedShow("", showName, "", e);
+                    thisShow = new FailedShow("", showName, e);
                 }
 
                 addShow(showName, thisShow);
