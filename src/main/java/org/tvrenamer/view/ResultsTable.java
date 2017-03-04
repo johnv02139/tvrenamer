@@ -164,7 +164,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             }
             return failMsg;
         } else {
-            return "Internal error: fail message for non-failure";
+            return FAIL_MSG_FOR_NONFAIL;
         }
     }
 
@@ -174,7 +174,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         } else if (episode.isReady()) {
             return episode.getProposedFilename();
         } else if (episode.isSeriesReady()) {
-            return "Processing episodes...";
+            return PROCESSING_EPISODES;
         } else {
             return ADDED_PLACEHOLDER_FILENAME;
         }
@@ -182,9 +182,9 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private static String renameButtonText(boolean isMoveEnabled) {
         if (isMoveEnabled) {
-            return "Rename && Move Selected";
+            return RENAME_AND_MOVE;
         } else {
-            return "Rename Selected";
+            return RENAME_LABEL;
         }
     }
 
@@ -192,22 +192,17 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                                               String destDirectory)
     {
         if (isMoveEnabled) {
-            return "Clicking this button will rename and move "
-                + "the selected files to the directory set "
-                + "in preferences (currently "
-                + destDirectory
-                + ").";
+            return MOVE_TOOLTIP_1 + destDirectory + MOVE_TOOLTIP_2;
         } else {
-            return "Clicking this button will rename the selected "
-                + "files but leave them where they are.";
+            return RENAME_TOOLTIP;
         }
     }
 
     private static String destColumnText(boolean isMoveEnabled) {
         if (isMoveEnabled) {
-            return "Proposed File Path";
+            return MOVE_HEADER;
         } else {
-            return "Proposed File Name";
+            return RENAME_HEADER;
         }
     }
 
@@ -260,7 +255,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         item.setGrayed(true); // makes checkbox use a dot; very weird
         item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
         item.setFont(italicFont);
-        item.setText(NEW_FILENAME_COLUMN, "filename not parsed");
+        item.setText(NEW_FILENAME_COLUMN, CANT_PARSE_FILENAME);
         return item;
     }
 
@@ -587,7 +582,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                                     });
                             }
                         }));
-            progressThread.setName("ProgressBarThread");
+            progressThread.setName(PROGRESS_THREAD_LABEL);
             progressThread.setDaemon(true);
             progressThread.start();
         }
@@ -604,30 +599,21 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         if (!isUIRunning) {
             return;
         }
-        if (prefs.isMoveEnabled()) {
-            renameSelectedButton.setText("Rename && Move Selected");
-            shell.changed(new Control[] {renameSelectedButton});
-            shell.layout(false, true);
-        } else {
-            renameSelectedButton.setText("Rename Selected");
-            shell.changed(new Control[] {renameSelectedButton});
-            shell.layout(false, true);
-        }
+        renameSelectedButton.setText(renameButtonText(prefs.isMoveEnabled()));
+        shell.changed(new Control[] {renameSelectedButton});
+        shell.layout(false, true);
     }
 
     private void setupMoveButtonText() {
         setRenameButtonText();
-        renameSelectedButton.setToolTipText("Clicking this button will rename and move "
-                                            + "the selected files to the directory set "
-                                            + "in preferences (currently "
+        renameSelectedButton.setToolTipText(MOVE_TOOLTIP_1
                                             + prefs.getDestinationDirectory().getAbsolutePath()
-                                            + ").");
+                                            + MOVE_TOOLTIP_2);
     }
 
     private void setupRenameButtonText() {
         setRenameButtonText();
-        renameSelectedButton.setToolTipText("Clicking this button will rename the selected "
-                                            + "files but leave them where they are.");
+        renameSelectedButton.setToolTipText(RENAME_TOOLTIP);
     }
 
     private void updateUserPreferences(UserPreferences observed, UserPreference upref) {
@@ -816,11 +802,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.setLayoutData(gridData);
 
         boolean isMoveEnabled = prefs.isMoveEnabled();
-        setupTableColumn(SELECTED_COLUMN, 60, "Selected");
-        setupTableColumn(CURRENT_FILE_COLUMN, 550, "Current File");
+        setupTableColumn(SELECTED_COLUMN, 60, CHECKBOX_LABEL);
+        setupTableColumn(CURRENT_FILE_COLUMN, 550, FILENAME_LABEL);
         destinationColumn = setupTableColumn(NEW_FILENAME_COLUMN, 550,
                                              destColumnText(isMoveEnabled));
-        setupTableColumn(STATUS_COLUMN, 60, "Status");
+        setupTableColumn(STATUS_COLUMN, 60, STATUS_LABEL);
 
         // Allow deleting of elements
         resultsTable.addKeyListener(
@@ -871,26 +857,26 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         topButtonsComposite.setLayout(new RowLayout());
 
         addFilesButton = new Button(topButtonsComposite, SWT.PUSH);
-        addFilesButton.setText("Add files");
+        addFilesButton.setText(ADD_FILES_LABEL);
 
         addFolderButton = new Button(topButtonsComposite, SWT.PUSH);
-        addFolderButton.setText("Add Folder");
+        addFolderButton.setText(ADD_FOLDER_LABEL);
 
         clearFilesButton = new Button(topButtonsComposite, SWT.PUSH);
-        clearFilesButton.setText("Clear List");
+        clearFilesButton.setText(CLEAR_LIST_LABEL);
 
         selectAllButton = new Button(topButtonsComposite, SWT.PUSH);
-        selectAllButton.setText("Select All");
+        selectAllButton.setText(SELECT_ALL_LABEL);
 
         deselectAllButton = new Button(topButtonsComposite, SWT.PUSH);
-        deselectAllButton.setText("Deselect All");
+        deselectAllButton.setText(DESELECT_ALL_LABEL);
 
         updatesAvailableLink = new Link(topButtonsComposite, SWT.VERTICAL);
         //updatesAvailableLink.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, true));
         updatesAvailableLink.setVisible(false);
-        updatesAvailableLink.setText("There is an update available. <a href=\""
+        updatesAvailableLink.setText(UPDATE_IS_AVAILABLE_1
                                      + TVRENAMER_DOWNLOAD_URL
-                                     + "\">Click here to download</a>");
+                                     + UPDATE_IS_AVAILABLE_2);
         updatesAvailableLink.addSelectionListener(
                 new SelectionAdapter() {
                     @Override
@@ -943,7 +929,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         quitButtonGridData.minimumWidth = 70;
         quitButtonGridData.widthHint = 70;
         quitButton.setLayoutData(quitButtonGridData);
-        quitButton.setText("Quit");
+        quitButton.setText(QUIT_LABEL);
 
         totalProgressBar = new ProgressBar(bottomButtonsComposite, SWT.SMOOTH);
         totalProgressBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
@@ -1023,16 +1009,16 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private Menu setupHelpMenuBar(Menu menuBar) {
         MenuItem helpMenuHeader = new MenuItem(menuBar, SWT.CASCADE);
-        helpMenuHeader.setText("Help");
+        helpMenuHeader.setText(HELP_LABEL);
 
         Menu helpMenu = new Menu(shell, SWT.DROP_DOWN);
         helpMenuHeader.setMenu(helpMenu);
 
         MenuItem helpHelpItem = new MenuItem(helpMenu, SWT.PUSH);
-        helpHelpItem.setText("Help");
+        helpHelpItem.setText(HELP_LABEL);
 
         MenuItem helpVisitWebpageItem = new MenuItem(helpMenu, SWT.PUSH);
-        helpVisitWebpageItem.setText("Visit Webpage");
+        helpVisitWebpageItem.setText(VISIT_WEBPAGE);
         helpVisitWebpageItem.addSelectionListener(
                 new SelectionAdapter() {
                     @Override
@@ -1078,24 +1064,24 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         } else {
             // Add the normal Preferences, About and Quit menus.
             MenuItem fileMenuItem = new MenuItem(menuBarMenu, SWT.CASCADE);
-            fileMenuItem.setText("File");
+            fileMenuItem.setText(FILE_MENU_LABEL);
 
             Menu fileMenu = new Menu(shell, SWT.DROP_DOWN);
             fileMenuItem.setMenu(fileMenu);
 
             MenuItem filePreferencesItem = new MenuItem(fileMenu, SWT.PUSH);
-            filePreferencesItem.setText("Preferences");
+            filePreferencesItem.setText(PREFERENCES_LABEL);
             filePreferencesItem.addListener(SWT.Selection, preferencesListener);
 
             MenuItem fileExitItem = new MenuItem(fileMenu, SWT.PUSH);
-            fileExitItem.setText("Exit");
+            fileExitItem.setText(EXIT_LABEL);
             fileExitItem.addListener(SWT.Selection, quitListener);
 
             helpMenu = setupHelpMenuBar(menuBarMenu);
 
             // The About item is added to the OSX bar, so we need to add it manually here
             MenuItem helpAboutItem = new MenuItem(helpMenu, SWT.PUSH);
-            helpAboutItem.setText("About");
+            helpAboutItem.setText(ABOUT_MENU_LABEL);
             helpAboutItem.addListener(SWT.Selection, aboutListener);
         }
 
@@ -1104,11 +1090,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private void setupIcons() {
         try {
-            InputStream icon = getClass().getResourceAsStream("/icons/tvrenamer.png");
+            InputStream icon = getClass().getResourceAsStream(TVRENAMER_ICON_PATH);
             if (icon != null) {
                 shell.setImage(new Image(display, icon));
             } else {
-                shell.setImage(new Image(display, "res/icons/tvrenamer.png"));
+                shell.setImage(new Image(display, ICON_PARENT_DIRECTORY + TVRENAMER_ICON_PATH));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1179,7 +1165,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             JOptionPane.showMessageDialog(null, NO_DND);
             System.exit(1);
         } catch (Exception exception) {
-            showMessageBox(SWTMessageBoxType.ERROR, "Error",
+            showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL,
                            UNKNOWN_EXCEPTION, exception);
             logger.log(Level.SEVERE, UNKNOWN_EXCEPTION, exception);
             System.exit(2);
