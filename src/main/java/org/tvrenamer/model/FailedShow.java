@@ -8,8 +8,8 @@ public class FailedShow extends Show {
         return ioe;
     }
 
-    public FailedShow(String id, String name, String url, TVRenamerIOException err) {
-        super(id, name, url);
+    public FailedShow(String id, String name, TVRenamerIOException err) {
+        super(id, name);
         ioe = err;
     }
 }

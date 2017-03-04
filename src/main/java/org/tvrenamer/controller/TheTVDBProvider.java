@@ -41,8 +41,6 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 public class TheTVDBProvider {
-    public static final String IMDB_BASE_URL = "http://www.imdb.com/title/";
-
     private static final String ERROR_PARSING_XML = "Error parsing XML";
     private static final String ERROR_DOWNLOADING_SHOW_INFORMATION = "Error downloading show information. Check internet or proxy settings";
 
@@ -152,10 +150,9 @@ public class TheTVDBProvider {
 
         for (int i = 0; i < shows.getLength(); i++) {
             Node eNode = shows.item(i);
-            String imdbId = nodeTextValue(XPATH_IMDB, eNode, xpath);
             options.add(new Show(nodeTextValue(XPATH_SHOWID, eNode, xpath),
                                  nodeTextValue(XPATH_NAME, eNode, xpath),
-                                 (imdbId == null) ? "" : IMDB_BASE_URL + imdbId));
+                                 nodeTextValue(XPATH_IMDB, eNode, xpath)));
         }
 
         return options;

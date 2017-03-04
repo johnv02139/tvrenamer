@@ -20,6 +20,6 @@ public class TheTVDBProviderTest {
 
     @Test
     public void testGetShowListing() throws Exception {
-        TheTVDBProvider.getShowListing(new Show("80547", "Gossip Girl", ""));
+        TheTVDBProvider.getShowListing(new Show("80547", "Gossip Girl"));
     }
 }
