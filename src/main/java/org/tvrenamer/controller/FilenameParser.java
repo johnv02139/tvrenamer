@@ -78,8 +78,25 @@ public class FilenameParser {
 
     public static boolean parseFilename(FileEpisode episode) {
         Path p = episode.getPath();
+
+        String fullPath = p.toString();
+        String show = KnownShow.mapFilenameToShow(fullPath);
+        if (show != null) {
+            logger.info("mapped to: " + show + "; " + fullPath);
+            episode.setSeriesName(show);
+        } else {
+            logger.info("no match on: " + fullPath);
+        }
+
         String withShow = insertShowNameIfNeeded(p);
+        // show = KnownShow.mapFilenameToShow(withShow);
+        // logger.info("wshw: " + withShow);
+        // logger.info("match: " + show);
+
         String fName = stripJunk(withShow);
+        // show = KnownShow.mapFilenameToShow(fName);
+        // logger.info("fnme: " + fName);
+        // logger.info("match: " + show);
 
         int idx = 0;
         Matcher matcher;
@@ -99,14 +116,11 @@ public class FilenameParser {
                 episode.setFilenameEpisode(matcher.group(3));
                 episode.setFilenameResolution(resolution);
 
-                String fullPath = p.toString();
-                String show = KnownShow.mapFilenameToShow(fullPath);
-                if (show != null) {
-                    logger.info("mapped to: " + show + "; " + fullPath);
-                    episode.setSeriesName(show);
-                } else {
-                    logger.info("no match on: " + fullPath);
-                }
+                // show = KnownShow.mapFilenameToShow(rawShow);
+                // logger.info("rshw: " + rawShow);
+                // logger.info("match: " + show);
+
+                // logger.info("----------------------------------------------------------------------");
 
                 return true;
             }
