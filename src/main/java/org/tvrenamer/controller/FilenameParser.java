@@ -1,6 +1,7 @@
 package org.tvrenamer.controller;
 
 import org.tvrenamer.model.FileEpisode;
+import org.tvrenamer.model.KnownShow;
 
 import java.nio.file.Path;
 import java.util.logging.Logger;
@@ -97,6 +98,16 @@ public class FilenameParser {
                 episode.setFilenameSeason(matcher.group(2));
                 episode.setFilenameEpisode(matcher.group(3));
                 episode.setFilenameResolution(resolution);
+
+                String fullPath = p.toString();
+                String show = KnownShow.mapFilenameToShow(fullPath);
+                if (show != null) {
+                    logger.info("mapped to: " + show + "; " + fullPath);
+                    episode.setSeriesName(show);
+                } else {
+                    logger.info("no match on: " + fullPath);
+                }
+
                 return true;
             }
         }
