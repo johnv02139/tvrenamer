@@ -658,6 +658,9 @@ public class ResultsTable implements Observer {
             }
             doCleanup();
         } catch (IllegalArgumentException argumentException) {
+            // TODO: it's crazy to assume that any IllegalArgumentException
+            // that occurs anywhere within the substantial amount of calls
+            // above, must be a drag-and-drop error.
             String message = "Drag and Drop is not currently supported on your operating system, please use the 'Browse Files' option above";
             logger.log(Level.SEVERE, message, argumentException);
             JOptionPane.showMessageDialog(null, message);
