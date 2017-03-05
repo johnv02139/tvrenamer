@@ -82,10 +82,10 @@ public class FilenameParser {
         String fullPath = p.toString();
         String show = KnownShow.mapFilenameToShow(fullPath);
         if (show != null) {
-            logger.info("mapped to: " + show + "; " + fullPath);
+            logger.fine("mapped to: " + show + "; " + fullPath);
             episode.setSeriesName(show);
         } else {
-            logger.info("no match on: " + fullPath);
+            logger.fine("no match on: " + fullPath);
         }
 
         String withShow = insertShowNameIfNeeded(p);

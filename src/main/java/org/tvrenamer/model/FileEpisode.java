@@ -291,8 +291,8 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
 
     public void setSeriesName(String seriesName) {
         this.seriesName = seriesName;
-        seriesStatus = SeriesStatus.QUERYING;
-        lookupSeries();
+        seriesStatus = SeriesStatus.NOT_STARTED;
+        ShowStore.mapStringToShow(seriesName, this);
     }
 
     public String getSeriesName() {
