@@ -41,7 +41,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         QUERYING,
         GOT_SERIES,
         UNFOUND,
-        DOWNLOADED,
         NO_LISTINGS,
         PARSED_ALL
     }
@@ -147,7 +146,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
                        EpisodeInformationListener listener)
     {
         fileStatus = FileStatus.UNCHECKED;
-        pathObj = path;
         viewItem = item;
         originalFilepath = path.toString();
         currentLocation = originalFilepath;
@@ -161,16 +159,12 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
             uiStatus = EpisodeUIStatus.ADDED;
         }
 
-        boolean isParsed = FilenameParser.parseFilename(this);
-        if (isParsed) {
-            parseStatus = ParseStatus.PARSED;
-        } else {
-            parseStatus = ParseStatus.BAD_PARSE;
-        }
+        setPath(path);
+
         if (listener != null) {
             listeners.push(listener);
             listener.onEpisodeUpdate(this);
-            if (isParsed) {
+            if (parseStatus == ParseStatus.PARSED) {
                 seriesStatus = SeriesStatus.QUERYING;
                 lookupSeries();
             } else {
@@ -394,6 +388,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
                 update();
             }
         } else {
+            seriesName = series.getName();
             if (seriesStatus != SeriesStatus.GOT_SERIES) {
                 seriesStatus = SeriesStatus.GOT_SERIES;
                 update();
