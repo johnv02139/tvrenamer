@@ -146,6 +146,7 @@ public class UserPreferences extends Observable {
         prefs.ensurePath();
 
         // add observer
+        // TODO: why do we do this?
         prefs.addObserver(new UserPreferencesChangeListener());
 
         return prefs;
