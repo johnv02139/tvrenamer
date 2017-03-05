@@ -13,7 +13,6 @@ import org.tvrenamer.model.Episode;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.Season;
 import org.tvrenamer.model.Series;
-import org.tvrenamer.model.ShowStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -257,7 +256,7 @@ public class TheTVDBProviderTest {
             String filenameSeries = fileEpisode.getFilenameSeries();
 
             final CompletableFuture<Series> futureShow = new CompletableFuture<>();
-            ShowStore.mapStringToShow(filenameSeries, new SeriesLookupListener() {
+            SeriesLookup.mapStringToShow(filenameSeries, new SeriesLookupListener() {
                     @Override
                     public void downloadComplete(Series show) {
                         futureShow.complete(show);

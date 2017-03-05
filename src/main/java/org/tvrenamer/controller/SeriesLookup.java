@@ -1,8 +1,8 @@
-package org.tvrenamer.model;
+package org.tvrenamer.controller;
 
-import org.tvrenamer.controller.SeriesLookupListener;
-import org.tvrenamer.controller.TheTVDBProvider;
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.Series;
+import org.tvrenamer.model.UnresolvedShow;
 import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.Collections;
@@ -16,9 +16,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
-public class ShowStore {
+public class SeriesLookup {
 
-    private static Logger logger = Logger.getLogger(ShowStore.class.getName());
+    private static Logger logger = Logger.getLogger(SeriesLookup.class.getName());
 
     private static class ShowRegistrations {
         private final List<SeriesLookupListener> listeners;
@@ -36,8 +36,6 @@ public class ShowStore {
         }
     }
 
-    private static final Map<String, Series> SERIES_MAP = new ConcurrentHashMap<>(100);
-
     private static final Map<String, ShowRegistrations> SHOW_LISTENERS = new ConcurrentHashMap<>();
 
     private static final ExecutorService THREAD_POOL
@@ -52,6 +50,9 @@ public class ShowStore {
                     return t;
                 }
             });
+
+    private static final Map<String, Series> SERIES_MAP = new ConcurrentHashMap<>(100);
+
 
     /**
      * Transform a string which we believe represents a show name, to the string we will
@@ -72,6 +73,15 @@ public class ShowStore {
         return StringUtils.replacePunctuation(showName).toLowerCase();
     }
 
+    /**
+     * For the given show name, notify all registered listeners that we now know
+     * the series that the name maps to.
+     *
+     * @param queryString
+     *            the string used to search for the series
+     * @param series
+     *            the {@link Series} that we found for that string
+     */
     private static void notifyListeners(String queryString, Series series) {
         ShowRegistrations registrations = SHOW_LISTENERS.get(queryString);
 
@@ -86,10 +96,18 @@ public class ShowStore {
         }
     }
 
+    /**
+     * Stop all activity in preparation for exiting.
+     *
+     */
     public static void cleanUp() {
         THREAD_POOL.shutdownNow();
     }
 
+    /**
+     * Clear all the mapping and registrations for all shows.
+     *
+     */
     public static void clear() {
         SERIES_MAP.clear();
         SHOW_LISTENERS.clear();
@@ -115,8 +133,14 @@ public class ShowStore {
         notifyListeners(queryString, series);
     }
 
-    // Given a list of two or more options for which show we're dealing with,
-    // choose the best one and return it.
+    /**
+     * Given a list of two or more options for which show we're dealing with,
+     * choose the best one and return it.
+     *
+     * @param showName the part of the filename that is presumed to name the show
+     * @param options the potentisl shows that match the string we searched for
+     * @return the series from the list which best matches the show information
+     */
     private static Series selectShowOption(String showName, List<Series> options) {
         for (Series s : options) {
             logger.info("option: " + s.getName() + " for " + showName);
@@ -125,28 +149,36 @@ public class ShowStore {
         return options.get(0);
     }
 
-    private static void downloadShow(final String showName) {
+    /**
+     * Fetch the best option for a given series name, and provide a Series object that
+     * represents it.
+     *
+     * @param queryString the string to use to search for the TV series (presumably based
+     *            on the part of a filename that we believe names the show)
+     * @return returns immediately, and later passes its true result via callback
+     */
+    private static void downloadShow(final String queryString) {
         Callable<Boolean> showFetcher = new Callable<Boolean>() {
             @Override
             public Boolean call() throws InterruptedException {
                 List<Series> options;
                 try {
-                    options = TheTVDBProvider.querySeriesName(showName);
+                    options = TheTVDBProvider.querySeriesName(queryString);
                 } catch (TVRenamerIOException e) {
-                    logger.info("exception getting options for " + showName);
-                    addSeriesToStore(showName, new UnresolvedShow(showName, e));
+                    logger.info("exception getting options for " + queryString);
+                    addSeriesToStore(queryString, new UnresolvedShow(queryString, e));
                     return true;
                 }
                 int nOptions = (options == null) ? 0 : options.size();
                 if (nOptions == 0) {
-                    logger.info("did not find any options for " + showName);
-                    addSeriesToStore(showName, new UnresolvedShow(showName));
+                    logger.info("did not find any options for " + queryString);
+                    addSeriesToStore(queryString, new UnresolvedShow(queryString));
                     return true;
                 } else if (nOptions == 1) {
-                    addSeriesToStore(showName, options.get(0));
+                    addSeriesToStore(queryString, options.get(0));
                 } else {
-                    logger.info("got " + nOptions + " options for " + showName);
-                    addSeriesToStore(showName, selectShowOption(showName, options));
+                    logger.info("got " + nOptions + " options for " + queryString);
+                    addSeriesToStore(queryString, selectShowOption(queryString, options));
                 }
 
                 return true;

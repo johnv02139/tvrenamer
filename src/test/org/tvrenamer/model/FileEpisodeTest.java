@@ -8,6 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import org.tvrenamer.controller.SeriesLookup;
 import org.tvrenamer.controller.SeriesLookupListener;
 
 import java.nio.file.Files;
@@ -79,7 +80,7 @@ public class FileEpisodeTest {
         episode.setFilenameResolution(resolution);
 
         Series series = new Series(showName, "1");
-        ShowStore.addSeriesToStore(showName, series);
+        SeriesLookup.addSeriesToStore(showName, series);
         episode.setSeries(series);
 
         Season season5 = new Season(series, seasonNum);
@@ -124,7 +125,7 @@ public class FileEpisodeTest {
         fileEpisode.setFilenameEpisode(episodeNum);
 
         Series series = new Series(showName, "1");
-        ShowStore.addSeriesToStore(showName, series);
+        SeriesLookup.addSeriesToStore(showName, series);
         fileEpisode.setSeries(series);
 
         Season season1 = new Season(series, seasonNum);

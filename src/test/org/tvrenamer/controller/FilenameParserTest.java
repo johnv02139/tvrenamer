@@ -14,7 +14,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.tvrenamer.model.FileEpisode;
-import org.tvrenamer.model.ShowStore;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -376,7 +375,7 @@ public class FilenameParserTest {
             FileEpisode retval = new FileEpisode(testInput.input);
             assertTrue(testInput.input + " could not be parsed", retval.wasParsed());
             assertEquals(testInput.input, testInput.queryString,
-                         ShowStore.makeQueryString(retval.getFilenameSeries()));
+                         SeriesLookup.makeQueryString(retval.getFilenameSeries()));
             assertEquals(testInput.input,
                          Integer.parseInt(testInput.season),
                          Integer.parseInt(retval.getFilenameSeason()));
@@ -392,7 +391,7 @@ public class FilenameParserTest {
         FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertTrue(episode.wasParsed());
         assertEquals("Warehouse.13.", episode.getFilenameSeries());
-        assertEquals("warehouse 13", ShowStore.makeQueryString(episode.getFilenameSeries()));
+        assertEquals("warehouse 13", SeriesLookup.makeQueryString(episode.getFilenameSeries()));
         assertEquals("05", episode.getFilenameSeason());
         assertEquals("04", episode.getFilenameEpisode());
     }

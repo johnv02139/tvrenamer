@@ -15,6 +15,7 @@ import org.tvrenamer.controller.EpisodeListListener;
 import org.tvrenamer.controller.FilenameParser;
 import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.NameFormatter;
+import org.tvrenamer.controller.SeriesLookup;
 import org.tvrenamer.controller.SeriesLookupListener;
 
 import java.io.IOException;
@@ -200,11 +201,11 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
                 if (seriesName != null) {
                     // logger.fine("looking up based on match " + seriesName);
                     seriesStatus = SeriesStatus.QUERYING;
-                    ShowStore.mapStringToShow(seriesName, this);
+                    SeriesLookup.mapStringToShow(seriesName, this);
                 } else if (filenameSeries != null) {
                     // logger.warning("looking up based on query string " + filenameSeries);
                     seriesStatus = SeriesStatus.QUERYING;
-                    ShowStore.mapStringToShow(filenameSeries, this);
+                    SeriesLookup.mapStringToShow(filenameSeries, this);
                 } else {
                     seriesStatus = SeriesStatus.NOT_STARTED;
                     logger.info("cannot lookup series; did not extract a series name: "
@@ -292,7 +293,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     public void setSeriesName(String seriesName) {
         this.seriesName = seriesName;
         seriesStatus = SeriesStatus.NOT_STARTED;
-        ShowStore.mapStringToShow(seriesName, this);
+        lookupSeries();
     }
 
     public String getSeriesName() {

@@ -80,11 +80,11 @@ import org.eclipse.swt.widgets.Text;
 
 import org.tvrenamer.controller.EpisodeInformationListener;
 import org.tvrenamer.controller.FileMover;
+import org.tvrenamer.controller.SeriesLookup;
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.Series;
-import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UnresolvedShow;
 import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
@@ -686,7 +686,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     private void doCleanup() {
         ProgressBarUpdater.shutDown();
         // TODO: may not be necessary if they're daemon threads
-        ShowStore.cleanUp();
+        SeriesLookup.cleanUp();
         shell.dispose();
         display.dispose();
     }

@@ -1,6 +1,5 @@
 package org.tvrenamer.controller;
 
-import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 
@@ -22,8 +21,8 @@ public class UserPreferencesChangeListener implements Observer {
             UserPreference upref = (UserPreference) value;
 
             if (upref == UserPreference.PROXY) {
-                // There may be incorrect entries in ShowStore if there is no internet, so clear on proxy change
-                ShowStore.clear();
+                // There may be incorrect entries in SeriesLookup if there is no internet, so clear on proxy change
+                SeriesLookup.clear();
             }
         }
     }
