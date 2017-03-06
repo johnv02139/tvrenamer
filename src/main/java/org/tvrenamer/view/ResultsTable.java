@@ -98,6 +98,12 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         prefs.addObserver(this);
         swtTable.setFocus();
 
+        // TODO: trying to get the UI thread to be more responsive.
+        // So far, this doesn't seem to have much, if any, effect.
+        // But it's probably part of the solution, even if it's not
+        // sufficient, so leave it in here.
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
         // Load the preload folder into the episode map, which will call
         // us back with the list of files once they've been loaded.
         episodeMap.subscribe(this);
