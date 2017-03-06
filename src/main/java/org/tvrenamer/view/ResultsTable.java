@@ -644,6 +644,12 @@ public class ResultsTable implements Observer {
             shell.pack();
             shell.open();
 
+            // TODO: trying to get the UI thread to be more responsive.
+            // So far, this doesn't seem to have much, if any, effect.
+            // But it's probably part of the solution, even if it's not
+            // sufficient, so leave it in here.
+            Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
             File preloadFolder = prefs.getPreloadFolder();
             if (preloadFolder != null) {
                 String[] preload = new String[1];
