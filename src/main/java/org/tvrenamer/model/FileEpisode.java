@@ -103,9 +103,9 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
 
     // The state of this object, not the state of the actual TV episode.  This is
     // about how far we've processed the filename.
-    private ParseStatus parseStatus;
-    private SeriesStatus seriesStatus;
-    private FileStatus fileStatus;
+    private ParseStatus parseStatus = ParseStatus.UNPARSED;
+    private SeriesStatus seriesStatus = SeriesStatus.NOT_STARTED;
+    private FileStatus fileStatus = FileStatus.UNCHECKED;
 
     private Series series;
     private Season season;
@@ -145,7 +145,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
                        TableItem item,
                        EpisodeInformationListener listener)
     {
-        fileStatus = FileStatus.UNCHECKED;
         viewItem = item;
         originalFilepath = path.toString();
         currentLocation = originalFilepath;
@@ -164,12 +163,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         if (listener != null) {
             listeners.push(listener);
             listener.onEpisodeUpdate(this);
-            if (parseStatus == ParseStatus.PARSED) {
-                seriesStatus = SeriesStatus.QUERYING;
-                lookupSeries();
-            } else {
-                seriesStatus = SeriesStatus.NOT_STARTED;
-            }
+            lookupSeries();
         }
     }
 
@@ -181,6 +175,43 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
 
     public FileEpisode(String filename) {
         this(Paths.get(filename));
+    }
+
+    // It would be nice to call this on our own.  But if we do, we have
+    // a potential race condition where the UI gets an initial version of
+    // the episode, then the episode gets its lookup information, and *then*
+    // the UI registers as a listener.
+
+    // One approach would be that registering as a listener automatically gets
+    // you an immediate publish, but most of the time, that would be
+    // unnecessary.  A more efficient approach would be to automatically call
+    // lookupSeries after the listener is added, knowing that, in reality, each
+    // episode will have exactly one listener.  But that's a little too magical.
+
+    // I prefer the pedantic approach of having the UI explicitly tell us when
+    // it's all set, and we should go look up the data.
+
+    // There's another approach that would do an immediate publish if and only
+    // if the data is different from what the listener already knows about, but
+    // that will have to wait.
+    public void lookupSeries() {
+        if (parseStatus == ParseStatus.PARSED) {
+            if (seriesStatus == SeriesStatus.NOT_STARTED) {
+                if (seriesName != null) {
+                    // logger.fine("looking up based on match " + seriesName);
+                    seriesStatus = SeriesStatus.QUERYING;
+                    ShowStore.mapStringToShow(seriesName, this);
+                } else if (filenameSeries != null) {
+                    // logger.warning("looking up based on query string " + filenameSeries);
+                    seriesStatus = SeriesStatus.QUERYING;
+                    ShowStore.mapStringToShow(filenameSeries, this);
+                } else {
+                    seriesStatus = SeriesStatus.NOT_STARTED;
+                    logger.info("cannot lookup series; did not extract a series name: "
+                                + originalFilepath);
+                }
+            }
+        }
     }
 
     public void listen(EpisodeInformationListener o) {
@@ -262,6 +293,17 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         this.seriesName = seriesName;
         seriesStatus = SeriesStatus.QUERYING;
         lookupSeries();
+    }
+
+    public String getSeriesName() {
+        return seriesName;
+    }
+
+    public String getBestSeriesName() {
+        if (seriesName != null) {
+            return seriesName;
+        }
+        return filenameSeries;
     }
 
     public String getFilenameSeason() {
@@ -437,33 +479,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         if (seriesStatus != SeriesStatus.NO_LISTINGS) {
             seriesStatus = SeriesStatus.NO_LISTINGS;
             update();
-        }
-    }
-
-    // It would be nice to call this on our own.  But if we do, we have
-    // a potential race condition where the UI gets an initial version of
-    // the episode, then the episode gets its lookup information, and *then*
-    // the UI registers as a listener.
-
-    // One approach would be that registering as a listener automatically gets
-    // you an immediate publish, but most of the time, that would be
-    // unnecessary.  A more efficient approach would be to automatically call
-    // lookupSeries after the listener is added, knowing that, in reality, each
-    // episode will have exactly one listener.  But that's a little too magical.
-
-    // I prefer the pedantic approach of having the UI explicitly tell us when
-    // it's all set, and we should go look up the data.
-
-    // There's another approach that would do an immediate publish if and only
-    // if the data is different from what the listener already knows about, but
-    // that will have to wait.
-    public void lookupSeries() {
-        if (filenameSeries == null) {
-            logger.info("cannot lookup series; did not extract a series name: "
-                        + originalFilepath);
-        } else {
-            ShowStore.mapStringToShow(filenameSeries, this);
-            logger.fine("mapStringToShow returned for " + filenameSeries);
         }
     }
 
