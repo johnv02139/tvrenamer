@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
 public class ShowStore {
@@ -37,7 +38,18 @@ public class ShowStore {
     private static final Map<String, Series> _shows = new ConcurrentHashMap<>(100);
     private static final Map<String, ShowRegistrations> _showRegistrations = new ConcurrentHashMap<>();
 
-    private static final ExecutorService threadPool = Executors.newCachedThreadPool();
+    private static final ExecutorService THREAD_POOL
+        = Executors.newCachedThreadPool(new ThreadFactory() {
+                // We want the lookup thread to run at the minimum priority, to try to
+                // keep the UI as responsive as possible.
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r);
+                    t.setPriority(Thread.MIN_PRIORITY);
+                    t.setDaemon(true);
+                    return t;
+                }
+            });
 
     private static void notifyListeners(String showName, Series show) {
         ShowRegistrations registrations = _showRegistrations.get(showName.toLowerCase());
@@ -54,7 +66,7 @@ public class ShowStore {
     }
 
     public static void cleanUp() {
-        threadPool.shutdownNow();
+        THREAD_POOL.shutdownNow();
     }
 
     public static void clear() {
@@ -114,7 +126,7 @@ public class ShowStore {
                 return true;
             }
         };
-        threadPool.submit(showFetcher);
+        THREAD_POOL.submit(showFetcher);
     }
 
     /**
