@@ -1131,12 +1131,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private void launch() {
         try {
-            // place the window in the centre of the primary monitor
+            // place the window in the bottom right of the primary monitor
             Monitor primary = display.getPrimaryMonitor();
             Rectangle bounds = primary.getBounds();
             Rectangle rect = shell.getBounds();
-            int x = bounds.x + (bounds.width - rect.width) / 2;
-            int y = bounds.y + (bounds.height - rect.height) / 2;
+            int x = bounds.x + bounds.width - rect.width - 5;
+            int y = bounds.y + bounds.height - rect.height - 35;
             shell.setLocation(x, y);
 
             // Start the shell
