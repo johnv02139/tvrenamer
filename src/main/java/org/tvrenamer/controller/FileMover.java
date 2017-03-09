@@ -90,7 +90,8 @@ public class FileMover implements Callable<Boolean> {
 
         episode.setRenamed();
         episode.setPath(destPath);
-        logger.info("Moved " + srcPath + " to " + destPath);
+        logger.info("successful: " + srcPath.toAbsolutePath().toString()
+                    + " | " + destPath.toAbsolutePath().toString());
         FileUtilities.removeWhileEmpty(srcDir.toFile());
         return true;
     }
