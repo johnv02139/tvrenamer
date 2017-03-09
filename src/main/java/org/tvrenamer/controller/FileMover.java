@@ -53,7 +53,10 @@ public class FileMover implements Callable<Boolean> {
             episode.setMoving();
             boolean succeeded = srcFile.renameTo(destFile);
             if (succeeded) {
-                long timestamp = System.currentTimeMillis();
+                long timestamp = episode.getAirDate();
+                if (timestamp == 0) {
+                    timestamp = System.currentTimeMillis();
+                }
                 episode.setRenamed();
                 logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFileName);
                 episode.setPath(destFile.toPath());
