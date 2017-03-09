@@ -37,6 +37,40 @@ public class UserPreferences extends Observable {
     private static final UserPreferences INSTANCE = load();
 
     /**
+     * Create the directory if it doesn't exist and we need it.
+     */
+    public void ensureDestDir() {
+        if (!moveEnabled) {
+            // It doesn't matter if the directory exists or not if move is not enabled.
+            return;
+        }
+
+        String errorMessage;
+        if (destDir.exists()) {
+            if (destDir.isDirectory()) {
+                // destDir already exists; we're all set.
+                return;
+            }
+
+            // destDir exists but is not a directory.
+            errorMessage = "Destination path exists but is not a directory: '"
+                + destDir.getAbsolutePath() + "'. Move is now disabled";
+            // fall through to failure at bottom
+        } else if (destDir.mkdirs()) {
+            // we have successfully created the destination directory
+            return;
+        } else {
+            errorMessage = "Couldn't create path: '"
+                + destDir.getAbsolutePath() + "'. Move is now disabled";
+            // fall through to failure
+        }
+
+        moveEnabled = false;
+        logger.warning(errorMessage);
+        UIUtils.showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL, errorMessage);
+    }
+
+    /**
      * UserPreferences constructor which uses the defaults from {@link Constants}
      */
     private UserPreferences() {
@@ -55,7 +89,7 @@ public class UserPreferences extends Observable {
         ignoreKeywords = new ArrayList<>();
         ignoreKeywords.add("sample");
 
-        ensurePath();
+        ensureDestDir();
     }
 
     public static UserPreferences getInstance() {
@@ -167,7 +201,7 @@ public class UserPreferences extends Observable {
             prefs.getProxy().apply();
         }
 
-        prefs.ensurePath();
+        prefs.ensureDestDir();
 
         // add observer
         // TODO: why do we do this?
@@ -208,7 +242,7 @@ public class UserPreferences extends Observable {
     public void setDestinationDirectory(File dir) throws TVRenamerIOException {
         if (valuesAreDifferent(destDir, dir)) {
             destDir = dir;
-            ensurePath();
+            ensureDestDir();
 
             preferenceChanged(UserPreference.DEST_DIR, dir);
         }
@@ -223,7 +257,7 @@ public class UserPreferences extends Observable {
     public void setDestinationDirectory(String dir) throws TVRenamerIOException {
         if (valuesAreDifferent(destDir.getAbsolutePath(), dir)) {
             destDir = new File(dir);
-            ensurePath();
+            ensureDestDir();
 
             preferenceChanged(UserPreference.DEST_DIR, dir);
         }
@@ -407,20 +441,6 @@ public class UserPreferences extends Observable {
             this.checkForUpdates = checkForUpdates;
 
             preferenceChanged(UserPreference.UPDATE_CHECK, checkForUpdates);
-        }
-    }
-
-    /**
-     * Create the directory if it doesn't exist.
-     */
-    public void ensurePath() {
-        if (moveEnabled && !destDir.mkdirs()) {
-            if (!destDir.exists()) {
-                moveEnabled = false;
-                String message = "Couldn't create path: '" + destDir.getAbsolutePath() + "'. Move is now disabled";
-                logger.warning(message);
-                UIUtils.showMessageBox(SWTMessageBoxType.ERROR, "Error", message);
-            }
         }
     }
 
