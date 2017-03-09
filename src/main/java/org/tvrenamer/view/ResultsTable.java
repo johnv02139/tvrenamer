@@ -806,11 +806,9 @@ public class UIStarter implements Observer {
 
     private void renameFiles() {
         final Queue<Future<Boolean>> futures = new LinkedList<>();
-        int count = 0;
 
         for (final TableItem item : resultsTable.getItems()) {
             if (item.getChecked()) {
-                count++;
                 String fileName = item.getText(CURRENT_FILE_COLUMN);
                 final File currentFile = new File(fileName);
                 final FileEpisode episode = files.get(fileName);
@@ -880,7 +878,7 @@ public class UIStarter implements Observer {
                         }
                     });
                 }
-            }, count, futures, new UpdateCompleteHandler() {
+            }, futures, new UpdateCompleteHandler() {
                 @Override
                 public void onUpdateComplete() {
                     display.asyncExec(new Runnable() {
