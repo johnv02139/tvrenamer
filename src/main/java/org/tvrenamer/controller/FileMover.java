@@ -51,10 +51,7 @@ public class FileMover implements Callable<Boolean> {
                 return false;
             }
             episode.setMoving();
-            boolean succeeded = false;
-            if (FileUtilities.areSameDisk(srcFile.getAbsolutePath(), destFileName)) {
-                succeeded = srcFile.renameTo(destFile);
-            }
+            boolean succeeded = srcFile.renameTo(destFile);
             if (succeeded) {
                 long timestamp = System.currentTimeMillis();
                 episode.setRenamed();
