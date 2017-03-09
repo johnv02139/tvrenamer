@@ -9,7 +9,7 @@ import org.tvrenamer.model.Season;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.UserPreferences;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -80,14 +80,21 @@ public class NameFormatter {
 
     private String addDestinationDirectory(String filename) {
         String dirname = (series == null) ? "" : series.getDirName();
-        File destPath = new File(userPrefs.getDestinationDirectory(), dirname);
+
+        Path destDir = userPrefs.getDestinationPath();
+        if (destDir == null) {
+            return dirname;
+        }
+
+        Path destPath = destDir.resolve(dirname);
 
         // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
         if (StringUtils.isNotBlank(userPrefs.getSeasonPrefix())) {
-            destPath = new File(destPath, seasonSubdir());
+            destPath = destPath.resolve(seasonSubdir());
         }
-        File destFile = new File(destPath, filename);
-        return destFile.getAbsolutePath();
+        Path destFile = destPath.resolve(filename);
+
+        return destFile.toAbsolutePath().toString();
     }
 
     private String replaceDate(String orig, String match, LocalDate date, String format) {

@@ -11,6 +11,7 @@ import org.tvrenamer.view.UIUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -223,6 +224,18 @@ public class UserPreferences extends Observable {
      */
     public File getDestinationDirectory() {
         return this.destDir;
+    }
+
+    /**
+     * Gets the directory set to move renamed files to.
+     *
+     * @return Path object representing the directory.
+     */
+    public Path getDestinationPath() {
+        if (destDir == null) {
+            return null;
+        }
+        return destDir.toPath();
     }
 
     public void setMoveEnabled(boolean moveEnabled) {
