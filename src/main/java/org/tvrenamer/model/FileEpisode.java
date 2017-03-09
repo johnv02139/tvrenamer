@@ -463,13 +463,25 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (uiStatus != EpisodeUIStatus.ERROR);
     }
 
-<<<<<<< HEAD
-    public String getProposedFilename() {
-        if ((series == null) || (season == null)) {
-=======
-    public String getNewFilename() {
+    public long getAirDate() {
         if (series == null) {
->>>>>>> 8b676c5... Fine-tune statuses.
+            return 0L;
+        }
+        if (season == null) {
+            return 0L;
+        }
+
+        Episode episode = season.getEpisode(episodeNum);
+        if (episode == null) {
+            return 0L;
+        }
+
+        long epochDay = 1 + episode.getAirDate().toEpochDay();
+        return epochDay * 24L * 60L * 60L * 1000L;
+    }
+
+    public String getProposedFilename() {
+        if (series == null) {
             return ADDED_PLACEHOLDER_FILENAME;
         }
         if (season == null) {
