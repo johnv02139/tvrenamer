@@ -59,7 +59,6 @@ import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UnresolvedShow;
 import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
-import org.tvrenamer.model.except.NotFoundException;
 import org.tvrenamer.model.util.Environment;
 
 import java.io.File;
@@ -296,20 +295,13 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             return failToParseTableItem(item, fileName);
         }
         String newFilename = fileName;
-        try {
-            // Set if the item is checked or not according
-            // to a list of banned keywords
-            item.setChecked(!isNameIgnored(newFilename));
-            // TODO: this used to get just the basename (no directory), even if
-            // move was enabled.  Why?
-            newFilename = valueForNewFilename(episode);
-            item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
-        } catch (NotFoundException e) {
-            item.setChecked(false);
-            newFilename = e.getMessage();
-            item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
-            item.setForeground(display.getSystemColor(SWT.COLOR_RED));
-        }
+        // Set if the item is checked or not according
+        // to a list of banned keywords
+        item.setChecked(!isNameIgnored(newFilename));
+        // TODO: this used to get just the basename (no directory), even if
+        // move was enabled.  Why?
+        newFilename = valueForNewFilename(episode);
+        item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
         item.setText(NEW_FILENAME_COLUMN, newFilename);
         return item;
     }
