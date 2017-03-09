@@ -487,6 +487,11 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         if (season == null) {
             return PROCESSING_EPISODES;
         }
+        if (0L == getAirDate()) {
+            seriesStatus = SeriesStatus.UNFOUND;
+            update();
+            return NO_SUCH_SHOW_MESSAGE;
+        }
         if (formatter == null) {
             formatter = new NameFormatter(this);
         }
