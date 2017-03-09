@@ -383,6 +383,11 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         if (series != null) {
             season = series.getSeason(filenameSeason);
         }
+        if (season == null) {
+            seriesStatus = SeriesStatus.NO_LISTINGS;
+        } else {
+            seriesStatus = SeriesStatus.PARSED_ALL;
+        }
     }
 
     @Override
@@ -390,7 +395,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         // TODO: we already have the series.  We don't need to return it.
         setSeason();
         // Only thing we could do would be to verify it.
-        seriesStatus = SeriesStatus.PARSED_ALL;
         update();
     }
 
@@ -459,9 +463,17 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (uiStatus != EpisodeUIStatus.ERROR);
     }
 
+<<<<<<< HEAD
     public String getProposedFilename() {
         if ((series == null) || (season == null)) {
+=======
+    public String getNewFilename() {
+        if (series == null) {
+>>>>>>> 8b676c5... Fine-tune statuses.
             return ADDED_PLACEHOLDER_FILENAME;
+        }
+        if (season == null) {
+            return PROCESSING_EPISODES;
         }
         if (formatter == null) {
             formatter = new NameFormatter(this);
