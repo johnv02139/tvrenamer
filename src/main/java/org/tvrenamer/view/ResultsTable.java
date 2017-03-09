@@ -583,55 +583,71 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return taskItem;
     }
 
+    private void updateProgressBar(final float progress, final TaskItem taskItem) {
+        if (totalProgressBar.isDisposed()) {
+            return;
+        }
+        totalProgressBar.setSelection(Math.round(progress * totalProgressBar.getMaximum()));
+        if (taskItem.isDisposed()) {
+            return;
+        }
+        taskItem.setProgress(Math.round(progress * 100));
+    }
+
+
+    private void doRenamesWithProgressBar(final Queue<Future<Boolean>> futures,
+                                          final TaskItem taskItem)
+    {
+        taskItem.setProgressState(SWT.NORMAL);
+        taskItem.setOverlayImage(FileMoveIcon.RENAMING.icon);
+
+        ProgressProxy proxy = new ProgressProxy() {
+                @Override
+                public void setProgress(final float progress) {
+                    if (display.isDisposed()) {
+                        return;
+                    }
+
+                    display.asyncExec(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateProgressBar(progress, taskItem);
+                            }
+                        });
+                }
+            };
+
+        UpdateCompleteHandler updateHandler = new UpdateCompleteHandler() {
+                @Override
+                public void onUpdateComplete() {
+                    display.asyncExec(new Runnable() {
+                            @Override
+                            public void run() {
+                                taskItem.setOverlayImage(null);
+                                taskItem.setProgressState(SWT.DEFAULT);
+                                refreshTable();
+                            }
+                        });
+                }
+            };
+
+        Runnable updater = new ProgressBarUpdater(proxy, futures, updateHandler);
+        Thread progressThread = new Thread(updater);
+        progressThread.setName(PROGRESS_THREAD_LABEL);
+        progressThread.setDaemon(true);
+        progressThread.start();
+    }
+
     private void renameFiles() {
         final Queue<Future<Boolean>> futures = listOfFileMoves();
-
-        final TaskItem taskItem = getTaskItem();
-        // There is no task bar on linux
-        if (taskItem != null) {
-            taskItem.setProgressState(SWT.NORMAL);
-            taskItem.setOverlayImage(FileMoveIcon.RENAMING.icon);
-
-            Thread progressThread =
-                new Thread(new ProgressBarUpdater(new ProgressProxy() {
-                        @Override
-                        public void setProgress(final float progress) {
-                            if (display.isDisposed()) {
-                                return;
-                            }
-
-                            display.asyncExec(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (totalProgressBar.isDisposed()) {
-                                            return;
-                                        }
-                                        totalProgressBar.setSelection(Math.round(progress * totalProgressBar.getMaximum()));
-                                        if (taskItem.isDisposed()) {
-                                            return;
-                                        }
-                                        taskItem.setProgress(Math.round(progress * 100));
-                                    }
-                                });
-                        }
-                    },
-                        futures,
-                        new UpdateCompleteHandler() {
-                            @Override
-                            public void onUpdateComplete() {
-                                display.asyncExec(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            taskItem.setOverlayImage(null);
-                                            taskItem.setProgressState(SWT.DEFAULT);
-                                            refreshTable();
-                                        }
-                                    });
-                            }
-                        }));
-            progressThread.setName(PROGRESS_THREAD_LABEL);
-            progressThread.setDaemon(true);
-            progressThread.start();
+        TaskItem taskItem = getTaskItem();
+        if (taskItem == null) {
+            // There is no task bar on linux
+            // In this case, we should execute the futures without the task bar
+            // (TODO)
+            logger.info("not moving files becasue no task item");
+        } else {
+            doRenamesWithProgressBar(futures, taskItem);
         }
     }
 
