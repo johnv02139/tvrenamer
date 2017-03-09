@@ -528,19 +528,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.deselectAll();
     }
 
-    private TaskItem getTaskItem() {
-        TaskItem taskItem = null;
-        TaskBar taskBar = display.getSystemTaskBar();
-        if (taskBar != null) {
-            taskItem = taskBar.getItem(shell);
-            if (taskItem == null) {
-                taskItem = taskBar.getItem(null);
-            }
-        }
-        return taskItem;
-    }
-
-    private void renameFiles() {
+    private Queue<Future<Boolean>> listOfFileMoves() {
         final Queue<Future<Boolean>> futures = new LinkedList<>();
 
         for (final TableItem item : getTableItems()) {
@@ -579,6 +567,24 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 }
             }
         }
+
+        return futures;
+    }
+
+    private TaskItem getTaskItem() {
+        TaskItem taskItem = null;
+        TaskBar taskBar = display.getSystemTaskBar();
+        if (taskBar != null) {
+            taskItem = taskBar.getItem(shell);
+            if (taskItem == null) {
+                taskItem = taskBar.getItem(null);
+            }
+        }
+        return taskItem;
+    }
+
+    private void renameFiles() {
+        final Queue<Future<Boolean>> futures = listOfFileMoves();
 
         final TaskItem taskItem = getTaskItem();
         // There is no task bar on linux
