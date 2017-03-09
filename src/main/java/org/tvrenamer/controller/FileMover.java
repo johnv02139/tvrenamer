@@ -37,6 +37,7 @@ public class FileMover implements Callable<Boolean> {
             episode.setDoesNotExist();
             return false;
         }
+        File srcDir = srcFile.getParentFile();
         File destDir = destFile.getParentFile();
         String destFileName = destFile.getAbsolutePath();
         if (!destDir.exists()) {
@@ -60,6 +61,7 @@ public class FileMover implements Callable<Boolean> {
                 logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFileName);
                 episode.setPath(destFile.toPath());
                 updateFileModifiedDate(destFile, timestamp);
+                FileUtilities.removeWhileEmpty(srcDir);
                 return true;
             } else {
                 // TODO: there used to be a facility for moving files to a different disk,
