@@ -202,16 +202,19 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
     }
 
-    private static String valueForNewFilename(FileEpisode episode) {
+    private void setEpisodeNewFilenameText(final TableItem item, final FileEpisode episode) {
+        String valueForNewFilename;
         if (episode.isFailed()) {
-            return getFailMessage(episode);
+            valueForNewFilename = getFailMessage(episode);
         } else if (episode.isReady()) {
-            return episode.getProposedFilename();
+            valueForNewFilename = episode.getProposedFilename();
         } else if (episode.isSeriesReady()) {
-            return PROCESSING_EPISODES;
+            valueForNewFilename = PROCESSING_EPISODES;
         } else {
-            return ADDED_PLACEHOLDER_FILENAME;
+            valueForNewFilename = ADDED_PLACEHOLDER_FILENAME;
         }
+
+        item.setText(NEW_FILENAME_COLUMN, valueForNewFilename);
     }
 
     private static String renameButtonText(boolean isMoveEnabled) {
@@ -275,7 +278,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                             ep.setViewItem(null);
                             return;
                         }
-                        item.setText(NEW_FILENAME_COLUMN, valueForNewFilename(ep));
+                        setEpisodeNewFilenameText(item, ep);
                         item.setImage(STATUS_COLUMN, getFileMoveIcon(ep));
                         item.setChecked(ep.isReady());
                     }
@@ -305,7 +308,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 String newFileName = episode.getFilepath();
                 episodeMap.put(newFileName, episode);
                 item.setText(CURRENT_FILE_COLUMN, newFileName);
-                item.setText(NEW_FILENAME_COLUMN, valueForNewFilename(episode));
+                setEpisodeNewFilenameText(item, episode);
             } else {
                 failToParseTableItem(item, fileName);
                 if (episode == null) {
@@ -346,11 +349,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         // Set if the item is checked or not according
         // to a list of banned keywords
         item.setChecked(!isNameIgnored(newFilename));
+        item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
         // TODO: this used to get just the basename (no directory), even if
         // move was enabled.  Why?
-        newFilename = valueForNewFilename(episode);
-        item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
-        item.setText(NEW_FILENAME_COLUMN, newFilename);
+        setEpisodeNewFilenameText(item, episode);
     }
 
     private void addFileToRenamer(final Path path) {
@@ -554,8 +556,8 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                     newFile = new File(newFilePath);
                 }
 
-                logger.info("Going to move '" + currentFile.getAbsolutePath()
-                            + "' to '" + newFile.getAbsolutePath() + "'");
+                logger.info("Going to move\n  '" + currentFile.getAbsolutePath()
+                            + "'\nto\n  '" + newFile.getAbsolutePath() + "'");
 
                 String currentName = currentFile.getName();
                 if (newName.equals(currentName)) {
