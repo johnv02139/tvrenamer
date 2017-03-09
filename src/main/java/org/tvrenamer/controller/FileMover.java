@@ -2,7 +2,6 @@ package org.tvrenamer.controller;
 
 import org.tvrenamer.controller.util.FileUtilities;
 import org.tvrenamer.model.FileEpisode;
-import org.tvrenamer.model.UserPreferences;
 
 import java.io.File;
 import java.util.concurrent.Callable;
@@ -18,15 +17,6 @@ public class FileMover implements Callable<Boolean> {
     public FileMover(FileEpisode episode, File destFile) {
         this.episode = episode;
         this.destFile = destFile;
-    }
-
-    private void updateFileModifiedDate(File file, long timestamp) {
-        // update the modified time on the file, the parent, and the grandparent
-        file.setLastModified(timestamp);
-        if (UserPreferences.getInstance().isMoveEnabled()) {
-            file.getParentFile().setLastModified(timestamp);
-            file.getParentFile().getParentFile().setLastModified(timestamp);
-        }
     }
 
     @Override
@@ -54,13 +44,12 @@ public class FileMover implements Callable<Boolean> {
             boolean succeeded = srcFile.renameTo(destFile);
             if (succeeded) {
                 long timestamp = episode.getAirDate();
-                if (timestamp == 0) {
-                    timestamp = System.currentTimeMillis();
+                if (timestamp > 0) {
+                    destFile.setLastModified(timestamp);
                 }
                 episode.setRenamed();
                 logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFileName);
                 episode.setPath(destFile.toPath());
-                updateFileModifiedDate(destFile, timestamp);
                 FileUtilities.removeWhileEmpty(srcDir);
                 return true;
             } else {
