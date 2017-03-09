@@ -3,68 +3,104 @@ package org.tvrenamer.controller;
 import org.tvrenamer.controller.util.FileUtilities;
 import org.tvrenamer.model.FileEpisode;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileMover implements Callable<Boolean> {
     private static Logger logger = Logger.getLogger(FileMover.class.getName());
 
-    private final File destFile;
+    private final Path destPath;
 
     private final FileEpisode episode;
 
-    public FileMover(FileEpisode episode, File destFile) {
+    public FileMover(FileEpisode episode, Path destPath) {
         this.episode = episode;
-        this.destFile = destFile;
+        this.destPath = destPath;
+    }
+
+    private boolean doActualMove(Path srcPath, Path destPath) {
+        Path actualDest = null;
+        try {
+            actualDest = Files.move(srcPath, destPath);
+            long timestamp = episode.getAirDate();
+            if (timestamp > 0) {
+                Files.setLastModifiedTime(actualDest, FileTime.fromMillis(timestamp));
+            }
+        } catch (IOException ioe) {
+            logger.log(Level.SEVERE, "Unable to move " + srcPath, ioe);
+            // TODO: there used to be a facility for moving files to a different disk,
+            // and monitoring the progress, but I didn't like the library it used.
+            // Look into a replacement.
+            return false;
+        }
+        boolean same = destPath.equals(actualDest);
+        if (!same) {
+            logger.warning("actual destination did not match intended:\n  "
+                           + actualDest + "\n  " + destPath);
+            return false;
+        }
+        return true;
+    }
+
+    private boolean moveFile() {
+        Path srcPath = episode.getPath();
+        if (Files.notExists(srcPath)) {
+            logger.info("Path no longer exists: " + srcPath);
+            episode.setDoesNotExist();
+            return false;
+        }
+        Path destDir = destPath.getParent();
+        if (Files.notExists(destDir)) {
+            try {
+                Files.createDirectories(destDir);
+            } catch (IOException ioe) {
+                logger.log(Level.SEVERE, "Unable to create directory " + destDir, ioe);
+                return false;
+            }
+        }
+        if (!Files.exists(destDir)) {
+            logger.warning("could not create destination directory " + destDir
+                           + "; not attempting to move " + srcPath);
+            return false;
+        }
+        if (!Files.isDirectory(destDir)) {
+            logger.warning("cannot use specified destination " + destDir
+                           + "because it is not a directory; not attempting to move "
+                           + srcPath);
+            return false;
+        }
+        if (Files.exists(destPath)) {
+            String message = "File " + destPath + " already exists.\n" + srcPath + " was not renamed!";
+            logger.warning(message);
+            // UIUtils.showErrorMessageBox(RENAME_FAILED_LABEL, message, null);
+            return false;
+        }
+
+        episode.setMoving();
+        Path srcDir = srcPath.getParent();
+
+        if (false == doActualMove(srcPath, destPath)) {
+            return false;
+        }
+
+        episode.setRenamed();
+        episode.setPath(destPath);
+        logger.info("Moved " + srcPath + " to " + destPath);
+        FileUtilities.removeWhileEmpty(srcDir.toFile());
+        return true;
     }
 
     @Override
     public Boolean call() {
-        File srcFile = episode.getPath().toFile();
-        if (!srcFile.exists()) {
-            logger.info("File no longer exists: " + srcFile);
-            episode.setDoesNotExist();
-            return false;
-        }
-        File srcDir = srcFile.getParentFile();
-        File destDir = destFile.getParentFile();
-        String destFileName = destFile.getAbsolutePath();
-        if (!destDir.exists()) {
-            destDir.mkdirs();
-        }
-        if (destDir.exists() && destDir.isDirectory()) {
-            if (destFile.exists()) {
-                String message = "File " + destFile + " already exists.\n" + srcFile + " was not renamed!";
-                logger.warning(message);
-                // UIUtils.showErrorMessageBox(RENAME_FAILED_LABEL, message, null);
-                return false;
-            }
-            episode.setMoving();
-            boolean succeeded = srcFile.renameTo(destFile);
-            if (succeeded) {
-                long timestamp = episode.getAirDate();
-                if (timestamp > 0) {
-                    destFile.setLastModified(timestamp);
-                }
-                episode.setRenamed();
-                logger.info("Moved " + srcFile.getAbsolutePath() + " to " + destFileName);
-                episode.setPath(destFile.toPath());
-                FileUtilities.removeWhileEmpty(srcDir);
-                return true;
-            } else {
-                // TODO: there used to be a facility for moving files to a different disk,
-                // and monitoring the progress, but I didn't like the library it used.
-                // Look into a replacement.
-                logger.severe("Unable to move " + srcFile.getAbsolutePath()
-                              + " to " + destFileName);
-                episode.setFailToMove();
-                return false;
-            }
-        } else {
-            logger.severe("Unable to use " + destDir + " as destination directory");
+        boolean success = moveFile();
+        if (!success) {
             episode.setFailToMove();
         }
-        return false;
+        return success;
     }
 }

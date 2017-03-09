@@ -91,7 +91,6 @@ import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Environment;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
@@ -582,31 +581,27 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                     continue;
                 }
 
-                final String fileName = item.getText(CURRENT_FILE_COLUMN);
-                final File currentFile = new File(fileName);
-
+                Path currentPath = episode.getPath();
                 String newName = item.getText(NEW_FILENAME_COLUMN);
-                File newFile = null;
-                if (prefs != null && prefs.isMoveEnabled()) {
-                    // If move is enabled, the full path is in the table already
-                    newFile = new File(newName);
-                } else {
-                    // Else we need to build it
-                    String newFilePath = currentFile.getParent() + File.separatorChar + newName;
-                    newFile = new File(newFilePath);
+                Path newPath = Paths.get(newName);
+
+                if (!prefs.isMoveEnabled()) {
+                    // If move is enabled, the full path is in the table already,
+                    // but if not, we need to build it
+                    Path currentParent = currentPath.getParent();
+                    newPath = currentParent.resolve(newName);
                 }
 
-                logger.info("Going to move\n  '" + currentFile.getAbsolutePath()
-                            + "'\nto\n  '" + newFile.getAbsolutePath() + "'");
-
-                String currentName = currentFile.getName();
-                if (newName.equals(currentName)) {
-                    logger.info("nothing to be done to " + currentName);
-                } else {
-                    Callable<Boolean> moveCallable = new FileMover(episode, newFile);
-                    futures.add(executor.submit(moveCallable));
-                    item.setChecked(false);
+                if (currentPath.equals(newPath)) {
+                    logger.info("nothing to be done to " + currentPath);
+                    continue;
                 }
+
+                logger.info("Going to move\n  '" + currentPath + "'\nto\n  '" + newPath + "'");
+
+                Callable<Boolean> moveCallable = new FileMover(episode, newPath);
+                futures.add(executor.submit(moveCallable));
+                item.setChecked(false);
             }
         }
 
