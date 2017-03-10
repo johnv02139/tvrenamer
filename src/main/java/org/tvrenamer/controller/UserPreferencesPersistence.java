@@ -30,7 +30,7 @@ public class UserPreferencesPersistence {
     /**
      * Save the preferences object to the path.
      * @param prefs the preferences object to save
-     * @param file the path to save it to
+     * @param path the path to save it to
      */
     public static void persist(UserPreferences prefs, Path path) {
         String xml = xstream.toXML(prefs);
