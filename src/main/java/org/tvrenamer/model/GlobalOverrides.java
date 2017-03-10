@@ -24,7 +24,7 @@ public class GlobalOverrides {
     }
 
     private static GlobalOverrides load() {
-        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE.toFile());
+        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE);
 
         if (overrides != null) {
             logger.fine("Sucessfully read overrides from: " + OVERRIDES_FILE.toAbsolutePath());
@@ -38,7 +38,7 @@ public class GlobalOverrides {
     }
 
     public static void store(GlobalOverrides overrides) {
-        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE.toFile());
+        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE);
         logger.fine("Sucessfully saved/updated overrides");
     }
 

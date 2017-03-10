@@ -5,11 +5,10 @@ import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider
 import org.tvrenamer.model.GlobalOverrides;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,49 +23,41 @@ public class GlobalOverridesPersistence {
     }
 
     /**
-     * Save the overrides object to the file.
+     * Save the overrides object to the path.
      *
      * @param prefs
      *            the overrides object to save
-     * @param file
-     *            the file to save it to
+     * @param path
+     *            the path to save it to
      */
-    public static void persist(GlobalOverrides overrides, File file) {
+    public static void persist(GlobalOverrides overrides, Path path) {
         String xml = xstream.toXML(overrides);
-        BufferedWriter writer = null;
 
-        try {
-            writer = new BufferedWriter(new FileWriter(file));
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(xml);
 
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Exception occured when writing overrides file", e);
-        } finally {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Exception occured when closing overrides file", e);
-            }
         }
     }
 
     /**
-     * Load the overrides from file.
+     * Load the overrides from path.
      *
-     * @param file
+     * @param path
      *            the file to read
      * @return the populated overrides object
      */
-    public static GlobalOverrides retrieve(File file) {
+    public static GlobalOverrides retrieve(Path path) {
         // Instantiate the object so the Observable superclass is called corrected
         GlobalOverrides overrides = null;
 
-        try {
-            overrides = (GlobalOverrides) xstream.fromXML(new FileInputStream(file));
-        } catch (FileNotFoundException e) {
-            // If file doesn't exist, assume defaults
+        try (InputStream in = Files.newInputStream(path)) {
+            overrides = (GlobalOverrides) xstream.fromXML(in);
+        } catch (IllegalArgumentException | UnsupportedOperationException
+                 | IOException  | SecurityException e)
+        {
+            // If anything goes wrong, assume defaults
             return null;
         }
 
