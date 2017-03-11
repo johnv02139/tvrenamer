@@ -35,8 +35,6 @@ package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
 
-import static org.tvrenamer.view.UIUtils.showMessageBox;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.TableEditor;
@@ -86,7 +84,6 @@ import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.controller.UpdateCompleteHandler;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
-import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UnresolvedShow;
@@ -1175,7 +1172,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         shell.setLayout(shellGridLayout);
 
         // Setup the util class
-        new UIUtils(shell);
+        UIUtils.setShell(shell);
 
         // Add controls to main shell
         setupMainWindow();
@@ -1229,8 +1226,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             JOptionPane.showMessageDialog(null, NO_DND);
             System.exit(1);
         } catch (Exception exception) {
-            showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL,
-                           UNKNOWN_EXCEPTION, exception);
+            UIUtils.showErrorMessageBox(ERROR_LABEL, UNKNOWN_EXCEPTION, exception);
             logger.log(Level.SEVERE, UNKNOWN_EXCEPTION, exception);
             System.exit(2);
         }

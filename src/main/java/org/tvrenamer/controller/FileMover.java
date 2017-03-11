@@ -47,7 +47,7 @@ public class FileMover implements Callable<Boolean> {
             if (destFile.exists()) {
                 String message = "File " + destFile + " already exists.\n" + srcFile + " was not renamed!";
                 logger.warning(message);
-                // showMessageBox(SWTMessageBoxType.ERROR, "Rename Failed", message);
+                // UIUtils.showErrorMessageBox(RENAME_FAILED_LABEL, message, null);
                 return false;
             }
             episode.setMoving();

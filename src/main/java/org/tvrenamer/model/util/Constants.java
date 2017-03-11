@@ -56,6 +56,11 @@ public class Constants {
     public static final String MOVE_TOOLTIP_2 = ").";
     public static final String UPDATE_IS_AVAILABLE_1 = "There is an update available. <a href=\"";
     public static final String UPDATE_IS_AVAILABLE_2 = "\">Click here to download</a>";
+    public static final String NEW_VERSION_AVAILABLE = "There is a new version available!\n\n"
+        + "You are currently running " + VERSION_NUMBER + ", but there is an update available\n\n"
+        + "Please visit " + TVRENAMER_PROJECT_URL + " to download the new version.";
+    public static final String NO_NEW_VERSION_AVAILABLE = "There is a no new version available\n\n"
+        + "Please check the website (" + TVRENAMER_PROJECT_URL + ") for any news or check back later.";
 
     public static final String UNKNOWN_EXCEPTION = "An error occurred, please check "
         + "your internet connection, java version or run from the command line to show errors";
@@ -63,7 +68,8 @@ public class Constants {
     public static final String VISIT_WEBPAGE = "Visit Webpage";
     public static final String ERROR_DOWNLOADING_SHOW_INFORMATION = "Error downloading "
         + "show information. Check internet or proxy settings";
-
+    public static final String UNABLE_TO_CONNECT = "Unable connect to the TV listing website, "
+        + "please check your internet connection.\nNote that proxies are not currently supported.";
 
     public static final String DEFAULT_REPLACEMENT_MASK = "%S [%sx%0e] %t";
     public static final String CANT_PARSE_EPISODE_TEXT = "n/a";

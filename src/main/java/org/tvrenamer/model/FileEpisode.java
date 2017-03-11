@@ -250,6 +250,10 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         this.filenameSeries = filenameSeries;
     }
 
+    public void setSeriesName(String seriesName) {
+        logger.warning("setSeriesName not implemented yet: " + seriesName);
+    }
+
     public String getFilenameSeason() {
         return filenameSeason;
     }

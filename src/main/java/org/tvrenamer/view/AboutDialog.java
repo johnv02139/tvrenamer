@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Shell;
 
 import org.tvrenamer.controller.UpdateChecker;
-import org.tvrenamer.model.SWTMessageBoxType;
 
 import java.io.InputStream;
 import java.util.logging.Logger;
@@ -178,25 +177,10 @@ public class AboutDialog extends Dialog {
                 if (updateAvailable == null) {
                     // Don't need to do anything here as the error message has been displayed already
                 } else if (updateAvailable) {
-                    StringBuilder messageBuilder = new StringBuilder();
-                    messageBuilder.append("There is a new version available!\n\n");
-                    messageBuilder.append("You are currently running ");
-                    messageBuilder.append(VERSION_NUMBER);
-                    messageBuilder.append(", but there is an update available\n\n");
-                    messageBuilder.append("Please visit ");
-                    messageBuilder.append(TVRENAMER_PROJECT_URL);
-                    messageBuilder.append(" to download the new version.");
-
-                    logger.fine(messageBuilder.toString());
-                    UIUtils.showMessageBox(SWTMessageBoxType.OK, "New Version Available!", messageBuilder.toString());
+                    logger.fine(NEW_VERSION_AVAILABLE);
+                    UIUtils.showOkMessageBox("New Version Available!", NEW_VERSION_AVAILABLE);
                 } else {
-                    StringBuilder messageBuilder = new StringBuilder();
-                    messageBuilder.append("There is a no new version available\n\n");
-                    messageBuilder.append("Please check the website (");
-                    messageBuilder.append(TVRENAMER_PROJECT_URL);
-                    messageBuilder.append(") for any news or check back later.");
-                    UIUtils.showMessageBox(SWTMessageBoxType.WARNING, "No New Version Available",
-                                           messageBuilder.toString());
+                    UIUtils.showWarningMessageBox("No New Version Available", NO_NEW_VERSION_AVAILABLE);
                 }
             }
         });

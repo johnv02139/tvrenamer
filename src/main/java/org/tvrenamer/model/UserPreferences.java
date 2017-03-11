@@ -67,7 +67,7 @@ public class UserPreferences extends Observable {
 
         moveEnabled = false;
         logger.warning(errorMessage);
-        UIUtils.showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL, errorMessage);
+        UIUtils.showErrorMessageBox(ERROR_LABEL, errorMessage, null);
     }
 
     /**

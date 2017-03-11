@@ -35,7 +35,6 @@ import org.eclipse.swt.widgets.Text;
 
 import org.tvrenamer.model.ProxySettings;
 import org.tvrenamer.model.ReplacementToken;
-import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.except.TVRenamerIOException;
 
@@ -522,8 +521,8 @@ public class PreferencesDialog extends Dialog {
         try {
             prefs.setDestinationDirectory(destDirText.getText());
         } catch (TVRenamerIOException e) {
-            UIUtils.showMessageBox(SWTMessageBoxType.ERROR, "Error", "Unable to create the destination directory: "
-                + destDirText.getText());
+            UIUtils.showErrorMessageBox("Error", "Unable to create the destination directory: "
+                                        + destDirText.getText(), null);
             logger.log(Level.WARNING, "Unable to create the destination directory", e);
         }
         UserPreferences.store(prefs);
