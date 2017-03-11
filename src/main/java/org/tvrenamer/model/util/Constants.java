@@ -72,12 +72,14 @@ public class Constants {
 
     public static final String ICON_PARENT_DIRECTORY = "res";
     public static final String TVRENAMER_ICON_PATH = "/icons/tvrenamer.png";
+    public static final String XML_SUFFIX = ".xml";
 
     private static final String CONFIGURATION_DIRECTORY_NAME = ".tvrenamer";
     private static final String PREFERENCES_FILENAME = "prefs.xml";
     private static final String OVERRIDES_FILENAME = "overrides.xml";
     private static final String KNOWN_SHOWS_FILENAME = "shows.xml";
-    private static final String TVDB_CACHE_DIRNAME = "thetvdb";
+    private static final String TVDB_DOWNLOAD_DIRNAME = "thetvdb";
+    private static final String TVDB_CACHE_DIRNAME = "cache";
 
     public static final String DEVELOPER_DEFAULT_OVERRIDES_FILENAME = "etc/default-overrides.xml";
 
@@ -92,6 +94,8 @@ public class Constants {
         = CONFIGURATION_DIRECTORY.resolve(PREFERENCES_FILENAME);
     public static final Path OVERRIDES_FILE
         = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
+    public static final Path THETVDB_DIR
+        = CONFIGURATION_DIRECTORY.resolve(TVDB_DOWNLOAD_DIRNAME);
     public static final Path THETVDB_CACHE
         = CONFIGURATION_DIRECTORY.resolve(TVDB_CACHE_DIRNAME);
     public static final Path KNOWN_SHOWS_FILE

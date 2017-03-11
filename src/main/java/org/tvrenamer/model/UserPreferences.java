@@ -171,9 +171,9 @@ public class UserPreferences extends Observable {
                 }
             }
         }
-        if (Files.notExists(THETVDB_CACHE)) {
+        if (Files.notExists(THETVDB_DIR)) {
             try {
-                Files.createDirectories(THETVDB_CACHE);
+                Files.createDirectories(THETVDB_DIR);
             } catch (Exception e) {
                 logger.log(Level.WARNING, e.getMessage(), e);
             }
