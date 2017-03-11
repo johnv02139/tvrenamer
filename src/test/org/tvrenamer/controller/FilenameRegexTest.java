@@ -3,19 +3,15 @@ package org.tvrenamer.controller;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized.Parameters;
-import org.junit.runners.Parameterized;
 
 import org.tvrenamer.model.FileEpisode;
 
 import java.util.Arrays;
+import java.util.List;
 
-@RunWith(Parameterized.class)
 public class FilenameRegexTest {
-    @Parameters
-    public static final Iterable<? extends Object> data() {
-        return Arrays.asList(
+    public static final List<String> data =
+        Arrays.asList(
             "24.s08.e01.720p.hdtv.x264-immerse.mkv",
             "24.S07.E18.720p.BlueRay.x264-SiNNERS.mkv",
             "human.target.2010.s01.e02.720p.hdtv.x264-2hd.mkv",
@@ -31,17 +27,15 @@ public class FilenameRegexTest {
             "castle.2009.s01e09.720p.hdtv.x264-ctu.mkv",
             "Marvels.Agents.of.S.H.I.E.L.D.S03E03.HDTV.x264-FLEET"
         );
-    }
 
-    private String input;
-
-    public FilenameRegexTest(String input) {
-        this.input = input;
+    public FilenameRegexTest() {
     }
 
     @Test
     public void testRegex() {
-        FileEpisode result = new FileEpisode(input);
-        assertTrue(result.wasParsed());
+        for (String s : data) {
+            FileEpisode result = new FileEpisode(s);
+            assertTrue(result.wasParsed());
+        }
     }
 }
