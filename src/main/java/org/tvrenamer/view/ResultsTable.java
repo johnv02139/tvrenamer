@@ -279,6 +279,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         item.setGrayed(true); // makes checkbox use a dot; very weird
         item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
         item.setFont(italicFont);
+        item.setText(CURRENT_FILE_COLUMN, fileName);
         item.setText(NEW_FILENAME_COLUMN, CANT_PARSE_FILENAME);
         return item;
     }
@@ -287,7 +288,13 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         String fileName = episode.getFilepath();
         episodeMap.put(fileName, episode);
 
-        item.setChecked(episode.isReady());
+        if (episode.wasNotParsed()) {
+            failToParseTableItem(item, fileName);
+            return;
+        }
+        // Set if the item is checked or not according
+        // to a list of banned keywords
+        item.setChecked(!isNameIgnored(fileName) && episode.isReady());
         item.setText(CURRENT_FILE_COLUMN, fileName);
         setEpisodeNewFilenameText(item, episode);
         item.setImage(STATUS_COLUMN, getFileMoveIcon(episode));
@@ -400,24 +407,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             });
     }
 
-    private void addItemToTable(TableItem item, FileEpisode episode) {
-        String fileName = episode.getFilepath();
-        item.setText(CURRENT_FILE_COLUMN, fileName);
-
-        if (episode.wasNotParsed()) {
-            failToParseTableItem(item, fileName);
-            return;
-        }
-        String newFilename = fileName;
-        // Set if the item is checked or not according
-        // to a list of banned keywords
-        item.setChecked(!isNameIgnored(newFilename));
-        item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
-        // TODO: this used to get just the basename (no directory), even if
-        // move was enabled.  Why?
-        setEpisodeNewFilenameText(item, episode);
-    }
-
     private void addFileToRenamer(final Path path) {
         final Path absPath = path.toAbsolutePath();
         final String key = absPath.toString();
@@ -427,7 +416,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             final TableItem item = new TableItem(resultsTable, SWT.NONE);
             final FileEpisode episode = new FileEpisode(absPath, item, this);
             // We add the file to the table even if we couldn't parse the filename
-            addItemToTable(item, episode);
+            updateTableItemText(item, episode);
             episodeMap.add(episode);
         }
     }
