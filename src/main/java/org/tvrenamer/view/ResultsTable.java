@@ -764,6 +764,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private void doCleanup() {
         executor.shutdownNow();
+        // TODO: may not be necessary if they're daemon threads
         ShowStore.cleanUp();
         shell.dispose();
         display.dispose();
