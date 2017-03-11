@@ -170,10 +170,15 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private static String getFailMessage(final FileEpisode ep) {
+        if (ep.isFailToParse()) {
+            return CANT_PARSE_FILENAME;
+        }
+
         if (ep.isFailed()) {
-            final Series epSeries = ep.getSeries();
-            // BROKEN_PLACEHOLDER_FILENAME;
             String failMsg = DOWNLOADING_FAILED_MESSAGE;
+            // BROKEN_PLACEHOLDER_FILENAME;
+
+            final Series epSeries = ep.getSeries();
             if (epSeries instanceof UnresolvedShow) {
                 UnresolvedShow f = (UnresolvedShow) epSeries;
                 if (f.getException() == null) {
@@ -181,9 +186,9 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 }
             }
             return failMsg;
-        } else {
-            return FAIL_MSG_FOR_NONFAIL;
         }
+
+        return FAIL_MSG_FOR_NONFAIL;
     }
 
     private static String renameButtonText(boolean isMoveEnabled) {
@@ -256,10 +261,15 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         } else if (episode.isRenameInProgress()) {
             item.setImage(STATUS_COLUMN, FileMoveIcon.RENAMING.icon);
         } else {
+            item.setGrayed(true); // makes checkbox use a dot; very weird
             item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
             item.setFont(italicFont);
             item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
         }
+    }
+
+    private void setEpisodeFilenameText(final TableItem item, final FileEpisode episode) {
+        item.setText(CURRENT_FILE_COLUMN, episode.getFilepath());
     }
 
     private void setEpisodeNewFilenameText(final TableItem item, final FileEpisode episode) {
@@ -277,29 +287,17 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         item.setText(NEW_FILENAME_COLUMN, valueForNewFilename);
     }
 
-    private TableItem failToParseTableItem(TableItem item, String fileName) {
-        logger.severe("Couldn't parse file: " + fileName);
-        item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
-        item.setGrayed(true); // makes checkbox use a dot; very weird
-        item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
-        item.setFont(italicFont);
-        item.setText(CURRENT_FILE_COLUMN, fileName);
-        item.setText(NEW_FILENAME_COLUMN, CANT_PARSE_FILENAME);
-        return item;
-    }
-
     private void updateTableItemText(final TableItem item, final FileEpisode episode) {
         String fileName = episode.getFilepath();
         episodeMap.put(fileName, episode);
 
         if (episode.wasNotParsed()) {
-            failToParseTableItem(item, fileName);
-            return;
+            logger.severe("Couldn't parse file: " + fileName);
         }
         // Set if the item is checked or not according
         // to a list of banned keywords
         item.setChecked(!isNameIgnored(fileName) && episode.isReady());
-        item.setText(CURRENT_FILE_COLUMN, fileName);
+        setEpisodeFilenameText(item, episode);
         setEpisodeNewFilenameText(item, episode);
         setEpisodeStatusImage(item, episode);
     }
