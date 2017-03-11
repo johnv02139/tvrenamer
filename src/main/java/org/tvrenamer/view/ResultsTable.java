@@ -290,6 +290,22 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         setEpisodeNewFilenameText(item, episode);
     }
 
+    private TableItem addRowCopy(TableItem oldItem, FileEpisode oldEpisode, int index) {
+        boolean wasChecked = oldItem.getChecked();
+        int oldStyle = oldItem.getStyle();
+
+        TableItem newItem = new TableItem(resultsTable, oldStyle, index);
+        newItem.setChecked(wasChecked);
+        newItem.setText(CURRENT_FILE_COLUMN, getFilenameRowText(oldItem));
+        newItem.setText(NEW_FILENAME_COLUMN, oldItem.getText(NEW_FILENAME_COLUMN));
+        newItem.setImage(STATUS_COLUMN, oldItem.getImage(STATUS_COLUMN));
+        newItem.setForeground(oldItem.getForeground());
+        newItem.setFont(oldItem.getFont());
+        newItem.setData(oldEpisode);
+
+        return newItem;
+    }
+
     private FileEpisode verifyEpisode(final TableItem item) {
         FileEpisode data = (FileEpisode) item.getData();
         String fileName;
@@ -478,16 +494,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         TableItem oldItem = getTableItem(i);
         FileEpisode oldEpisode = getTableItemEpisode(oldItem);
 
-        boolean wasChecked = oldItem.getChecked();
-        int oldStyle = oldItem.getStyle();
-
-        TableItem item = new TableItem(resultsTable, oldStyle, j);
-        item.setChecked(wasChecked);
-        item.setText(CURRENT_FILE_COLUMN, oldItem.getText(CURRENT_FILE_COLUMN));
-        item.setText(NEW_FILENAME_COLUMN, oldItem.getText(NEW_FILENAME_COLUMN));
-        item.setImage(STATUS_COLUMN, oldItem.getImage(STATUS_COLUMN));
-        item.setChecked(wasChecked);
-        item.setData(oldEpisode);
+        TableItem item = addRowCopy(oldItem, oldEpisode, j);
 
         oldEpisode.setViewItem(item);
 
