@@ -1,17 +1,19 @@
 package org.tvrenamer.model;
 
-
-import static org.tvrenamer.model.util.Constants.IMDB_BASE_URL;
+import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.controller.util.StringUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 /**
  * Represents a TV Series, with a name, url and list of seasons.
  */
 public class Series implements Comparable<Series> {
+    private static Logger logger = Logger.getLogger(Series.class.getName());
+
     private final int idNum;
     private final String name;
     private final String nameKey;
@@ -19,6 +21,7 @@ public class Series implements Comparable<Series> {
     private final String idString;
     private final String imdb;
 
+    private EpisodeList epList = null;
     private final Map<Integer, Season> seasons;
 
     public Series(String name, String idString, String imdb) {
@@ -58,15 +61,23 @@ public class Series implements Comparable<Series> {
             setSeason(seasonNum, season);
         }
         season.addEpisode(ep);
+        epList.addEpisode(ep);
         return true;
     }
 
     public void addEpisodes(Episode[] episodes) {
-        for (int i = 0; i < episodes.length; i++) {
+        int n = episodes.length;
+        if (epList == null) {
+            epList = new EpisodeList(n, name, idString);
+        } else {
+            logger.warning("reloading episodes for " + name);
+        }
+        for (int i = 0; i < n; i++) {
             if (episodes[i] != null) {
                 addEpisode(episodes[i]);
             }
         }
+        epList.store(THETVDB_CACHE.resolve(idString + XML_SUFFIX));
     }
 
     public String getIdString() {
