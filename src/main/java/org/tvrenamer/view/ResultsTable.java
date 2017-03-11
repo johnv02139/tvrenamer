@@ -284,10 +284,13 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void updateTableItemText(final TableItem item, final FileEpisode episode) {
-        String newFileName = episode.getFilepath();
-        episodeMap.put(newFileName, episode);
-        item.setText(CURRENT_FILE_COLUMN, newFileName);
+        String fileName = episode.getFilepath();
+        episodeMap.put(fileName, episode);
+
+        item.setChecked(episode.isReady());
+        item.setText(CURRENT_FILE_COLUMN, fileName);
         setEpisodeNewFilenameText(item, episode);
+        item.setImage(STATUS_COLUMN, getFileMoveIcon(episode));
     }
 
     private TableItem addRowCopy(TableItem oldItem, FileEpisode oldEpisode, int index) {
@@ -391,9 +394,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                             ep.setViewItem(null);
                             return;
                         }
-                        setEpisodeNewFilenameText(item, ep);
-                        item.setImage(STATUS_COLUMN, getFileMoveIcon(ep));
-                        item.setChecked(ep.isReady());
+                        updateTableItemText(item, ep);
                     }
                 }
             });
