@@ -229,6 +229,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         throw new IllegalStateException("TableItem does not contain FileEpisode: " + item);
     }
 
+    private String getFilenameRowText(TableItem item) {
+        return item.getText(CURRENT_FILE_COLUMN);
+    }
+
     private boolean isNameIgnored(String fileName) {
         for (int i = 0; i < ignoreKeywords.size(); i++) {
             if (fileName.toLowerCase().contains(ignoreKeywords.get(i))) {
@@ -279,35 +283,68 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return item;
     }
 
+    private void updateTableItemText(final TableItem item, final FileEpisode episode) {
+        String newFileName = episode.getFilepath();
+        episodeMap.put(newFileName, episode);
+        item.setText(CURRENT_FILE_COLUMN, newFileName);
+        setEpisodeNewFilenameText(item, episode);
+    }
+
+    private FileEpisode verifyEpisode(final TableItem item) {
+        FileEpisode data = (FileEpisode) item.getData();
+        String fileName;
+
+        if (data != null) {
+            fileName = data.getFilepath();
+        } else {
+            fileName = getFilenameRowText(item);
+        }
+        if (fileName == null) {
+            throw new IllegalStateException("unrecoverable table corruption");
+        }
+
+        FileEpisode mapped = episodeMap.get(fileName);
+
+        // TODO: check that file still exists?
+
+        // This is the success case, and very much normal and expected.
+        if ((data != null) && (data == mapped)) {
+            return data;
+        }
+
+        // Everything below here is handling internal (programming) errors.
+        // There's nothing the user can do that should cause any of this.
+        if (mapped == null) {
+            if (data == null) {
+                logger.warning("table item without FileEpisode: " + fileName);
+            } else {
+                logger.warning("table item with no episodeMap mapping: " + fileName);
+            }
+        } else {
+            if (!episodeMap.remove(fileName, mapped)) {
+                throw new IllegalStateException("unrecoverable episode DB corruption");
+            }
+            if (data == null) {
+                logger.warning("table item with no FileEpisode data: " + fileName);
+            } else {
+                logger.warning("table item mapped to two different episodes: " + fileName);
+            }
+        }
+
+        // Again, we're in an internal error case, by this point.  Perhaps just throwing
+        // an exception and exiting would be better.  But to try to debug any internal
+        // errors that come up, it's better for now to whip up a new object and continue.
+        data = new FileEpisode(Paths.get(fileName), item, this);
+        episodeMap.put(fileName, data);
+
+        return data;
+    }
+
     private void refreshTable() {
         logger.info("Refreshing table");
         for (TableItem item : getTableItems()) {
-            FileEpisode episode = (FileEpisode) item.getData();
-
-            String fileName = item.getText(CURRENT_FILE_COLUMN);
-            FileEpisode removed = episodeMap.remove(fileName);
-
-            if ((episode != null) && (episode == removed)) {
-                String newFileName = episode.getFilepath();
-                episodeMap.put(newFileName, episode);
-                item.setText(CURRENT_FILE_COLUMN, newFileName);
-                setEpisodeNewFilenameText(item, episode);
-            } else {
-                failToParseTableItem(item, fileName);
-                if (episode == null) {
-                    if (removed == null) {
-                        logger.warning("table item without FileEpisode: " + fileName);
-                    } else {
-                        logger.warning("table item with no FileEpisode data: " + fileName);
-                    }
-                } else {
-                    if (removed == null) {
-                        logger.warning("table item with no episodeMap mapping: " + fileName);
-                    } else {
-                        logger.warning("table item mapped to two different episodes: " + fileName);
-                    }
-                }
-            }
+            FileEpisode episode = verifyEpisode(item);
+            updateTableItemText(item, episode);
         }
     }
 
