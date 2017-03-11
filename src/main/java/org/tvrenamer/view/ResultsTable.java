@@ -169,22 +169,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
     }
 
-    private static Image getFileMoveIcon(final FileEpisode episode) {
-        if (episode.isNewlyAdded()) {
-            return FileMoveIcon.ADDED.icon;
-        } else if (episode.isInvestigating()) {
-            return FileMoveIcon.DOWNLOADING.icon;
-        } else if (episode.isReady()) {
-            return FileMoveIcon.SUCCESS.icon;
-        } else if (episode.isFailed()) {
-            return FileMoveIcon.FAIL.icon;
-        } else if (episode.isRenameInProgress()) {
-            return FileMoveIcon.RENAMING.icon;
-        } else {
-            return FileMoveIcon.NOPARSE.icon;
-        }
-    }
-
     private static String getFailMessage(final FileEpisode ep) {
         if (ep.isFailed()) {
             final Series epSeries = ep.getSeries();
@@ -200,21 +184,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         } else {
             return FAIL_MSG_FOR_NONFAIL;
         }
-    }
-
-    private void setEpisodeNewFilenameText(final TableItem item, final FileEpisode episode) {
-        String valueForNewFilename;
-        if (episode.isFailed()) {
-            valueForNewFilename = getFailMessage(episode);
-        } else if (episode.isReady()) {
-            valueForNewFilename = episode.getProposedFilename();
-        } else if (episode.isSeriesReady()) {
-            valueForNewFilename = PROCESSING_EPISODES;
-        } else {
-            valueForNewFilename = ADDED_PLACEHOLDER_FILENAME;
-        }
-
-        item.setText(NEW_FILENAME_COLUMN, valueForNewFilename);
     }
 
     private static String renameButtonText(boolean isMoveEnabled) {
@@ -251,39 +220,53 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return resultsTable.getItem(index);
     }
 
-    public void onEpisodeUpdate(final FileEpisode ep) {
-        if (ep == null) {
-            logger.severe("got update for a null episode (makes no sense)");
-            return;
+    private FileEpisode getTableItemEpisode(final TableItem item) {
+        FileEpisode episode = null;
+        Object data = item.getData();
+        if ((data != null) && (data instanceof FileEpisode)) {
+            return (FileEpisode) data;
         }
-        if (!isUIRunning || display.isDisposed()) {
-            return;
+        throw new IllegalStateException("TableItem does not contain FileEpisode: " + item);
+    }
+
+    private boolean isNameIgnored(String fileName) {
+        for (int i = 0; i < ignoreKeywords.size(); i++) {
+            if (fileName.toLowerCase().contains(ignoreKeywords.get(i))) {
+                return true;
+            }
         }
-        final TableItem item = ep.getViewItem();
-        if (item == null) {
-            logger.warning("episode not associated with table item: " + ep);
-            return;
+        return false;
+    }
+
+    private static Image getFileMoveIcon(final FileEpisode episode) {
+        if (episode.isNewlyAdded()) {
+            return FileMoveIcon.ADDED.icon;
+        } else if (episode.isInvestigating()) {
+            return FileMoveIcon.DOWNLOADING.icon;
+        } else if (episode.isReady()) {
+            return FileMoveIcon.SUCCESS.icon;
+        } else if (episode.isFailed()) {
+            return FileMoveIcon.FAIL.icon;
+        } else if (episode.isRenameInProgress()) {
+            return FileMoveIcon.RENAMING.icon;
+        } else {
+            return FileMoveIcon.NOPARSE.icon;
         }
-        display.asyncExec(new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (ep) {
-                        final TableItem item = ep.getViewItem();
-                        if (item == null) {
-                            logger.info("item has disappeared from episode: " + ep);
-                            return;
-                        }
-                        if (item.isDisposed()) {
-                            logger.info("item has been displosed from episode: " + ep);
-                            ep.setViewItem(null);
-                            return;
-                        }
-                        setEpisodeNewFilenameText(item, ep);
-                        item.setImage(STATUS_COLUMN, getFileMoveIcon(ep));
-                        item.setChecked(ep.isReady());
-                    }
-                }
-            });
+    }
+
+    private void setEpisodeNewFilenameText(final TableItem item, final FileEpisode episode) {
+        String valueForNewFilename;
+        if (episode.isFailed()) {
+            valueForNewFilename = getFailMessage(episode);
+        } else if (episode.isReady()) {
+            valueForNewFilename = episode.getProposedFilename();
+        } else if (episode.isSeriesReady()) {
+            valueForNewFilename = PROCESSING_EPISODES;
+        } else {
+            valueForNewFilename = ADDED_PLACEHOLDER_FILENAME;
+        }
+
+        item.setText(NEW_FILENAME_COLUMN, valueForNewFilename);
     }
 
     private TableItem failToParseTableItem(TableItem item, String fileName) {
@@ -328,13 +311,39 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
     }
 
-    private boolean isNameIgnored(String fileName) {
-        for (int i = 0; i < ignoreKeywords.size(); i++) {
-            if (fileName.toLowerCase().contains(ignoreKeywords.get(i))) {
-                return true;
-            }
+    public void onEpisodeUpdate(final FileEpisode ep) {
+        if (ep == null) {
+            logger.severe("got update for a null episode (makes no sense)");
+            return;
         }
-        return false;
+        if (!isUIRunning || display.isDisposed()) {
+            return;
+        }
+        final TableItem item = ep.getViewItem();
+        if (item == null) {
+            logger.warning("episode not associated with table item: " + ep);
+            return;
+        }
+        display.asyncExec(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (ep) {
+                        final TableItem item = ep.getViewItem();
+                        if (item == null) {
+                            logger.info("item has disappeared from episode: " + ep);
+                            return;
+                        }
+                        if (item.isDisposed()) {
+                            logger.info("item has been displosed from episode: " + ep);
+                            ep.setViewItem(null);
+                            return;
+                        }
+                        setEpisodeNewFilenameText(item, ep);
+                        item.setImage(STATUS_COLUMN, getFileMoveIcon(ep));
+                        item.setChecked(ep.isReady());
+                    }
+                }
+            });
     }
 
     private void addItemToTable(TableItem item, FileEpisode episode) {
@@ -426,15 +435,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 addFileIfVisible(path);
             }
         }
-    }
-
-    private FileEpisode getTableItemEpisode(final TableItem item) {
-        FileEpisode episode = null;
-        Object data = item.getData();
-        if ((data != null) && (data instanceof FileEpisode)) {
-            return (FileEpisode) data;
-        }
-        throw new IllegalStateException("TableItem does not contain FileEpisode: " + item);
     }
 
     private void setSortedItem(int i, int j) {
@@ -984,8 +984,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
         Composite bottomButtonsComposite = new Composite(shell, SWT.FILL);
         bottomButtonsComposite.setLayout(new GridLayout(3, false));
-        GridData bottomButtonsCompositeGridData =
-                new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
+        GridData bottomButtonsCompositeGridData = new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
         bottomButtonsComposite.setLayoutData(bottomButtonsCompositeGridData);
 
         final Button quitButton = new Button(bottomButtonsComposite, SWT.PUSH);
