@@ -242,19 +242,23 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return false;
     }
 
-    private static Image getFileMoveIcon(final FileEpisode episode) {
+    private void setEpisodeStatusImage(final TableItem item, final FileEpisode episode) {
         if (episode.isNewlyAdded()) {
-            return FileMoveIcon.ADDED.icon;
+            item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
         } else if (episode.isInvestigating()) {
-            return FileMoveIcon.DOWNLOADING.icon;
+            item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
         } else if (episode.isReady()) {
-            return FileMoveIcon.SUCCESS.icon;
+            item.setImage(STATUS_COLUMN, FileMoveIcon.SUCCESS.icon);
         } else if (episode.isFailed()) {
-            return FileMoveIcon.FAIL.icon;
+            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
+            item.setFont(italicFont);
+            item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
         } else if (episode.isRenameInProgress()) {
-            return FileMoveIcon.RENAMING.icon;
+            item.setImage(STATUS_COLUMN, FileMoveIcon.RENAMING.icon);
         } else {
-            return FileMoveIcon.NOPARSE.icon;
+            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
+            item.setFont(italicFont);
+            item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
         }
     }
 
@@ -297,7 +301,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         item.setChecked(!isNameIgnored(fileName) && episode.isReady());
         item.setText(CURRENT_FILE_COLUMN, fileName);
         setEpisodeNewFilenameText(item, episode);
-        item.setImage(STATUS_COLUMN, getFileMoveIcon(episode));
+        setEpisodeStatusImage(item, episode);
     }
 
     private TableItem addRowCopy(TableItem oldItem, FileEpisode oldEpisode, int index) {
