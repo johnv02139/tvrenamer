@@ -247,25 +247,16 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return false;
     }
 
-    private void setEpisodeStatusImage(final TableItem item, final FileEpisode episode) {
-        if (episode.isNewlyAdded()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
-        } else if (episode.isInvestigating()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
-        } else if (episode.isReady()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.SUCCESS.icon);
-        } else if (episode.isFailed()) {
-            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
-            item.setFont(italicFont);
-            item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
-        } else if (episode.isRenameInProgress()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.RENAMING.icon);
-        } else {
-            item.setGrayed(true); // makes checkbox use a dot; very weird
-            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
-            item.setFont(italicFont);
-            item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
+    private void setEpisodeIsChecked(final TableItem item, final FileEpisode episode) {
+        String fileName = episode.getFilepath();
+        episodeMap.put(fileName, episode);
+
+        if (episode.wasNotParsed()) {
+            logger.severe("Couldn't parse file: " + fileName);
         }
+        // Set if the item is checked or not according
+        // to a list of banned keywords
+        item.setChecked(!isNameIgnored(fileName) && episode.isReady());
     }
 
     private void setEpisodeFilenameText(final TableItem item, final FileEpisode episode) {
@@ -287,16 +278,29 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         item.setText(NEW_FILENAME_COLUMN, valueForNewFilename);
     }
 
-    private void updateTableItemText(final TableItem item, final FileEpisode episode) {
-        String fileName = episode.getFilepath();
-        episodeMap.put(fileName, episode);
-
-        if (episode.wasNotParsed()) {
-            logger.severe("Couldn't parse file: " + fileName);
+    private void setEpisodeStatusImage(final TableItem item, final FileEpisode episode) {
+        if (episode.isNewlyAdded()) {
+            item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
+        } else if (episode.isInvestigating()) {
+            item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
+        } else if (episode.isReady()) {
+            item.setImage(STATUS_COLUMN, FileMoveIcon.SUCCESS.icon);
+        } else if (episode.isFailed()) {
+            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
+            item.setFont(italicFont);
+            item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
+        } else if (episode.isRenameInProgress()) {
+            item.setImage(STATUS_COLUMN, FileMoveIcon.RENAMING.icon);
+        } else {
+            item.setGrayed(true); // makes checkbox use a dot; very weird
+            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
+            item.setFont(italicFont);
+            item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
         }
-        // Set if the item is checked or not according
-        // to a list of banned keywords
-        item.setChecked(!isNameIgnored(fileName) && episode.isReady());
+    }
+
+    private void updateTableItemText(final TableItem item, final FileEpisode episode) {
+        setEpisodeIsChecked(item, episode);
         setEpisodeFilenameText(item, episode);
         setEpisodeNewFilenameText(item, episode);
         setEpisodeStatusImage(item, episode);
