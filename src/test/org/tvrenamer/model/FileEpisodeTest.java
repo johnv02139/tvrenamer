@@ -55,7 +55,7 @@ public class FileEpisodeTest {
         int episodeNum = 10;
         String resolution = "720p";
 
-        episode.setFilenameSeries(showName);
+        episode.setRawSeries(showName);
         episode.setFilenameSeason(seasonNum);
         episode.setFilenameEpisode(episodeNum);
         episode.setFilenameResolution(resolution);
@@ -92,7 +92,7 @@ public class FileEpisodeTest {
         String showName = "Steven Seagal: Lawman";
         int seasonNum = 1;
         int episodeNum = 1;
-        fileEpisode.setFilenameSeries(showName);
+        fileEpisode.setRawSeries(showName);
         fileEpisode.setFilenameSeason(seasonNum);
         fileEpisode.setFilenameEpisode(episodeNum);
 

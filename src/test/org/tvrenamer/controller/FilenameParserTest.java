@@ -7,6 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.tvrenamer.model.FileEpisode;
+import org.tvrenamer.model.ShowStore;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -231,7 +232,8 @@ public class FilenameParserTest {
         for (TestInput testInput : values) {
             FileEpisode retval = new FileEpisode(testInput.input);
             assertTrue(retval.wasParsed());
-            assertEquals(testInput.input, testInput.queryString, retval.getFilenameSeries());
+            assertEquals(testInput.input, testInput.queryString,
+                         ShowStore.makeQueryString(retval.getFilenameSeries()));
             assertEquals(testInput.input, Integer.parseInt(testInput.season), retval.getFilenameSeason());
             assertEquals(testInput.input, Integer.parseInt(testInput.episode), retval.getFilenameEpisode());
             assertEquals(testInput.input, testInput.episodeResolution, retval.getFilenameResolution());
@@ -242,7 +244,7 @@ public class FilenameParserTest {
     public void testWarehouse13() {
         FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertTrue(episode.wasParsed());
-        assertEquals("warehouse 13", episode.getFilenameSeries());
+        assertEquals("warehouse 13", ShowStore.makeQueryString(episode.getFilenameSeries()));
         assertEquals(5, episode.getFilenameSeason());
         assertEquals(4, episode.getFilenameEpisode());
     }

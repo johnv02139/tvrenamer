@@ -209,12 +209,8 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         return filenameSeries;
     }
 
-    public void setFilenameSeries(String filenameSeries) {
-        this.filenameSeries = filenameSeries;
-    }
-
     public void setRawSeries(String filenameSeries) {
-        this.filenameSeries = StringUtils.replacePunctuation(filenameSeries).toLowerCase();
+        this.filenameSeries = filenameSeries;
     }
 
     public int getFilenameSeason() {

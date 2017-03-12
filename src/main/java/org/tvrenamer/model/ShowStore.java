@@ -2,6 +2,7 @@ package org.tvrenamer.model;
 
 import org.tvrenamer.controller.ShowInformationListener;
 import org.tvrenamer.controller.TheTVDBProvider;
+import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.except.TVRenamerIOException;
 
 import java.util.Collections;
@@ -51,8 +52,28 @@ public class ShowStore {
                 }
             });
 
+
+    /**
+     * Transform a string which we believe represents a show name, to the string we will
+     * use for the query.
+     *
+     * For the internal data structures used by this class, the keys should always be
+     * the result of this method.  It's not up to callers to worry about; they can pass
+     * in show names however they have them, and the methods here will be sure to
+     * normalize them in preparation for querying.
+     *
+     * @param showName
+     *            the substring of the file path that we think represents the show name
+     * @return a version of the show name that is more suitable for a query; this may
+     *         include case normalization, removal of superfluous whitepsace and
+     *         punctuation, etc.
+     */
+    public static String makeQueryString(String showName) {
+        return StringUtils.replacePunctuation(showName).toLowerCase();
+    }
+
     private static void notifyListeners(String showName, Series show) {
-        ShowRegistrations registrations = _showRegistrations.get(showName.toLowerCase());
+        ShowRegistrations registrations = _showRegistrations.get(showName);
 
         if (registrations != null) {
             for (ShowInformationListener informationListener : registrations.getListeners()) {
@@ -89,7 +110,7 @@ public class ShowStore {
         } else {
             logger.fine("Options and episodes for '" + show.getName() + "' acquired");
         }
-        _shows.put(showName.toLowerCase(), show);
+        _shows.put(makeQueryString(showName), show);
         notifyListeners(showName, show);
     }
 
@@ -147,18 +168,19 @@ public class ShowStore {
      *            the listener to notify or register
      */
     public static void mapStringToShow(String showName, ShowInformationListener listener) {
-        Series show = _shows.get(showName.toLowerCase());
+        String showKey = makeQueryString(showName);
+        Series show = _shows.get(showKey);
         if (show != null) {
             listener.downloadComplete(show);
         } else {
-            ShowRegistrations registrations = _showRegistrations.get(showName.toLowerCase());
+            ShowRegistrations registrations = _showRegistrations.get(showKey);
             if (registrations != null) {
                 registrations.addListener(listener);
             } else {
                 registrations = new ShowRegistrations();
                 registrations.addListener(listener);
-                _showRegistrations.put(showName.toLowerCase(), registrations);
-                downloadShow(showName);
+                _showRegistrations.put(showKey, registrations);
+                downloadShow(showKey);
             }
         }
     }
