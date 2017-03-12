@@ -374,6 +374,8 @@ public class UserPreferences extends Observable {
         prefix = prefix.replaceAll("\"", "");
 
         if (valuesAreDifferent(seasonPrefix, prefix)) {
+            // TODO: rather than silently sanitising, we should probably
+            // reject any text that has an illegal character in it.
             seasonPrefix = StringUtils.sanitiseTitle(prefix);
 
             preferenceChanged(UserPreference.SEASON_PREFIX, prefix);
