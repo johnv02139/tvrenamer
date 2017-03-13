@@ -350,6 +350,7 @@ public class FilenameParserTest {
     public void testWarehouse13() {
         FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertTrue(episode.wasParsed());
+        assertEquals("Warehouse.13.", episode.getFilenameSeries());
         assertEquals("warehouse 13", ShowStore.makeQueryString(episode.getFilenameSeries()));
         assertEquals("05", episode.getFilenameSeason());
         assertEquals("04", episode.getFilenameEpisode());
