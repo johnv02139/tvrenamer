@@ -23,6 +23,39 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * There are three major steps to turning a filename into real show information.
+ *
+ * First is we parse the filename, and attempt to identify the parts of the
+ * filename that represents the show name, the season number, the episode
+ * number, and possibly the screen resolution.  For the substring that we think
+ * identifies the show name, we normalize it somewhat.  We replace punctuation
+ * and lower-case the name.
+ *
+ * From there, we use information from the provider to compose an actual filename;
+ * the file TVRenamerTest is used to test that functionality.
+ *
+ * This file attempts to test the first step.  The static data provided
+ * in "values" has all the information we need to verify the filename parsing.
+ *
+ * For each filename, we provide the proper, formatted name of the actual
+ * show; this is the string we expect to find after the show name has been
+ * resolved based on information from the provider.
+ *
+ * That's the second step.  To test the first step, we might provide the
+ * string that we expect to get after we've parsed the filename and normalized
+ * the substring.  In this file, we refer to that as the "query string",
+ * because it's the string we send to the provider for the query.  But
+ * the static data does not necessarily give the query string explicitly.
+ * If the query string is just the lower-cased version of the actual show
+ * name, we don't make it explicit.
+ *
+ * That's why some of the values use the six-arg constructor, and some use
+ * the seven-arg.  Basically if there's punctuation in the show name, we
+ * need to provide the query string explicitly, but if the query string is
+ * identical to the show name, apart from case, we can infer it.
+ *
+ */
 public class FilenameParserTest {
 
     private static class TestInput {
