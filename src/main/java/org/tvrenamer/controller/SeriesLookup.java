@@ -114,6 +114,24 @@ public class SeriesLookup {
     }
 
     /**
+     * Add a series to the store, registered by the query string.
+     *
+     * @param queryString
+     *            the string to use to query for the series
+     * @param series
+     *            the {@link Series}
+     */
+    private static void storeShowQueryResult(String queryString, Series series) {
+        if (series instanceof UnresolvedShow) {
+            logger.info("Failed to get options or episodes for '" + series.getName());
+        } else {
+            logger.fine("Options and episodes for '" + series.getName() + "' acquired");
+        }
+        SERIES_MAP.put(queryString, series);
+        notifyListeners(queryString, series);
+    }
+
+    /**
      * Add a series to the store, registered by the show name.<br />
      * Added this distinct method to enable unit testing
      *
@@ -123,14 +141,7 @@ public class SeriesLookup {
      *            the {@link Series}
      */
     public static void addSeriesToStore(String showName, Series series) {
-        String queryString = makeQueryString(showName);
-        if (series instanceof UnresolvedShow) {
-            logger.info("Failed to get options or episodes for '" + showName);
-        } else {
-            logger.fine("Options and episodes for '" + showName + "' acquired");
-        }
-        SERIES_MAP.put(queryString, series);
-        notifyListeners(queryString, series);
+        storeShowQueryResult(makeQueryString(showName), series);
     }
 
     /**
@@ -168,19 +179,19 @@ public class SeriesLookup {
                     options = TheTVDBProvider.querySeriesName(queryString);
                 } catch (TVRenamerIOException e) {
                     logger.info("exception getting options for " + showName);
-                    addSeriesToStore(queryString, new UnresolvedShow(showName, e));
+                    storeShowQueryResult(queryString, new UnresolvedShow(showName, e));
                     return true;
                 }
                 int nOptions = (options == null) ? 0 : options.size();
                 if (nOptions == 0) {
                     logger.info("did not find any options for " + queryString);
-                    addSeriesToStore(queryString, new UnresolvedShow(showName));
+                    storeShowQueryResult(queryString, new UnresolvedShow(showName));
                     return true;
                 } else if (nOptions == 1) {
-                    addSeriesToStore(queryString, options.get(0));
+                    storeShowQueryResult(queryString, options.get(0));
                 } else {
                     logger.info("got " + nOptions + " options for " + showName);
-                    addSeriesToStore(queryString, selectShowOption(options, showName));
+                    storeShowQueryResult(queryString, selectShowOption(options, showName));
                 }
 
                 return true;
