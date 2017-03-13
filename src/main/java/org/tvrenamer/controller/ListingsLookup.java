@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ListingsLookup {
@@ -80,8 +81,8 @@ public class ListingsLookup {
                         // exception does not get caught by the main thread, and
                         // prevents this thread from dying.  Try to make sure that the
                         // thread dies, one way or another.
-                        logger.info("generic exception doing getListings for " + series);
-                        logger.info(e.toString());
+                        logger.log(Level.WARNING, "generic exception doing getListings for "
+                                   + series, e);
                         return false;
                     }
                 }
