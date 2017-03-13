@@ -74,11 +74,11 @@ public class SeriesLookup {
     }
 
     /**
-     * For the given show name, notify all registered listeners that we now know
-     * the series that the name maps to.
+     * For the given queryString, notify all registered listeners that we now know
+     * the series that the string maps to.
      *
      * @param queryString
-     *            the string used to search for the series
+     *            the string used to query for the series
      * @param series
      *            the {@link Series} that we found for that string
      */
@@ -137,11 +137,11 @@ public class SeriesLookup {
      * Given a list of two or more options for which show we're dealing with,
      * choose the best one and return it.
      *
-     * @param showName the part of the filename that is presumed to name the show
      * @param options the potentisl shows that match the string we searched for
+     * @param showName the part of the filename that is presumed to name the show
      * @return the series from the list which best matches the show information
      */
-    private static Series selectShowOption(String showName, List<Series> options) {
+    private static Series selectShowOption(List<Series> options, String showName) {
         for (Series s : options) {
             logger.info("option: " + s.getName() + " for " + showName);
         }
@@ -153,11 +153,13 @@ public class SeriesLookup {
      * Fetch the best option for a given series name, and provide a Series object that
      * represents it.
      *
-     * @param queryString the string to use to search for the TV series (presumably based
-     *            on the part of a filename that we believe names the show)
+     * @param queryString series the name of the TV series (presumably from a filename) that
+     *            we are going to query for and try to figure out which show it refers to
+     * @param showName series the name of the TV series (presumably from a filename) that
+     *            we are going to query for and try to figure out which show it refers to
      * @return returns immediately, and later passes its true result via callback
      */
-    private static void downloadShow(final String queryString) {
+    private static void downloadShow(final String queryString, final String showName) {
         Callable<Boolean> showFetcher = new Callable<Boolean>() {
             @Override
             public Boolean call() throws InterruptedException {
@@ -165,20 +167,20 @@ public class SeriesLookup {
                 try {
                     options = TheTVDBProvider.querySeriesName(queryString);
                 } catch (TVRenamerIOException e) {
-                    logger.info("exception getting options for " + queryString);
-                    addSeriesToStore(queryString, new UnresolvedShow(queryString, e));
+                    logger.info("exception getting options for " + showName);
+                    addSeriesToStore(queryString, new UnresolvedShow(showName, e));
                     return true;
                 }
                 int nOptions = (options == null) ? 0 : options.size();
                 if (nOptions == 0) {
                     logger.info("did not find any options for " + queryString);
-                    addSeriesToStore(queryString, new UnresolvedShow(queryString));
+                    addSeriesToStore(queryString, new UnresolvedShow(showName));
                     return true;
                 } else if (nOptions == 1) {
                     addSeriesToStore(queryString, options.get(0));
                 } else {
-                    logger.info("got " + nOptions + " options for " + queryString);
-                    addSeriesToStore(queryString, selectShowOption(queryString, options));
+                    logger.info("got " + nOptions + " options for " + showName);
+                    addSeriesToStore(queryString, selectShowOption(options, showName));
                 }
 
                 return true;
@@ -225,7 +227,7 @@ public class SeriesLookup {
                 registrations.addListener(listener);
             }
             if (needToDownload) {
-                downloadShow(queryString);
+                downloadShow(queryString, showName);
             }
         }
     }
