@@ -128,6 +128,86 @@ public class FileEpisode {
         return new File(destPath);
     }
 
+    private String getRenamedFilename() {
+        String showName = "";
+        String seasonNum = "";
+        String titleString = "";
+        LocalDate airDate = null;
+
+        try {
+            Show show = ShowStore.mapStringToShow(queryString);
+            showName = show.getName();
+
+            Season season = show.getSeason(filenameSeason);
+            if (season == null) {
+                seasonNum = String.valueOf(filenameSeason);
+                logger.log(Level.SEVERE, "Season #" + filenameSeason + " not found for show '" + filenameShow + "'");
+            } else {
+                seasonNum = String.valueOf(season.getNumber());
+
+                try {
+                    titleString = season.getTitle(filenameEpisode);
+                    airDate = season.getAirDate(filenameEpisode);
+                    if (airDate == null) {
+                        logger.log(Level.WARNING, "Episode air date not found for '" + toString() + "'");
+                    }
+                } catch (EpisodeNotFoundException e) {
+                    logger.log(Level.SEVERE, "Episode not found for '" + toString() + "'", e);
+                }
+            }
+        } catch (ShowNotFoundException e) {
+            showName = filenameShow;
+            logger.log(Level.SEVERE, "Show not found for '" + toString() + "'", e);
+        }
+
+        String newFilename = userPrefs.getRenameReplacementString();
+
+        // Ensure that all special characters in the replacement are quoted
+        showName = Matcher.quoteReplacement(showName);
+        showName = GlobalOverrides.getInstance().getShowName(showName);
+        titleString = Matcher.quoteReplacement(titleString);
+
+        // Make whatever modifications are required
+        String episodeNumberString = new DecimalFormat("##0").format(filenameEpisode);
+        String episodeNumberWithLeadingZeros = new DecimalFormat("#00").format(filenameEpisode);
+        String episodeTitleNoSpaces = titleString.replaceAll(" ", ".");
+        String seasonNumberWithLeadingZero = new DecimalFormat("00").format(filenameSeason);
+
+        newFilename = newFilename.replaceAll(ReplacementToken.SHOW_NAME.getToken(), showName);
+        newFilename = newFilename.replaceAll(ReplacementToken.SEASON_NUM.getToken(), seasonNum);
+        newFilename = newFilename.replaceAll(ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken(),
+                                             seasonNumberWithLeadingZero);
+        newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_NUM.getToken(), episodeNumberString);
+        newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken(),
+                                             episodeNumberWithLeadingZeros);
+        newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_TITLE.getToken(), titleString);
+        newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken(),
+                                             episodeTitleNoSpaces);
+        newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_RESOLUTION.getToken(),
+                                             filenameResolution);
+
+        // Date and times
+        if (airDate != null) {
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(),
+                                                 formatDate(airDate, "d"));
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(),
+                                                 formatDate(airDate, "dd"));
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(),
+                                                 formatDate(airDate, "M"));
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(),
+                                                 formatDate(airDate, "MM"));
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(),
+                                                 formatDate(airDate, "yyyy"));
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
+                                                 formatDate(airDate, "yy"));
+        }
+        newFilename = StringUtils.sanitiseTitle(newFilename);
+
+        String suffix = getExtension(fileObj);
+        String resultingFilename = newFilename.concat(suffix);
+        return StringUtils.sanitiseTitle(resultingFilename);
+    }
+
     public String getNewFilename() {
         switch (status) {
             case ADDED: {
@@ -138,82 +218,7 @@ public class FileEpisode {
                 if (!userPrefs.isRenameEnabled()) {
                     return fileObj.getName();
                 }
-
-                String showName = "";
-                String seasonNum = "";
-                String titleString = "";
-                LocalDate airDate = null;
-
-                try {
-                    Show show = ShowStore.mapStringToShow(queryString);
-                    showName = show.getName();
-
-                    Season season = show.getSeason(filenameSeason);
-                    if (season == null) {
-                        seasonNum = String.valueOf(filenameSeason);
-                        logger.log(Level.SEVERE, "Season #" + filenameSeason + " not found for show '" + filenameShow + "'");
-                    } else {
-                        seasonNum = String.valueOf(season.getNumber());
-
-                        try {
-                            titleString = season.getTitle(filenameEpisode);
-                            airDate = season.getAirDate(filenameEpisode);
-                            if (airDate == null) {
-                                logger.log(Level.WARNING, "Episode air date not found for '" + toString() + "'");
-                            }
-                        } catch (EpisodeNotFoundException e) {
-                            logger.log(Level.SEVERE, "Episode not found for '" + toString() + "'", e);
-                        }
-                    }
-                } catch (ShowNotFoundException e) {
-                    showName = filenameShow;
-                    logger.log(Level.SEVERE, "Show not found for '" + toString() + "'", e);
-                }
-
-                String newFilename = userPrefs.getRenameReplacementString();
-
-                // Ensure that all special characters in the replacement are quoted
-                showName = Matcher.quoteReplacement(showName);
-                showName = GlobalOverrides.getInstance().getShowName(showName);
-                titleString = Matcher.quoteReplacement(titleString);
-
-                // Make whatever modifications are required
-                String episodeNumberString = new DecimalFormat("##0").format(filenameEpisode);
-                String episodeNumberWithLeadingZeros = new DecimalFormat("#00").format(filenameEpisode);
-                String episodeTitleNoSpaces = titleString.replaceAll(" ", ".");
-                String seasonNumberWithLeadingZero = new DecimalFormat("00").format(filenameSeason);
-
-                newFilename = newFilename.replaceAll(ReplacementToken.SHOW_NAME.getToken(), showName);
-                newFilename = newFilename.replaceAll(ReplacementToken.SEASON_NUM.getToken(), seasonNum);
-                newFilename = newFilename.replaceAll(ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken(),
-                                                     seasonNumberWithLeadingZero);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_NUM.getToken(), episodeNumberString);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken(),
-                                                     episodeNumberWithLeadingZeros);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_TITLE.getToken(), titleString);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken(),
-                                                     episodeTitleNoSpaces);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_RESOLUTION.getToken(),
-                                                     filenameResolution);
-
-                // Date and times
-                if (airDate != null) {
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(),
-                                                         formatDate(airDate, "d"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(),
-                                                         formatDate(airDate, "dd"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(),
-                                                         formatDate(airDate, "M"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(),
-                                                         formatDate(airDate, "MM"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(),
-                                                         formatDate(airDate, "yyyy"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
-                                                         formatDate(airDate, "yy"));
-                }
-
-                String resultingFilename = newFilename.concat(getExtension(fileObj));
-                return StringUtils.sanitiseTitle(resultingFilename);
+                return getRenamedFilename();
             }
             case UNPARSED:
             case BROKEN:
