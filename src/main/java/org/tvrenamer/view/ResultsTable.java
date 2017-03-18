@@ -809,19 +809,17 @@ public class UIStarter implements Observer {
 
         for (final TableItem item : resultsTable.getItems()) {
             if (item.getChecked()) {
-                String fileName = item.getText(CURRENT_FILE_COLUMN);
+                final String fileName = item.getText(CURRENT_FILE_COLUMN);
                 final File currentFile = new File(fileName);
                 final FileEpisode episode = files.get(fileName);
-                String currentName = currentFile.getName();
-                String newName = item.getText(NEW_FILENAME_COLUMN);
 
                 // Skip files not successfully downloaded
                 if (episode.getStatus() != EpisodeStatus.DOWNLOADED) {
                     continue;
                 }
 
+                String newName = item.getText(NEW_FILENAME_COLUMN);
                 File newFile = null;
-
                 if (prefs != null && prefs.isMoveEnabled()) {
                     // If move is enabled, the full path is in the table already
                     newFile = new File(newName);
@@ -834,9 +832,11 @@ public class UIStarter implements Observer {
                 logger.info("Going to move '" + currentFile.getAbsolutePath() + "' to '" + newFile.getAbsolutePath()
                     + "'");
 
+                String currentName = currentFile.getName();
                 if (newFile.exists() && !newName.equals(currentName)) {
                     String message = "File " + newFile + " already exists.\n" + currentFile + " was not renamed!";
-                    showMessageBox(SWTMessageBoxType.ERROR, "Rename Failed", message);
+                    logger.warning(message);
+                     // showMessageBox(SWTMessageBoxType.ERROR, "Rename Failed", message);
                 } else {
                     // progress label
                     TableEditor editor = new TableEditor(resultsTable);
