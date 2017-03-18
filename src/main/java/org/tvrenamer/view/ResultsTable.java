@@ -33,7 +33,6 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
@@ -532,13 +531,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 if (newName.equals(currentName)) {
                     logger.info("nothing to be done to " + currentName);
                 } else {
-                    // progress label
-                    TableEditor editor = new TableEditor(resultsTable);
-                    final Label progressLabel =
-                            new Label(resultsTable, SWT.SHADOW_NONE | SWT.CENTER);
-                    editor.grabHorizontal = true;
-                    editor.setEditor(progressLabel, item, STATUS_COLUMN);
-
                     Callable<Boolean> moveCallable = new FileMover(episode, newFile);
                     futures.add(executor.submit(moveCallable));
                     item.setChecked(false);
