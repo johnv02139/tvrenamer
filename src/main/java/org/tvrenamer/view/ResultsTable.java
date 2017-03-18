@@ -833,10 +833,8 @@ public class UIStarter implements Observer {
                     + "'");
 
                 String currentName = currentFile.getName();
-                if (newFile.exists() && !newName.equals(currentName)) {
-                    String message = "File " + newFile + " already exists.\n" + currentFile + " was not renamed!";
-                    logger.warning(message);
-                     // showMessageBox(SWTMessageBoxType.ERROR, "Rename Failed", message);
+                if (newName.equals(currentName)) {
+                    logger.info("nothing to be done to " + currentName);
                 } else {
                     // progress label
                     TableEditor editor = new TableEditor(resultsTable);

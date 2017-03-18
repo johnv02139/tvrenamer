@@ -39,6 +39,12 @@ public class FileMover implements Callable<Boolean> {
     @Override
     public Boolean call() {
         File srcFile = this.episode.getFile();
+        if (destFile.exists()) {
+            String message = "File " + destFile + " already exists.\n" + srcFile + " was not renamed!";
+            logger.warning(message);
+            // showMessageBox(SWTMessageBoxType.ERROR, "Rename Failed", message);
+            return false;
+        }
         if (destFile.getParentFile().exists() || destFile.getParentFile().mkdirs()) {
             UIStarter.setTableItemStatus(display, item, FileMoveIcon.RENAMING);
             boolean succeeded = false;
