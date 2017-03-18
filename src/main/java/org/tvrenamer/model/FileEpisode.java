@@ -187,7 +187,14 @@ public class FileEpisode {
                                              filenameResolution);
 
         // Date and times
-        if (airDate != null) {
+        if (airDate == null) {
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(), "");
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(), "");
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(), "");
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(), "");
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(), "");
+            newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(), "");
+        } else {
             newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(),
                                                  formatDate(airDate, "d"));
             newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(),
