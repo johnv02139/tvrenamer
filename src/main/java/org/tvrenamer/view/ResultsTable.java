@@ -676,16 +676,17 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void renameFiles() {
-        final Queue<Future<Boolean>> futures = listOfFileMoves();
         TaskItem taskItem = getTaskItem();
         if (taskItem == null) {
             // There is no task bar on linux
             // In this case, we should execute the futures without the task bar
             // (TODO)
             logger.info("not moving files becasue no task item");
-        } else {
-            doRenamesWithProgressBar(futures, taskItem);
+            return;
         }
+
+        final Queue<Future<Boolean>> futures = listOfFileMoves();
+        doRenamesWithProgressBar(futures, taskItem);
     }
 
     private void setColumnDestText() {
