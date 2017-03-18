@@ -569,8 +569,8 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.deselectAll();
     }
 
-    private Queue<Future<Boolean>> listOfFileMoves() {
-        final Queue<Future<Boolean>> futures = new LinkedList<>();
+    private Queue<FileMover> listOfFileMoves() {
+        final Queue<FileMover> moves = new LinkedList<>();
 
         for (final TableItem item : getTableItems()) {
             if (item.getChecked()) {
@@ -600,13 +600,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
                 logger.info("Going to move\n  '" + currentPath + "'\nto\n  '" + newPath + "'");
 
-                Callable<Boolean> moveCallable = new FileMover(episode, newRoot, newPath);
-                futures.add(executor.submit(moveCallable));
+                moves.add(new FileMover(episode, newRoot, newPath));
                 item.setChecked(false);
             }
         }
 
-        return futures;
+        return moves;
     }
 
     private TaskItem getTaskItem() {
@@ -633,7 +632,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
 
-    private void doRenamesWithProgressBar(final Queue<Future<Boolean>> futures,
+    private void doRenamesWithProgressBar(final Queue<FileMover> moves,
                                           final TaskItem taskItem)
     {
         taskItem.setProgressState(SWT.NORMAL);
@@ -669,6 +668,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 }
             };
 
+        // moves.size()
+        Queue<Future<Boolean>> futures = new LinkedList<>();
+        for (FileMover move : moves) {
+            futures.add(executor.submit(move));
+        }
         Runnable updater = new ProgressBarUpdater(proxy, futures, updateHandler);
         Thread progressThread = new Thread(updater);
         progressThread.setName(PROGRESS_THREAD_LABEL);
@@ -686,8 +690,8 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             return;
         }
 
-        final Queue<Future<Boolean>> futures = listOfFileMoves();
-        doRenamesWithProgressBar(futures, taskItem);
+        final Queue<FileMover> moves = listOfFileMoves();
+        doRenamesWithProgressBar(moves, taskItem);
     }
 
     private void setColumnDestText() {
