@@ -39,6 +39,9 @@ public class FileEpisode {
     private String filenameResolution = "";
     private String queryString = "";
 
+    private String fileBasename = null;
+    private String filenameSuffix = null;
+
     // This class actually figures out the proposed new name for the file, so we need
     // a link to the user preferences to know how the user wants the file renamed.
     private UserPreferences userPrefs = UserPreferences.getInstance();
@@ -208,10 +211,11 @@ public class FileEpisode {
             newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
                                                  formatDate(airDate, "yy"));
         }
-        newFilename = StringUtils.sanitiseTitle(newFilename);
+        // Note, these are instance variables, not local variables.
+        fileBasename = StringUtils.sanitiseTitle(newFilename);
+        filenameSuffix = getExtension(fileObj);
 
-        String suffix = getExtension(fileObj);
-        String resultingFilename = newFilename.concat(suffix);
+        String resultingFilename = fileBasename + filenameSuffix;
         return StringUtils.sanitiseTitle(resultingFilename);
     }
 
