@@ -585,11 +585,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 String newName = item.getText(NEW_FILENAME_COLUMN);
                 Path newPath = Paths.get(newName);
 
+                Path newRoot = newPath.getParent();
                 if (!prefs.isMoveEnabled()) {
                     // If move is enabled, the full path is in the table already,
                     // but if not, we need to build it
-                    Path currentParent = currentPath.getParent();
-                    newPath = currentParent.resolve(newName);
+                    newRoot = currentPath.getParent();
+                    newPath = newRoot.resolve(newName);
                 }
 
                 if (currentPath.equals(newPath)) {
@@ -599,7 +600,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
                 logger.info("Going to move\n  '" + currentPath + "'\nto\n  '" + newPath + "'");
 
-                Callable<Boolean> moveCallable = new FileMover(episode, newPath);
+                Callable<Boolean> moveCallable = new FileMover(episode, newRoot, newPath);
                 futures.add(executor.submit(moveCallable));
                 item.setChecked(false);
             }

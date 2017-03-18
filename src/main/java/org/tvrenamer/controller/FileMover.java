@@ -14,12 +14,13 @@ import java.util.logging.Logger;
 public class FileMover implements Callable<Boolean> {
     private static Logger logger = Logger.getLogger(FileMover.class.getName());
 
+    private final FileEpisode episode;
+    private final Path destRoot;
     private final Path destPath;
 
-    private final FileEpisode episode;
-
-    public FileMover(FileEpisode episode, Path destPath) {
+    public FileMover(FileEpisode episode, Path destRoot, Path destPath) {
         this.episode = episode;
+        this.destRoot = destRoot;
         this.destPath = destPath;
     }
 
