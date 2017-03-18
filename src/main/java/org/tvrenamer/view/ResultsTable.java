@@ -104,8 +104,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Queue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -139,8 +137,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     private Table resultsTable;
     private Font italicFont;
     private ProgressBar totalProgressBar;
-
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final UserPreferences prefs;
     private final Path preloadFolder;
@@ -668,12 +664,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 }
             };
 
-        // moves.size()
-        Queue<Future<Boolean>> futures = new LinkedList<>();
-        for (FileMover move : moves) {
-            futures.add(executor.submit(move));
-        }
-        Runnable updater = new ProgressBarUpdater(proxy, futures, updateHandler);
+        Runnable updater = new ProgressBarUpdater(proxy, moves, updateHandler);
         Thread progressThread = new Thread(updater);
         progressThread.setName(PROGRESS_THREAD_LABEL);
         progressThread.setDaemon(true);
@@ -764,7 +755,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void doCleanup() {
-        executor.shutdownNow();
+        ProgressBarUpdater.shutDown();
         // TODO: may not be necessary if they're daemon threads
         ShowStore.cleanUp();
         shell.dispose();
