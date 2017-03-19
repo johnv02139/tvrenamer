@@ -95,9 +95,10 @@ public class ListingsLookup {
      * Download the series details if required, otherwise notify listener.
      * </p>
      * <ul>
-     * <li>if we already have the series listings (the Series has season info) then just  call the method on the listener</li>
-     * <li>if we don't have the listings, but are in the process of processing them (exists in listenersMap) then
-     * add the listener to the registration</li>
+     * <li>if we already have the series listings (the Series has season info)
+     *     then just  call the method on the listener</li>
+     * <li>if we don't have the listings, but are in the process of processing them
+     *      (exists in listenersMap) then add the listener to the registration</li>
      * <li>if we don't have the listings and aren't processing, then create the
      registration, add the listener and kick off
      * the download</li>

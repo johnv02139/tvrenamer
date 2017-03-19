@@ -31,7 +31,8 @@ import java.lang.reflect.Method;
  * This class works with both the 32-bit and 64-bit versions of the SWT Cocoa bindings.
  * <p>
  * <p>
- * This class is released under the Eclipse Public License (<a href="http://www.eclipse.org/legal/epl-v10.html">EPL</a>).
+ * This class is released under the Eclipse Public License
+ * (<a href="http://www.eclipse.org/legal/epl-v10.html">EPL</a>).
  */
 public class CocoaUIEnhancer {
 
