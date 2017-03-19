@@ -86,7 +86,15 @@ public class ProgressBarUpdater implements Runnable {
             int remaining = futures.size();
             setProgress(remaining);
 
-            if (remaining == 0) {
+            if (remaining > 0) {
+                try {
+                    Future<Boolean> future = futures.remove();
+                    Boolean success = future.get();
+                    logger.finer("future returned: " + success);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            } else {
                 display.asyncExec(new Runnable() {
                         @Override
                         public void run() {
@@ -97,14 +105,6 @@ public class ProgressBarUpdater implements Runnable {
                     });
 
                 return;
-            }
-
-            try {
-                Future<Boolean> future = futures.remove();
-                Boolean success = future.get();
-                logger.finer("future returned: " + success);
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
             }
         }
     }
