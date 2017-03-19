@@ -2,7 +2,11 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+
 import org.tvrenamer.model.TVRenamerIOException;
+import org.tvrenamer.model.UserPreferences;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,6 +37,26 @@ public class UpdateChecker {
                 + latestVersion);
             return true;
         }
+        logger.finer("You have the latest version!");
         return false;
+    }
+
+    /**
+     * Lets the UI update itself with information about a new version, if one is available
+     *
+     * @param display the display where the UI is running
+     * @param control the control to make visible if an update is available
+     */
+    public static void checkForUpdates(final Display display, final Control control) {
+        Thread updateCheckThread = new Thread(() -> {
+            if (UserPreferences.getInstance().checkForUpdates()) {
+                final boolean updatesAvailable = isUpdateAvailable();
+
+                if (updatesAvailable) {
+                    display.asyncExec(() -> control.setVisible(true));
+                }
+            }
+        });
+        updateCheckThread.start();
     }
 }
