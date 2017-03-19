@@ -14,6 +14,7 @@ public class Constants {
 
     public static final String TVRENAMER_PROJECT_URL = "http://tvrenamer.org";
     public static final String TVRENAMER_DOWNLOAD_URL = TVRENAMER_PROJECT_URL + "/downloads";
+    public static final String TVRENAMER_ISSUES_URL = TVRENAMER_PROJECT_URL + "/issues";
     public static final String TVRENAMER_VERSION_URL = TVRENAMER_PROJECT_URL + "/version";
 
     public static final String NO_SUCH_SHOW_MESSAGE = "No such show found: ";
@@ -35,6 +36,7 @@ public class Constants {
     public static final String ABOUT_MENU_LABEL = "About";
     public static final String QUIT_LABEL = "Quit";
     public static final String HELP_LABEL = "Help";
+    public static final String OK_LABEL = "OK";
     public static final String ERROR_LABEL = "Error";
     public static final String ADD_FILES_LABEL = "Add files";
     public static final String ADD_FOLDER_LABEL = "Add Folder";
@@ -57,11 +59,35 @@ public class Constants {
     public static final String MOVE_TOOLTIP_2 = ").";
     public static final String UPDATE_IS_AVAILABLE_1 = "There is an update available. <a href=\"";
     public static final String UPDATE_IS_AVAILABLE_2 = "\">Click here to download</a>";
+
+    public static final String VERSION_LABEL = "Version: " + VERSION_NUMBER;
+    public static final String ABOUT_TEXT = "About TVRenamer";
+    public static final String TVRENAMER_DESCRIPTION = "TVRenamer is a Java GUI utility to rename "
+        + "TV episodes from TV listings";
+    public static final String PROJECT_TEXT = "<a href=\"" + TVRENAMER_PROJECT_URL
+        + "\">Project Page</a>";
+    public static final String TVRENAMER_SUPPORT_EMAIL = "support@tvrenamer.org";
+    public static final String EMAIL_TEXT = "<a href=\"mailto:"
+        + TVRENAMER_SUPPORT_EMAIL + "\">Send support email</a>";
+    public static final String EMAIL_LINK = "mailto:" + TVRENAMER_SUPPORT_EMAIL;
+    public static final String UPDATE_TEXT = "Check for Updates...";
+    public static final String NEW_VERSION_TITLE = "New Version Available!";
     public static final String NEW_VERSION_AVAILABLE = "There is a new version available!\n\n"
         + "You are currently running " + VERSION_NUMBER + ", but there is an update available\n\n"
         + "Please visit " + TVRENAMER_PROJECT_URL + " to download the new version.";
+    public static final String NO_NEW_VERSION_TITLE = "No New Version Available";
     public static final String NO_NEW_VERSION_AVAILABLE = "There is a no new version available\n\n"
         + "Please check the website (" + TVRENAMER_PROJECT_URL + ") for any news or check back later.";
+    public static final String TVRENAMER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
+    public static final String LICENSE_TEXT = "Licensed under the <a href=\""
+        + TVRENAMER_LICENSE_URL + "\">GNU General Public License v2</a>";
+    public static final String ISSUE_TRACKER = "<a href=\"" + TVRENAMER_ISSUES_URL
+        + "\">Issue Tracker</a>";
+    public static final String TVRENAMER_REPOSITORY_URL = "http://tvrenamer.org/source";
+    public static final String REPOSITORY_TEXT = "<a href=\"" + TVRENAMER_REPOSITORY_URL
+        + "\">Source Code</a>";
+
+
 
     public static final String UNKNOWN_EXCEPTION = "An error occurred, please check "
         + "your internet connection, java version or run from the command line to show errors";

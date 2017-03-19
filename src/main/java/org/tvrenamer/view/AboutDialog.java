@@ -29,10 +29,6 @@ import java.util.logging.Logger;
 public class AboutDialog extends Dialog {
     private static Logger logger = Logger.getLogger(AboutDialog.class.getName());
 
-    private static final String TVRENAMER_REPOSITORY_URL = "http://tvrenamer.org/source";
-    private static final String TVRENAMER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
-    private static final String TVRENAMER_SUPPORT_EMAIL = "support@tvrenamer.org";
-    private static final String TVRENAMER_PROJECT_ISSUES_URL = TVRENAMER_PROJECT_URL + "/issues";
     private static Shell aboutShell;
 
     /**
@@ -45,29 +41,7 @@ public class AboutDialog extends Dialog {
         super(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
     }
 
-    public void open() {
-        // Create the dialog window
-        aboutShell = new Shell(getParent(), getStyle());
-        aboutShell.setText("About TVRenamer");
-
-        // Add the contents of the dialog window
-        createContents();
-
-        aboutShell.pack();
-        aboutShell.open();
-        Display display = getParent().getDisplay();
-        while (!aboutShell.isDisposed()) {
-            if (!display.readAndDispatch()) {
-                display.sleep();
-            }
-        }
-    }
-
-    /**
-     * Creates the dialog's contents.
-     *
-     */
-    private void createContents() {
+    private void createContents1() {
         GridLayout shellGridLayout = new GridLayout();
         shellGridLayout.numColumns = 2;
         shellGridLayout.marginRight = 15;
@@ -84,11 +58,12 @@ public class AboutDialog extends Dialog {
         iconGridData.grabExcessHorizontalSpace = false;
         iconLabel.setLayoutData(iconGridData);
 
-        InputStream icon = getClass().getResourceAsStream("/icons/tvrenamer.png");
+        InputStream icon = getClass().getResourceAsStream(TVRENAMER_ICON_PATH);
         if (icon != null) {
             iconLabel.setImage(new Image(Display.getCurrent(), icon));
         } else {
-            iconLabel.setImage(new Image(Display.getCurrent(), "res/icons/tvrenamer.png"));
+            iconLabel.setImage(new Image(Display.getCurrent(),
+                                         ICON_PARENT_DIRECTORY + TVRENAMER_ICON_PATH));
         }
 
         Label applicationLabel = new Label(aboutShell, SWT.NONE);
@@ -100,16 +75,17 @@ public class AboutDialog extends Dialog {
         Label versionLabel = new Label(aboutShell, SWT.NONE);
         versionLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(), getDefaultSystemFont()
             .getHeight() + 2, SWT.BOLD));
-        versionLabel.setText("Version: " + VERSION_NUMBER);
+        versionLabel.setText(VERSION_LABEL);
         versionLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         Label descriptionLabel = new Label(aboutShell, SWT.NONE);
         descriptionLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
-        descriptionLabel.setText("TVRenamer is a Java GUI utility to rename TV episodes from TV listings");
+        descriptionLabel.setText(TVRENAMER_DESCRIPTION);
+    }
 
+    private void createContents2() {
         final Link licenseLink = new Link(aboutShell, SWT.NONE);
-        licenseLink.setText("Licensed under the <a href=\"" + TVRENAMER_LICENSE_URL
-            + "\">GNU General Public License v2</a>");
+        licenseLink.setText(LICENSE_TEXT);
         licenseLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         licenseLink.addSelectionListener(new SelectionAdapter() {
@@ -120,7 +96,7 @@ public class AboutDialog extends Dialog {
         });
 
         final Link projectPageLink = new Link(aboutShell, SWT.NONE);
-        projectPageLink.setText("<a href=\"" + TVRENAMER_PROJECT_URL + "\">Project Page</a>");
+        projectPageLink.setText(PROJECT_TEXT);
         projectPageLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         projectPageLink.addSelectionListener(new SelectionAdapter() {
@@ -131,28 +107,30 @@ public class AboutDialog extends Dialog {
         });
 
         final Link issuesLink = new Link(aboutShell, SWT.NONE);
-        issuesLink.setText("<a href=\"" + TVRENAMER_PROJECT_ISSUES_URL + "\">Issue Tracker</a>");
+        issuesLink.setText(ISSUE_TRACKER);
         issuesLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         issuesLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent arg0) {
-                Program.launch(TVRENAMER_PROJECT_ISSUES_URL);
+                Program.launch(TVRENAMER_ISSUES_URL);
             }
         });
 
         final Link supportEmailLink = new Link(aboutShell, SWT.NONE);
-        supportEmailLink.setText("<a href=\"mailto:" + TVRENAMER_SUPPORT_EMAIL + "\">Send support email</a>");
+        supportEmailLink.setText(EMAIL_TEXT);
         supportEmailLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
         supportEmailLink.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent arg0) {
-                    Program.launch("mailto:" + TVRENAMER_SUPPORT_EMAIL);
+                    Program.launch(EMAIL_LINK);
                 }
             });
+    }
 
+    private void createContents3() {
         final Link sourceCodeLink = new Link(aboutShell, SWT.NONE);
-        sourceCodeLink.setText("<a href=\"" + TVRENAMER_REPOSITORY_URL + "\">Source Code</a>");
+        sourceCodeLink.setText(REPOSITORY_TEXT);
         sourceCodeLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         sourceCodeLink.addSelectionListener(new SelectionAdapter() {
@@ -163,7 +141,7 @@ public class AboutDialog extends Dialog {
         });
 
         Button updateCheckButton = new Button(aboutShell, SWT.PUSH);
-        updateCheckButton.setText("Check for Updates...");
+        updateCheckButton.setText(UPDATE_TEXT);
         GridData gridDataUpdateCheck = new GridData();
         gridDataUpdateCheck.widthHint = 160;
         gridDataUpdateCheck.horizontalAlignment = GridData.END;
@@ -178,15 +156,17 @@ public class AboutDialog extends Dialog {
                     // Don't need to do anything here as the error message has been displayed already
                 } else if (updateAvailable) {
                     logger.fine(NEW_VERSION_AVAILABLE);
-                    UIUtils.showOkMessageBox("New Version Available!", NEW_VERSION_AVAILABLE);
+                    UIUtils.showOkMessageBox(NEW_VERSION_TITLE, NEW_VERSION_AVAILABLE);
                 } else {
-                    UIUtils.showWarningMessageBox("No New Version Available", NO_NEW_VERSION_AVAILABLE);
+                    UIUtils.showWarningMessageBox(NO_NEW_VERSION_TITLE, NO_NEW_VERSION_AVAILABLE);
                 }
             }
         });
+    }
 
+    private void createContents4() {
         Button okButton = new Button(aboutShell, SWT.PUSH);
-        okButton.setText("OK");
+        okButton.setText(OK_LABEL);
         GridData gridDataOK = new GridData();
         gridDataOK.widthHint = 160;
         gridDataOK.horizontalAlignment = GridData.END;
@@ -203,5 +183,34 @@ public class AboutDialog extends Dialog {
         // Set the OK button as the default, so
         // user can press Enter to dismiss
         aboutShell.setDefaultButton(okButton);
+    }
+
+    /**
+     * Creates the dialog's contents.
+     *
+     */
+    private void createContents() {
+        createContents1();
+        createContents2();
+        createContents3();
+        createContents4();
+    }
+
+    public void open() {
+        // Create the dialog window
+        aboutShell = new Shell(getParent(), getStyle());
+        aboutShell.setText(ABOUT_TEXT);
+
+        // Add the contents of the dialog window
+        createContents();
+
+        aboutShell.pack();
+        aboutShell.open();
+        Display display = getParent().getDisplay();
+        while (!aboutShell.isDisposed()) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
     }
 }
