@@ -81,7 +81,6 @@ import org.eclipse.swt.widgets.Text;
 import org.tvrenamer.controller.EpisodeInformationListener;
 import org.tvrenamer.controller.FileMover;
 import org.tvrenamer.controller.UpdateChecker;
-import org.tvrenamer.controller.UpdateCompleteHandler;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.Series;
@@ -103,8 +102,6 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Queue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -367,7 +364,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return data;
     }
 
-    private void refreshTable() {
+    public void refreshTable() {
         logger.info("Refreshing table");
         for (TableItem item : getTableItems()) {
             FileEpisode episode = verifyEpisode(item);
@@ -604,75 +601,21 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return moves;
     }
 
-    private TaskItem getTaskItem() {
-        TaskItem taskItem = null;
+    private void doRenamesWithProgressBar(final Queue<FileMover> moves) {
+        ProgressBarUpdater updater = new ProgressBarUpdater(moves, this);
+        updater.runThread();
+    }
+
+    private void renameFiles() {
         TaskBar taskBar = display.getSystemTaskBar();
+
+        TaskItem taskItem = null;
         if (taskBar != null) {
             taskItem = taskBar.getItem(shell);
             if (taskItem == null) {
                 taskItem = taskBar.getItem(null);
             }
         }
-        return taskItem;
-    }
-
-    private void updateProgressBar(final float progress, final TaskItem taskItem) {
-        if (totalProgressBar.isDisposed()) {
-            return;
-        }
-        totalProgressBar.setSelection(Math.round(progress * totalProgressBar.getMaximum()));
-        if (taskItem.isDisposed()) {
-            return;
-        }
-        taskItem.setProgress(Math.round(progress * 100));
-    }
-
-
-    private void doRenamesWithProgressBar(final Queue<FileMover> moves,
-                                          final TaskItem taskItem)
-    {
-        taskItem.setProgressState(SWT.NORMAL);
-        taskItem.setOverlayImage(FileMoveIcon.RENAMING.icon);
-
-        ProgressProxy proxy = new ProgressProxy() {
-                @Override
-                public void setProgress(final float progress) {
-                    if (display.isDisposed()) {
-                        return;
-                    }
-
-                    display.asyncExec(new Runnable() {
-                            @Override
-                            public void run() {
-                                updateProgressBar(progress, taskItem);
-                            }
-                        });
-                }
-            };
-
-        UpdateCompleteHandler updateHandler = new UpdateCompleteHandler() {
-                @Override
-                public void onUpdateComplete() {
-                    display.asyncExec(new Runnable() {
-                            @Override
-                            public void run() {
-                                taskItem.setOverlayImage(null);
-                                taskItem.setProgressState(SWT.DEFAULT);
-                                refreshTable();
-                            }
-                        });
-                }
-            };
-
-        Runnable updater = new ProgressBarUpdater(proxy, moves, updateHandler);
-        Thread progressThread = new Thread(updater);
-        progressThread.setName(PROGRESS_THREAD_LABEL);
-        progressThread.setDaemon(true);
-        progressThread.start();
-    }
-
-    private void renameFiles() {
-        TaskItem taskItem = getTaskItem();
         if (taskItem == null) {
             // There is no task bar on linux
             // In this case, we should execute the futures without the task bar
@@ -682,7 +625,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
 
         final Queue<FileMover> moves = listOfFileMoves();
-        doRenamesWithProgressBar(moves, taskItem);
+
+        taskItem.setProgressState(SWT.NORMAL);
+        taskItem.setOverlayImage(FileMoveIcon.RENAMING.icon);
+
+        doRenamesWithProgressBar(moves);
     }
 
     private void setColumnDestText() {
@@ -948,6 +895,18 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                         }
                     }
                 });
+    }
+
+    public Display getDisplay() {
+        return display;
+    }
+
+    public Shell getShell() {
+        return shell;
+    }
+
+    public ProgressBar getProgressBar() {
+        return totalProgressBar;
     }
 
     private void setupMainWindow() {

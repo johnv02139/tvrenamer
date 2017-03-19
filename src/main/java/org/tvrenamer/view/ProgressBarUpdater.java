@@ -1,7 +1,15 @@
 package org.tvrenamer.view;
 
+import static org.tvrenamer.model.util.Constants.*;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.ProgressBar;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.TaskBar;
+import org.eclipse.swt.widgets.TaskItem;
+
 import org.tvrenamer.controller.FileMover;
-import org.tvrenamer.controller.UpdateCompleteHandler;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -16,32 +24,78 @@ public class ProgressBarUpdater implements Runnable {
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private final int totalNumFiles;
     private final Queue<Future<Boolean>> futures = new LinkedList<>();
+    private final int totalNumFiles;
 
-    private final UpdateCompleteHandler updateCompleteHandler;
+    private final UIStarter ui;
+    private final Display display;
+    private final Shell shell;
+    private final TaskItem taskItem;
+    private final ProgressBar progressBar;
+    private final int barSize;
 
-    private final ProgressProxy proxy;
+    private static TaskItem getTaskItem(Display display, Shell shell) {
+        TaskItem taskItem = null;
+        TaskBar taskBar = display.getSystemTaskBar();
+        if (taskBar != null) {
+            taskItem = taskBar.getItem(shell);
+            if (taskItem == null) {
+                taskItem = taskBar.getItem(null);
+            }
+        }
+        return taskItem;
+    }
 
-    public ProgressBarUpdater(ProgressProxy proxy, Queue<FileMover> moves,
-                              UpdateCompleteHandler updateComplete)
-    {
-        this.proxy = proxy;
+    public ProgressBarUpdater(Queue<FileMover> moves, UIStarter ui) {
+        this.ui = ui;
+        this.display = ui.getDisplay();
+        this.shell = ui.getShell();
+        this.progressBar = ui.getProgressBar();
+        this.barSize = progressBar.getMaximum();
+        this.taskItem = getTaskItem(display, shell);
         for (FileMover move : moves) {
             futures.add(executor.submit(move));
         }
         totalNumFiles = futures.size();
-        updateCompleteHandler = updateComplete;
+    }
+
+    private void setProgress(int nRemaining) {
+        if (display.isDisposed()) {
+            return;
+        }
+
+        final float progress = (float) (totalNumFiles - nRemaining) / totalNumFiles;
+        display.asyncExec(new Runnable() {
+                @Override
+                public void run() {
+                    if (progressBar.isDisposed()) {
+                        return;
+                    }
+                    progressBar.setSelection(Math.round(progress * barSize));
+                    if (taskItem.isDisposed()) {
+                        return;
+                    }
+                    taskItem.setProgress(Math.round(progress * 100));
+                }
+            });
     }
 
     @Override
     public void run() {
         while (true) {
-            final int size = futures.size();
-            proxy.setProgress((float) (totalNumFiles - size) / totalNumFiles);
+            int remaining = futures.size();
+            setProgress(remaining);
 
-            if (size == 0) {
-                this.updateCompleteHandler.onUpdateComplete();
+            if (remaining == 0) {
+                display.asyncExec(new Runnable() {
+                        @Override
+                        public void run() {
+                            taskItem.setOverlayImage(null);
+                            taskItem.setProgressState(SWT.DEFAULT);
+                            ui.refreshTable();
+                        }
+                    });
+
                 return;
             }
 
@@ -53,6 +107,13 @@ public class ProgressBarUpdater implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void runThread() {
+        Thread progressThread = new Thread(this);
+        progressThread.setName(PROGRESS_THREAD_LABEL);
+        progressThread.setDaemon(true);
+        progressThread.start();
     }
 
     public static void shutDown() {
