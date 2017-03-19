@@ -605,11 +605,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return moves;
     }
 
-    private void doRenamesWithProgressBar(final Queue<FileMover> moves) {
-        ProgressBarUpdater updater = new ProgressBarUpdater(moves, this);
-        updater.runThread();
-    }
-
     private void renameFiles() {
         TaskBar taskBar = display.getSystemTaskBar();
 
@@ -629,11 +624,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
 
         final Queue<FileMover> moves = listOfFileMoves();
+        ProgressBarUpdater updater = new ProgressBarUpdater(moves, this);
 
         taskItem.setProgressState(SWT.NORMAL);
         taskItem.setOverlayImage(FileMoveIcon.RENAMING.icon);
 
-        doRenamesWithProgressBar(moves);
+        updater.runThread();
     }
 
     private void setColumnDestText() {
