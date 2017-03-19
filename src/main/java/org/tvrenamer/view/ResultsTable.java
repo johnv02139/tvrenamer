@@ -595,7 +595,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                     continue;
                 }
 
-                logger.info("Going to move\n  '" + currentPath + "'\nto\n  '" + newPath + "'");
+                logger.fine("Going to move\n  '" + currentPath + "'\n  '" + newPath + "'");
 
                 moves.add(new FileMover(episode, newRoot, newPath));
                 item.setChecked(false);
