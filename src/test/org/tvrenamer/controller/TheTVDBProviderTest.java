@@ -82,7 +82,7 @@ public class TheTVDBProviderTest {
     private static final List<TestInput> values1 = new ArrayList<>(50);
     private static final List<TestInput> values2 = new ArrayList<>(7);
 
-    private static boolean testAllInputs = true;
+    private static boolean testAllInputs = false;
 
     private static void setupValues0() {
         // In this section, we have, in order:
