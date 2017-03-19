@@ -13,6 +13,7 @@ public class Constants {
 
     public static final String TVRENAMER_PROJECT_URL = "http://tvrenamer.org";
     public static final String TVRENAMER_DOWNLOAD_URL = TVRENAMER_PROJECT_URL + "/downloads";
+    public static final String TVRENAMER_VERSION_URL = TVRENAMER_PROJECT_URL + "/version";
 
     public static final String NO_SUCH_SHOW_MESSAGE = "No such show found: ";
     public static final String DOWNLOADING_FAILED_MESSAGE =

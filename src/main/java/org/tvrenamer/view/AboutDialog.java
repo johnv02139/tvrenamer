@@ -33,7 +33,6 @@ public class AboutDialog extends Dialog {
     private static final String TVRENAMER_REPOSITORY_URL = "http://tvrenamer.org/source";
     private static final String TVRENAMER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
     private static final String TVRENAMER_SUPPORT_EMAIL = "support@tvrenamer.org";
-    public static final String TVRENAMER_PROJECT_URL = "http://tvrenamer.org";
     private static final String TVRENAMER_PROJECT_ISSUES_URL = TVRENAMER_PROJECT_URL + "/issues";
     private static Shell aboutShell;
 
