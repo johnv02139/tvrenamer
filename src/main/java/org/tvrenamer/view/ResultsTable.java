@@ -909,25 +909,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return totalProgressBar;
     }
 
-    private void setupMainWindow() {
-        final Composite topButtonsComposite = new Composite(shell, SWT.FILL);
-        topButtonsComposite.setLayout(new RowLayout());
-
-        addFilesButton = new Button(topButtonsComposite, SWT.PUSH);
-        addFilesButton.setText(ADD_FILES_LABEL);
-
-        addFolderButton = new Button(topButtonsComposite, SWT.PUSH);
-        addFolderButton.setText(ADD_FOLDER_LABEL);
-
-        clearFilesButton = new Button(topButtonsComposite, SWT.PUSH);
-        clearFilesButton.setText(CLEAR_LIST_LABEL);
-
-        selectAllButton = new Button(topButtonsComposite, SWT.PUSH);
-        selectAllButton.setText(SELECT_ALL_LABEL);
-
-        deselectAllButton = new Button(topButtonsComposite, SWT.PUSH);
-        deselectAllButton.setText(DESELECT_ALL_LABEL);
-
+    private void setupUpdateStuff(final Composite topButtonsComposite) {
         updatesAvailableLink = new Link(topButtonsComposite, SWT.VERTICAL);
         //updatesAvailableLink.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, true));
         updatesAvailableLink.setVisible(false);
@@ -963,7 +945,28 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                     }
                 });
         updateCheckThread.start();
+    }
 
+    private void setupMainWindow() {
+        final Composite topButtonsComposite = new Composite(shell, SWT.FILL);
+        topButtonsComposite.setLayout(new RowLayout());
+
+        addFilesButton = new Button(topButtonsComposite, SWT.PUSH);
+        addFilesButton.setText(ADD_FILES_LABEL);
+
+        addFolderButton = new Button(topButtonsComposite, SWT.PUSH);
+        addFolderButton.setText(ADD_FOLDER_LABEL);
+
+        clearFilesButton = new Button(topButtonsComposite, SWT.PUSH);
+        clearFilesButton.setText(CLEAR_LIST_LABEL);
+
+        selectAllButton = new Button(topButtonsComposite, SWT.PUSH);
+        selectAllButton.setText(SELECT_ALL_LABEL);
+
+        deselectAllButton = new Button(topButtonsComposite, SWT.PUSH);
+        deselectAllButton.setText(DESELECT_ALL_LABEL);
+
+        setupUpdateStuff(topButtonsComposite);
         setupResultsTable();
         setupTableDragDrop();
 
