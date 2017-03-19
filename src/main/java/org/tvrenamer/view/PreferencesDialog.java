@@ -428,9 +428,11 @@ public class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 if (proxyEnabledCheckbox.getSelection()) {
-                    toggleEnableControls(proxyEnabledCheckbox, proxyHostText, proxyPortText, proxyAuthenticationRequiredCheckbox);
+                    toggleEnableControls(proxyEnabledCheckbox, proxyHostText, proxyPortText,
+                                         proxyAuthenticationRequiredCheckbox);
                 } else {
-                    toggleEnableControls(proxyEnabledCheckbox, proxyHostText, proxyPortText, proxyAuthenticationRequiredCheckbox, proxyUsernameText, proxyPasswordText);
+                    toggleEnableControls(proxyEnabledCheckbox, proxyHostText, proxyPortText,
+                                         proxyAuthenticationRequiredCheckbox, proxyUsernameText, proxyPasswordText);
                 }
             }
         });
