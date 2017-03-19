@@ -13,6 +13,7 @@ import org.tvrenamer.controller.FileMover;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,6 +47,15 @@ public class ProgressBarUpdater implements Runnable {
         return taskItem;
     }
 
+    private static Future<Boolean> makeFuture(FileMover move) {
+        return executor.submit(new Callable<Boolean>() {
+                @Override
+                public Boolean call() {
+                    return move.moveFile();
+                }
+            });
+    }
+
     public ProgressBarUpdater(Queue<FileMover> moves, UIStarter ui) {
         this.ui = ui;
         this.display = ui.getDisplay();
@@ -53,10 +63,10 @@ public class ProgressBarUpdater implements Runnable {
         this.progressBar = ui.getProgressBar();
         this.barSize = progressBar.getMaximum();
         this.taskItem = getTaskItem(display, shell);
+        this.totalNumFiles = moves.size();
         for (FileMover move : moves) {
-            futures.add(executor.submit(move));
+            futures.add(makeFuture(move));
         }
-        totalNumFiles = futures.size();
     }
 
     private void setProgress(int nRemaining) {

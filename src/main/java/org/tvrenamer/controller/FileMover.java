@@ -7,11 +7,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class FileMover implements Callable<Boolean> {
+public class FileMover {
     private static Logger logger = Logger.getLogger(FileMover.class.getName());
 
     private final FileEpisode episode;
@@ -48,7 +47,7 @@ public class FileMover implements Callable<Boolean> {
         return true;
     }
 
-    private boolean moveFile() {
+    private boolean tryToMoveFile() {
         Path srcPath = episode.getPath();
         if (Files.notExists(srcPath)) {
             logger.info("Path no longer exists: " + srcPath);
@@ -76,7 +75,8 @@ public class FileMover implements Callable<Boolean> {
             return false;
         }
         if (Files.exists(destPath)) {
-            String message = "File " + destPath + " already exists.\n" + srcPath + " was not renamed!";
+            String message ="already exists:\n  " + destPath + "\n"
+                + srcPath + " was not renamed!";
             logger.warning(message);
             // UIUtils.showErrorMessageBox(RENAME_FAILED_LABEL, message, null);
             return false;
@@ -91,15 +91,18 @@ public class FileMover implements Callable<Boolean> {
 
         episode.setRenamed();
         episode.setPath(destPath);
-        logger.info("successful: " + srcPath.toAbsolutePath().toString()
-                    + " | " + destPath.toAbsolutePath().toString());
+        logger.info("successful:\n  " + srcPath.toAbsolutePath().toString()
+                    + "\n  " + destPath.toAbsolutePath().toString());
         FileUtilities.removeWhileEmpty(srcDir.toFile());
         return true;
     }
 
-    @Override
-    public Boolean call() {
-        boolean success = moveFile();
+    public boolean moveFile() {
+        // There are numerous reasons why the move would fail.  Instead of
+        // calling setFailToMove on the episode in each individual case,
+        // make the functionality into a subfunction, and set the episode
+        // here for any of the failure cases.
+        boolean success = tryToMoveFile();
         if (!success) {
             episode.setFailToMove();
         }
