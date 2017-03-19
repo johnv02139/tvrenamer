@@ -49,8 +49,7 @@ public class FilenameParserTest {
 
     public static final List<TestInput> values = new LinkedList<>();
 
-    @BeforeClass
-    public static void setupValues() {
+    private static void setupValuesSection0() {
         // In this section, we have, in order:
         // (1) actual filename to test
         // (2) the query string; that is, what we expect to pull out of the filename, to use as a basis to
@@ -89,9 +88,9 @@ public class FilenameParserTest {
                                  "channel zero", "1", "1", "480p"));
         values.add(new TestInput("NCIS.S14E04.720p.HDTV.X264-DIMENSION[ettv].mkv",
                                  "ncis", "14", "4", "720p"));
+    }
 
-
-
+    private static void setupValuesSection1() {
         // In this section, we do not supply an explicit query string.  The query string is simply
         //  the show name, lower-cased. So, we have:
         // (1) actual filename to test
@@ -114,7 +113,6 @@ public class FilenameParserTest {
                                  "law and order svu", "17", "05"));
         values.add(new TestInput("House.Of.Cards.2013.S01E06.HDTV.x264-EVOLVE.mp4",
                                  "house of cards 2013", "1", "6"));
-
 
         values.add(new TestInput("game.of.thrones.5x01.mp4", "game of thrones", "5", "1"));
         values.add(new TestInput("JAG.S10E01.DVDRip.XviD-P0W4DVD.avi", "jag", "10", "1"));
@@ -148,6 +146,9 @@ public class FilenameParserTest {
         values.add(new TestInput("Witches.of.East.End.S01E01.PROPER.HDTV.x264-2HD.mp4",
                                  "witches of east end", "1", "1"));
         values.add(new TestInput("Warehouse.13.S05E04.HDTV.x264-2HD.mp4", "warehouse 13", "5", "4"));
+    }
+
+    private static void setupValuesSection2() {
         values.add(new TestInput("the.100.208.hdtv-lol.mp4", "the 100", "2", "8")); // issue #79
         values.add(new TestInput("firefly.1x01.hdtv-lol.mp4", "firefly", "1", "1"));
         values.add(new TestInput("firefly.1x02.hdtv-lol.mp4", "firefly", "1", "2"));
@@ -174,6 +175,13 @@ public class FilenameParserTest {
                                  "frasier", "11", "12"));
         values.add(new TestInput("testdir/excellent/dups/Frasier/Frasier_S11E12.avi",
                                  "frasier", "11", "12"));
+    }
+
+    @BeforeClass
+    public static void setupValues() {
+        setupValuesSection0();
+        setupValuesSection1();
+        setupValuesSection2();
     }
 
     @Test
