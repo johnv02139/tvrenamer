@@ -233,7 +233,8 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         }
         return ((parseStatus == ParseStatus.PARSED)
                 && (seriesStatus == SeriesStatus.PARSED_ALL)
-                && (fileStatus != FileStatus.MOVING));
+                && ((fileStatus == FileStatus.UNCHECKED)
+                    || (fileStatus == FileStatus.RENAMED)));
     }
 
     public boolean isSeriesReady() {
