@@ -19,6 +19,7 @@ public class Constants {
     public static final String NO_SUCH_SHOW_MESSAGE = "No such show found: ";
     public static final String DOWNLOADING_FAILED_MESSAGE = "Downloading show listings failed.  "
         + "Check internet connection";
+    public static final String FAIL_TO_MOVE_MESSAGE = "Unable to move file to proposed destination";
     public static final String FAIL_MSG_FOR_NONFAIL = "Internal error: fail message for non-failure";
     public static final String ADDED_PLACEHOLDER_FILENAME = "Downloading ...";
     public static final String CANT_PARSE_FILENAME = "filename not parsed";

@@ -201,6 +201,10 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (parseStatus == ParseStatus.BAD_PARSE);
     }
 
+    public boolean isFailToMove() {
+        return (fileStatus == FileStatus.FAIL_TO_MOVE);
+    }
+
     public boolean isFailed() {
         return ((parseStatus == ParseStatus.BAD_PARSE)
                 || (seriesStatus == SeriesStatus.UNFOUND)

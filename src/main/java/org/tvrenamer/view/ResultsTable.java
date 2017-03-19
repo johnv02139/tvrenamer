@@ -166,6 +166,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             return CANT_PARSE_FILENAME;
         }
 
+        if (ep.isFailToMove()) {
+            return FAIL_TO_MOVE_MESSAGE;
+        }
+
         if (ep.isFailed()) {
             String failMsg = DOWNLOADING_FAILED_MESSAGE;
             // BROKEN_PLACEHOLDER_FILENAME;
