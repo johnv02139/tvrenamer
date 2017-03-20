@@ -18,6 +18,7 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -84,16 +85,26 @@ public class PreferencesDialog extends Dialog {
     }
 
     public void open() {
+        Shell parent = getParent();
+
         // Create the dialog window
-        preferencesShell = new Shell(getParent(), getStyle());
+        preferencesShell = new Shell(parent, getStyle());
         preferencesShell.setText(PREFERENCES_LABEL);
 
         // Add the contents of the dialog window
         createContents();
 
+        // place the window in the bottom right of the primary monitor
+        Display display = parent.getDisplay();
+        Rectangle monitorBounds = display.getPrimaryMonitor().getBounds();
+        Rectangle mainWin = parent.getBounds();
+        Rectangle dialog = preferencesShell.getBounds();
+        int x = monitorBounds.x + monitorBounds.width - mainWin.width - 5;
+        int y = monitorBounds.y + monitorBounds.height - dialog.height;
+        preferencesShell.setLocation(x, y);
+
         preferencesShell.pack();
         preferencesShell.open();
-        Display display = getParent().getDisplay();
         while (!preferencesShell.isDisposed()) {
             if (!display.readAndDispatch()) {
                 display.sleep();
@@ -449,32 +460,48 @@ public class PreferencesDialog extends Dialog {
 
     private void createActionButtonGroup() {
         Composite bottomButtonsComposite = new Composite(preferencesShell, SWT.FILL);
-        bottomButtonsComposite.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, true, 0, 1));
-        bottomButtonsComposite.setLayout(new GridLayout(2, false));
-        GridData bottomButtonsCompositeGridData = new GridData(SWT.FILL, SWT.CENTER, true, true, 2, 1);
+        GridData bottomButtonsCompositeGridData;
+        bottomButtonsCompositeGridData = new GridData(SWT.END, SWT.CENTER, true, true, 0, 1);
+        bottomButtonsComposite.setLayoutData(bottomButtonsCompositeGridData);
+        bottomButtonsComposite.setLayout(new GridLayout(3, true));
+        bottomButtonsCompositeGridData = new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1);
         bottomButtonsComposite.setLayoutData(bottomButtonsCompositeGridData);
 
-        Button cancelButton = new Button(bottomButtonsComposite, SWT.PUSH);
-        GridData cancelButtonGridData = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
-        cancelButtonGridData.minimumWidth = 150;
-        cancelButtonGridData.widthHint = 150;
-        cancelButton.setLayoutData(cancelButtonGridData);
-        cancelButton.setText(CANCEL_LABEL);
+        Button closeButton = new Button(bottomButtonsComposite, SWT.PUSH);
+        GridData closeButtonGridData = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
+        closeButtonGridData.minimumWidth = 100;
+        closeButtonGridData.widthHint = 100;
+        closeButton.setLayoutData(closeButtonGridData);
+        closeButton.setText(CLOSE_LABEL);
 
-        cancelButton.addSelectionListener(new SelectionAdapter() {
+        closeButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
                 preferencesShell.close();
             }
         });
 
+        Button applyButton = new Button(bottomButtonsComposite, SWT.PUSH);
+        GridData applyButtonGridData = new GridData(GridData.CENTER, GridData.CENTER, true, true);
+        applyButtonGridData.minimumWidth = 100;
+        applyButtonGridData.widthHint = 100;
+        applyButton.setLayoutData(applyButtonGridData);
+        applyButton.setText("Apply");
+        applyButton.setFocus();
+
+        applyButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                savePreferences();
+            }
+        });
+
         Button saveButton = new Button(bottomButtonsComposite, SWT.PUSH);
         GridData saveButtonGridData = new GridData(GridData.END, GridData.CENTER, true, true);
-        saveButtonGridData.minimumWidth = 150;
-        saveButtonGridData.widthHint = 150;
+        saveButtonGridData.minimumWidth = 100;
+        saveButtonGridData.widthHint = 100;
         saveButton.setLayoutData(saveButtonGridData);
         saveButton.setText(SAVE_LABEL);
-        saveButton.setFocus();
 
         saveButton.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -484,9 +511,9 @@ public class PreferencesDialog extends Dialog {
             }
         });
 
-        // Set the OK button as the default, so
-        // user can press Enter to save
-        preferencesShell.setDefaultButton(saveButton);
+        // Set the Apply button as the default, so
+        // user can press Enter to see the updates
+        preferencesShell.setDefaultButton(applyButton);
     }
 
     /**
