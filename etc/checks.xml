@@ -26,10 +26,10 @@
         <module name="FileContentsHolder"/>
         <module name="OuterTypeFilename"/>
         <module name="LineLength">
-            <property name="max" value="156"/>
+            <property name="max" value="130"/>
         </module>
         <module name="MethodLength">
-            <property name="max" value="139"/>
+            <property name="max" value="124"/>
         </module>
         <module name="OneTopLevelClass"/>
         <module name="NoLineWrap"/>
