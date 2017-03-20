@@ -245,6 +245,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private void setEpisodeIsChecked(final TableItem item, final FileEpisode episode) {
         String fileName = episode.getFilepath();
+        if (fileName.equals(episode.getProposedFilename())) {
+            // If the file is already in the "destination", there's nothing to be done,
+            // and so it obviously shouldn't be checked.
+            item.setChecked(false);
+            return;
+        }
         episodeMap.put(fileName, episode);
 
         if (episode.wasNotParsed()) {
@@ -296,10 +302,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void updateTableItemText(final TableItem item, final FileEpisode episode) {
-        setEpisodeIsChecked(item, episode);
         setEpisodeFilenameText(item, episode);
         setEpisodeNewFilenameText(item, episode);
         setEpisodeStatusImage(item, episode);
+        setEpisodeIsChecked(item, episode);
     }
 
     private TableItem addRowCopy(TableItem oldItem, FileEpisode oldEpisode, int index) {
