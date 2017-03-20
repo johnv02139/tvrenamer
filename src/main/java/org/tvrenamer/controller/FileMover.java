@@ -15,15 +15,32 @@ public class FileMover {
 
     private final FileEpisode episode;
     private final Path destRoot;
-    private final Path destPath;
+    private final String destBaseName;
+    private final String destSuffix;
+    private final boolean alreadyInPlace;
+    private Path destPath;
 
-    public FileMover(FileEpisode episode, Path destRoot, Path destPath) {
+    public FileMover(FileEpisode episode) {
         this.episode = episode;
-        this.destRoot = destRoot;
-        this.destPath = destPath;
+
+        destRoot = episode.getDestinationDirectory();
+        destBaseName = episode.getFileBasename();
+        destSuffix = episode.getFilenameSuffix();
+
+        String filename = destBaseName + destSuffix;
+        destPath = destRoot.resolve(filename);
+
+        alreadyInPlace = destPath.equals(episode.getPath());
+
     }
 
     private boolean doActualMove(Path srcPath, Path destPath) {
+        if (alreadyInPlace) {
+            logger.info("nothing to be done to " + srcPath);
+            return false;
+        }
+
+        logger.fine("Going to move\n  '" + srcPath + "'\n  '" + destPath + "'");
         Path actualDest = null;
         try {
             actualDest = Files.move(srcPath, destPath);
@@ -55,22 +72,21 @@ public class FileMover {
             episode.setDoesNotExist();
             return false;
         }
-        Path destDir = destPath.getParent();
-        if (Files.notExists(destDir)) {
+        if (Files.notExists(destRoot)) {
             try {
-                Files.createDirectories(destDir);
+                Files.createDirectories(destRoot);
             } catch (IOException ioe) {
-                logger.log(Level.SEVERE, "Unable to create directory " + destDir, ioe);
+                logger.log(Level.SEVERE, "Unable to create directory " + destRoot, ioe);
                 return false;
             }
         }
-        if (!Files.exists(destDir)) {
-            logger.warning("could not create destination directory " + destDir
+        if (!Files.exists(destRoot)) {
+            logger.warning("could not create destination directory " + destRoot
                            + "; not attempting to move " + srcPath);
             return false;
         }
-        if (!Files.isDirectory(destDir)) {
-            logger.warning("cannot use specified destination " + destDir
+        if (!Files.isDirectory(destRoot)) {
+            logger.warning("cannot use specified destination " + destRoot
                            + "because it is not a directory; not attempting to move "
                            + srcPath);
             return false;

@@ -581,29 +581,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
                 // Skip files not successfully downloaded and ready to be moved
                 if (!episode.isReady()) {
+                    logger.info("selected but not ready: " + episode.getFilepath());
                     continue;
                 }
 
-                Path currentPath = episode.getPath();
-                String newName = episode.getProposedFilename();
-                Path newPath = Paths.get(newName);
-
-                Path newRoot = newPath.getParent();
-                if (!prefs.isMoveEnabled()) {
-                    // If move is enabled, the full path is in the table already,
-                    // but if not, we need to build it
-                    newRoot = currentPath.getParent();
-                    newPath = newRoot.resolve(newName);
-                }
-
-                if (currentPath.equals(newPath)) {
-                    logger.info("nothing to be done to " + currentPath);
-                    continue;
-                }
-
-                logger.fine("Going to move\n  '" + currentPath + "'\n  '" + newPath + "'");
-
-                moves.add(new FileMover(episode, newRoot, newPath));
+                moves.add(new FileMover(episode));
             }
         }
 

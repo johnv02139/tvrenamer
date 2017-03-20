@@ -528,6 +528,16 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return epochDay * 24L * 60L * 60L * 1000L;
     }
 
+    public Path getDestinationDirectory() {
+        return formatter.getDestinationDirectory();
+    }
+
+    public String getFileBasename() {
+        // Note, this is an instance variable, not a local variable.
+        fileBasename = formatter.getNewBasename();
+        return fileBasename;
+    }
+
     public String getProposedFilename() {
         if (series == null) {
             return ADDED_PLACEHOLDER_FILENAME;
