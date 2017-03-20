@@ -64,6 +64,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     // even after the file is moved, this value remains the same.  Note also this could
     // be a non-normalized, relative pathstring, for example.
     private final String originalFilepath;
+    private String currentLocation;
 
     // "filename" instance vars -- these are the results of parsing the filename.
     // The "filenameSeries" is the precise string from the filename, that we think
@@ -144,6 +145,8 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         pathObj = path;
         viewItem = item;
         originalFilepath = path.toString();
+        currentLocation = originalFilepath;
+
         filenameSuffix = getExtension(path);
 
         if (item == null) {
@@ -240,7 +243,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     }
 
     public String getFilepath() {
-        return originalFilepath;
+        return currentLocation;
     }
 
     public String getFilenameSuffix() {
@@ -320,6 +323,14 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
 
     public void setPath(Path pathObj) {
         this.pathObj = pathObj;
+        currentLocation = pathObj.toAbsolutePath().toString();
+        boolean isParsed = FilenameParser.parseFilename(this);
+        if (isParsed) {
+            parseStatus = ParseStatus.PARSED;
+        } else {
+            parseStatus = ParseStatus.BAD_PARSE;
+        }
+
     }
 
     private void update() {
