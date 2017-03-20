@@ -295,6 +295,13 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         }
     }
 
+    public String makeEpisodeId() {
+        // TODO: use getRenameReplacementString() from Renamer
+
+        return "S" + NameFormatter.TWO_DIGITS.get().format(seasonNum)
+            + "E" + NameFormatter.TWO_DIGITS.get().format(episodeNum);
+    }
+
     public String getFilenameResolution() {
         return filenameResolution;
     }
