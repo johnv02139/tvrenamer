@@ -141,6 +141,7 @@ public class Constants {
     public static final String CANT_PARSE_EPISODE_TEXT = "n/a";
     public static final String HAVENT_PARSED_EPISODE_TEXT = "---";
     public static final String DEFAULT_SEASON_PREFIX = "Season ";
+    public static final String VERSION_SEPARATOR_STRING = "~";
 
     public static final String ICON_PARENT_DIRECTORY = "res";
     public static final String TVRENAMER_ICON_PATH = "/icons/tvrenamer.png";

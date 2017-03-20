@@ -1,5 +1,7 @@
 package org.tvrenamer.controller;
 
+import static org.tvrenamer.model.util.Constants.*;
+
 import org.tvrenamer.controller.util.FileUtilities;
 import org.tvrenamer.model.FileEpisode;
 
@@ -81,15 +83,16 @@ public class FileMover {
 
         String filename = destBaseName + destSuffix;
         Path destPath = destRoot.resolve(filename);
-
-        if (destPath.equals(srcPath)) {
-            logger.info("nothing to be done to " + srcPath);
-            return false;
-        }
+        int index = 2;
 
         while (Files.exists(destPath)) {
+            if (destPath.equals(srcPath)) {
+                logger.info("nothing to be done to " + srcPath);
+                return true;
+            }
             logger.warning("already exists:\n  " + destPath);
-            filename = "z" + filename;
+            filename = destBaseName + VERSION_SEPARATOR_STRING + index + destSuffix;
+            index++;
             destPath = destRoot.resolve(filename);
         }
 
