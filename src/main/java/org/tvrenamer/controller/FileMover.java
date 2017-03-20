@@ -17,8 +17,6 @@ public class FileMover {
     private final Path destRoot;
     private final String destBaseName;
     private final String destSuffix;
-    private final boolean alreadyInPlace;
-    private Path destPath;
 
     public FileMover(FileEpisode episode) {
         this.episode = episode;
@@ -26,20 +24,9 @@ public class FileMover {
         destRoot = episode.getDestinationDirectory();
         destBaseName = episode.getFileBasename();
         destSuffix = episode.getFilenameSuffix();
-
-        String filename = destBaseName + destSuffix;
-        destPath = destRoot.resolve(filename);
-
-        alreadyInPlace = destPath.equals(episode.getPath());
-
     }
 
     private boolean doActualMove(Path srcPath, Path destPath) {
-        if (alreadyInPlace) {
-            logger.info("nothing to be done to " + srcPath);
-            return false;
-        }
-
         logger.fine("Going to move\n  '" + srcPath + "'\n  '" + destPath + "'");
         Path actualDest = null;
         try {
@@ -91,12 +78,19 @@ public class FileMover {
                            + srcPath);
             return false;
         }
-        if (Files.exists(destPath)) {
-            String message ="already exists:\n  " + destPath + "\n"
-                + srcPath + " was not renamed!";
-            logger.warning(message);
-            // UIUtils.showErrorMessageBox(RENAME_FAILED_LABEL, message, null);
+
+        String filename = destBaseName + destSuffix;
+        Path destPath = destRoot.resolve(filename);
+
+        if (destPath.equals(srcPath)) {
+            logger.info("nothing to be done to " + srcPath);
             return false;
+        }
+
+        while (Files.exists(destPath)) {
+            logger.warning("already exists:\n  " + destPath);
+            filename = "z" + filename;
+            destPath = destRoot.resolve(filename);
         }
 
         episode.setMoving();
