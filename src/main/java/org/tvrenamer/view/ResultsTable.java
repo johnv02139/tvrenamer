@@ -573,13 +573,13 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             if (item.getChecked()) {
                 final FileEpisode episode = (FileEpisode) item.getData();
 
-                // Skip files not successfully downloaded
-                if (!episode.isDownloaded()) {
+                // Skip files not successfully downloaded and ready to be moved
+                if (!episode.isReady()) {
                     continue;
                 }
 
                 Path currentPath = episode.getPath();
-                String newName = item.getText(NEW_FILENAME_COLUMN);
+                String newName = episode.getProposedFilename();
                 Path newPath = Paths.get(newName);
 
                 Path newRoot = newPath.getParent();
@@ -598,7 +598,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 logger.fine("Going to move\n  '" + currentPath + "'\n  '" + newPath + "'");
 
                 moves.add(new FileMover(episode, newRoot, newPath));
-                item.setChecked(false);
             }
         }
 
