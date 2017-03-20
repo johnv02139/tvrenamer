@@ -72,31 +72,6 @@ public class NameFormatter {
     private final UserPreferences userPrefs = UserPreferences.getInstance();
     private final GlobalOverrides overrides = GlobalOverrides.getInstance();
 
-    private String seasonSubdir() {
-        return userPrefs.getSeasonPrefix()
-            + String.format((userPrefs.isSeasonPrefixLeadingZero() ? "%02d" : "%d"),
-                            seasonNum);
-    }
-
-    private String addDestinationDirectory(String filename) {
-        String dirname = (series == null) ? "" : series.getDirName();
-
-        Path destDir = userPrefs.getDestinationPath();
-        if (destDir == null) {
-            return dirname;
-        }
-
-        Path destPath = destDir.resolve(dirname);
-
-        // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
-        if (StringUtils.isNotBlank(userPrefs.getSeasonPrefix())) {
-            destPath = destPath.resolve(seasonSubdir());
-        }
-        Path destFile = destPath.resolve(filename);
-
-        return destFile.toAbsolutePath().toString();
-    }
-
     private String replaceDate(String orig, String match, LocalDate date, String format) {
         if (date == null) {
             // TODO: any kind of logging here?
@@ -137,7 +112,7 @@ public class NameFormatter {
     }
 
     private String getOfficialSeriesName() {
-        String officialSeriesName = series.getName();
+        String officialSeriesName = series.getDirName();
         // Ensure that all special characters in the replacement are quoted
         officialSeriesName = Matcher.quoteReplacement(officialSeriesName);
         officialSeriesName = overrides.applyTitleOverride(officialSeriesName);
@@ -170,9 +145,49 @@ public class NameFormatter {
                                    getAirDate());
     }
 
+    private String seasonSubdir() {
+        String seasonPrefix = userPrefs.getSeasonPrefix();
+        // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
+        if (StringUtils.isBlank(seasonPrefix)) {
+            return null;
+        }
+
+        String formatted;
+        if ((seasonNum < 10) && userPrefs.isSeasonPrefixLeadingZero()) {
+            formatted = "0" + seasonNum;
+        } else {
+            formatted = String.valueOf(seasonNum);
+        }
+
+        return seasonPrefix + formatted;
+    }
+
+    public Path getDestinationDirectory() {
+        Path destDir = userPrefs.getDestinationPath();
+        if (destDir == null) {
+            return null;
+        }
+
+        String dirname = series.getDirName();
+        Path destPath = destDir.resolve(dirname);
+
+        String subdirName = seasonSubdir();
+        if (subdirName != null) {
+            destPath = destPath.resolve(subdirName);
+        }
+
+        return destPath;
+    }
+
     public String getProposedFilename(String newFilename) {
         if (userPrefs.isMoveEnabled()) {
-            return addDestinationDirectory(newFilename);
+            Path destPath = getDestinationDirectory();
+            if (destPath == null) {
+                logger.warning("although move enabled, couldn't get destination directory");
+                return newFilename;
+            }
+            Path destFile = destPath.resolve(newFilename);
+            return destFile.toAbsolutePath().toString();
         } else {
             return newFilename;
         }
@@ -192,8 +207,15 @@ public class NameFormatter {
             throw new IllegalArgumentException("season must not be null");
         }
 
-        seasonNum = StringUtils.stringToInt(ep.getFilenameSeason());
-        episodeNum = StringUtils.stringToInt(ep.getFilenameEpisode());
+        seasonNum = ep.getSeasonNum();
+        if (seasonNum < 0) {
+            throw new IllegalArgumentException("season number must not be negative");
+        }
+
+        episodeNum = ep.getEpisodeNum();
+        if (episodeNum < 0) {
+            throw new IllegalArgumentException("episode number must not be negative");
+        }
 
         // The resolution comes directly from the original filename, and therefore
         // cannot require "sanitising".

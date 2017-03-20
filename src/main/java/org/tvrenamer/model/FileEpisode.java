@@ -52,9 +52,6 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         ERROR
     }
 
-    public static final int NO_SEASON = -1;
-    public static final int NO_EPISODE = -1;
-
     // Although we also store the file object that clearly gives us all the information
     // about the file's name, store this explicitly to know what we were given.  Note,
     // even after the file is moved, this value remains the same.  Note also this could
@@ -73,6 +70,9 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     private String filenameResolution = "";
 
     private String fileBasename = null;
+
+    private int seasonNum = 0;
+    private int episodeNum = 0;
 
     // The "fileObj" is the java.io.File object representing the file that this
     // object is concerned with.  Note that it is non-final, as the FileMover
@@ -172,6 +172,9 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
     }
 
     public boolean isReady() {
+        if ((seasonNum == 0) || (episodeNum == 0)) {
+            return false;
+        }
         return ((episodeStatus == EpisodeStatus.DOWNLOADED)
                 || (episodeStatus == EpisodeStatus.RENAMED));
     }
@@ -201,16 +204,34 @@ public class FileEpisode implements ShowInformationListener, ShowListingsListene
         return filenameSeason;
     }
 
+    public int getSeasonNum() {
+        return seasonNum;
+    }
+
     public void setFilenameSeason(String filenameSeason) {
         this.filenameSeason = filenameSeason;
+        try {
+            seasonNum = Integer.parseInt(filenameSeason);
+        } catch (Exception e) {
+            seasonNum = 0;
+        }
     }
 
     public String getFilenameEpisode() {
         return filenameEpisode;
     }
 
+    public int getEpisodeNum() {
+        return episodeNum;
+    }
+
     public void setFilenameEpisode(String filenameEpisode) {
         this.filenameEpisode = filenameEpisode;
+        try {
+            episodeNum = Integer.parseInt(filenameEpisode);
+        } catch (Exception e) {
+            episodeNum = 0;
+        }
     }
 
     public String getFilenameResolution() {
