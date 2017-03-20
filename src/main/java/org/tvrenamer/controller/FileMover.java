@@ -38,6 +38,7 @@ public class FileMover {
             // Look into a replacement.
             return false;
         }
+        episode.setPath(actualDest);
         boolean same = destPath.equals(actualDest);
         if (!same) {
             logger.warning("actual destination did not match intended:\n  "
