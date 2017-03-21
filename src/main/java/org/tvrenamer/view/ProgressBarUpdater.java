@@ -10,8 +10,12 @@ import org.eclipse.swt.widgets.TaskBar;
 import org.eclipse.swt.widgets.TaskItem;
 
 import org.tvrenamer.controller.FileMover;
+import org.tvrenamer.model.FileEpisode;
 
+import java.nio.file.Path;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -47,26 +51,36 @@ public class ProgressBarUpdater implements Runnable {
         return taskItem;
     }
 
-    private static Future<Boolean> makeFuture(FileMover move) {
-        return executor.submit(new Callable<Boolean>() {
-                @Override
-                public Boolean call() {
-                    return move.moveFile();
-                }
-            });
+    private static int createFutures(Map<Path, List<FileEpisode>> episodes,
+                                     Queue<Future<Boolean>> futures)
+    {
+        int count = 0;
+
+        for (List<FileEpisode> eps : episodes.values()) {
+            for (FileEpisode ep : eps) {
+                FileMover move = new FileMover(ep);
+                futures.add(executor.submit(new Callable<Boolean>() {
+                        @Override
+                        public Boolean call() {
+                            return move.moveFile();
+                        }
+                    }));
+                count++;
+            }
+        }
+        logger.fine("have " + count + " files to move");
+
+        return count;
     }
 
-    public ProgressBarUpdater(Queue<FileMover> moves, UIStarter ui) {
+    public ProgressBarUpdater(Map<Path, List<FileEpisode>> episodes, UIStarter ui) {
         this.ui = ui;
         this.display = ui.getDisplay();
         this.shell = ui.getShell();
         this.progressBar = ui.getProgressBar();
         this.barSize = progressBar.getMaximum();
         this.taskItem = getTaskItem(display, shell);
-        this.totalNumFiles = moves.size();
-        for (FileMover move : moves) {
-            futures.add(makeFuture(move));
-        }
+        this.totalNumFiles = createFutures(episodes, futures);
     }
 
     private void setProgress(int nRemaining) {

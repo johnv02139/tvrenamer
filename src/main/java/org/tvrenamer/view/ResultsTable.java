@@ -79,7 +79,6 @@ import org.eclipse.swt.widgets.TaskItem;
 import org.eclipse.swt.widgets.Text;
 
 import org.tvrenamer.controller.EpisodeInformationListener;
-import org.tvrenamer.controller.FileMover;
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
@@ -97,11 +96,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Collator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -572,8 +572,8 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.deselectAll();
     }
 
-    private Queue<FileMover> listOfFileMoves() {
-        final Queue<FileMover> moves = new LinkedList<>();
+    private Map<Path, List<FileEpisode>> listOfFileMoves() {
+        final Map<Path, List<FileEpisode>> moves = new HashMap<>();
 
         for (final TableItem item : getTableItems()) {
             if (item.getChecked()) {
@@ -585,7 +585,13 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                     continue;
                 }
 
-                moves.add(new FileMover(episode));
+                Path destDir = episode.getDestinationDirectory();
+                List<FileEpisode> eps = moves.get(destDir);
+                if (eps == null) {
+                    eps = new LinkedList<FileEpisode>();
+                }
+                eps.add(episode);
+                moves.put(destDir, eps);
             }
         }
 
@@ -610,7 +616,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             return;
         }
 
-        final Queue<FileMover> moves = listOfFileMoves();
+        final Map<Path, List<FileEpisode>> moves = listOfFileMoves();
         ProgressBarUpdater updater = new ProgressBarUpdater(moves, this);
 
         taskItem.setProgressState(SWT.NORMAL);
