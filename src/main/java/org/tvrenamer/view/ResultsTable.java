@@ -344,7 +344,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                     if (contents != null) {
                         // recursive call
                         contents.forEach(pth -> addFilesRecursively(pth));
-                        contents.close();
                     }
                 } catch (IOException ioe) {
                     logger.log(Level.WARNING, "IO Exception descending " + path, ioe);

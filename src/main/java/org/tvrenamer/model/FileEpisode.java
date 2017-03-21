@@ -147,8 +147,11 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         pathString = path.toAbsolutePath().toString();
         filenameSuffix = getExtension(path);
 
-        if (item != null) {
+        if (item == null) {
+            uiStatus = EpisodeUIStatus.NEW;
+        } else {
             item.setData(this);
+            uiStatus = EpisodeUIStatus.ADDED;
         }
 
         boolean isParsed = FilenameParser.parseFilename(this);
@@ -435,7 +438,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
             uiStatus = EpisodeUIStatus.REMOVED;
         } else {
             if (viewItem != null) {
-                logger.info("changing table item for episode! " + this);
+                logger.finer("changing table item for episode! " + this);
             }
             Object data = newViewItem.getData();
             if ((data != null) && (data instanceof FileEpisode)) {
