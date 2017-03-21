@@ -17,10 +17,13 @@ import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.NameFormatter;
 import org.tvrenamer.controller.SeriesLookupListener;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
@@ -96,6 +99,8 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     // old FileEpisode in the EpisodeDb and in the TableItem, and then drop the old
     // FileEpisode.  TODO?
     private Path pathObj;
+    private long fileSize;
+    private static final long NO_FILE_SIZE = -1L;
 
     // The state of this object, not the state of the actual TV episode.  This is
     // about how far we've processed the filename.
@@ -323,6 +328,12 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
 
     public void setPath(Path pathObj) {
         this.pathObj = pathObj;
+        try {
+            fileSize = Files.size(pathObj);
+        } catch (IOException ioe) {
+            logger.log(Level.WARNING, "couldn't get size of " + pathObj);
+            fileSize = NO_FILE_SIZE;
+        }
         currentLocation = pathObj.toAbsolutePath().toString();
         boolean isParsed = FilenameParser.parseFilename(this);
         if (isParsed) {
@@ -331,6 +342,10 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
             parseStatus = ParseStatus.BAD_PARSE;
         }
 
+    }
+
+    public long getFileSize() {
+        return fileSize;
     }
 
     private void update() {
