@@ -10,7 +10,6 @@ import org.eclipse.swt.widgets.TaskBar;
 import org.eclipse.swt.widgets.TaskItem;
 
 import org.tvrenamer.controller.FileMover;
-import org.tvrenamer.model.FileEpisode;
 
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -51,14 +50,13 @@ public class ProgressBarUpdater implements Runnable {
         return taskItem;
     }
 
-    private static int createFutures(Map<Path, List<FileEpisode>> episodes,
+    private static int createFutures(Map<Path, List<FileMover>> episodes,
                                      Queue<Future<Boolean>> futures)
     {
         int count = 0;
 
-        for (List<FileEpisode> eps : episodes.values()) {
-            for (FileEpisode ep : eps) {
-                FileMover move = new FileMover(ep);
+        for (List<FileMover> moves : episodes.values()) {
+            for (FileMover move : moves) {
                 futures.add(executor.submit(new Callable<Boolean>() {
                         @Override
                         public Boolean call() {
@@ -73,7 +71,7 @@ public class ProgressBarUpdater implements Runnable {
         return count;
     }
 
-    public ProgressBarUpdater(Map<Path, List<FileEpisode>> episodes, UIStarter ui) {
+    public ProgressBarUpdater(Map<Path, List<FileMover>> episodes, UIStarter ui) {
         this.ui = ui;
         this.display = ui.getDisplay();
         this.shell = ui.getShell();

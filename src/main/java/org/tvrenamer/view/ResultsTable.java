@@ -79,6 +79,7 @@ import org.eclipse.swt.widgets.TaskItem;
 import org.eclipse.swt.widgets.Text;
 
 import org.tvrenamer.controller.EpisodeInformationListener;
+import org.tvrenamer.controller.FileMover;
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
@@ -96,7 +97,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Collator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -572,32 +572,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.deselectAll();
     }
 
-    private Map<Path, List<FileEpisode>> listOfFileMoves() {
-        final Map<Path, List<FileEpisode>> moves = new HashMap<>();
-
-        for (final TableItem item : getTableItems()) {
-            if (item.getChecked()) {
-                final FileEpisode episode = (FileEpisode) item.getData();
-
-                // Skip files not successfully downloaded and ready to be moved
-                if (!episode.isReady()) {
-                    logger.info("selected but not ready: " + episode.getFilepath());
-                    continue;
-                }
-
-                Path destDir = episode.getDestinationDirectory();
-                List<FileEpisode> eps = moves.get(destDir);
-                if (eps == null) {
-                    eps = new LinkedList<FileEpisode>();
-                }
-                eps.add(episode);
-                moves.put(destDir, eps);
-            }
-        }
-
-        return moves;
-    }
-
     private void renameFiles() {
         TaskBar taskBar = display.getSystemTaskBar();
 
@@ -616,7 +590,22 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             return;
         }
 
-        final Map<Path, List<FileEpisode>> moves = listOfFileMoves();
+        final List<FileEpisode> episodesToMove = new LinkedList<FileEpisode>();
+        for (final TableItem item : getTableItems()) {
+            if (item.getChecked()) {
+                final FileEpisode episode = (FileEpisode) item.getData();
+
+                // Skip files not successfully downloaded and ready to be moved
+                if (!episode.isReady()) {
+                    logger.info("selected but not ready: " + episode.getFilepath());
+                    continue;
+                }
+
+                episodesToMove.add(episode);
+            }
+        }
+
+        final Map<Path, List<FileMover>> moves = FileMover.listOfFileToMove(episodesToMove);
         ProgressBarUpdater updater = new ProgressBarUpdater(moves, this);
 
         taskItem.setProgressState(SWT.NORMAL);
