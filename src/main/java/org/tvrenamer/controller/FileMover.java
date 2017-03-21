@@ -71,31 +71,33 @@ public class FileMover {
             episode.setDoesNotExist();
             return false;
         }
-        if (Files.notExists(destRoot)) {
+        Path destDir = destRoot;
+        String filename = destBaseName + destSuffix;
+        if (destIndex != null) {
+            destDir = destRoot.resolve(DUPLICATES_DIRECTORY);
+            filename = destBaseName + VERSION_SEPARATOR_STRING + destIndex + destSuffix;
+        }
+        if (Files.notExists(destDir)) {
             try {
-                Files.createDirectories(destRoot);
+                Files.createDirectories(destDir);
             } catch (IOException ioe) {
-                logger.log(Level.SEVERE, "Unable to create directory " + destRoot, ioe);
+                logger.log(Level.SEVERE, "Unable to create directory " + destDir, ioe);
                 return false;
             }
         }
-        if (!Files.exists(destRoot)) {
-            logger.warning("could not create destination directory " + destRoot
+        if (!Files.exists(destDir)) {
+            logger.warning("could not create destination directory " + destDir
                            + "; not attempting to move " + srcPath);
             return false;
         }
-        if (!Files.isDirectory(destRoot)) {
-            logger.warning("cannot use specified destination " + destRoot
+        if (!Files.isDirectory(destDir)) {
+            logger.warning("cannot use specified destination " + destDir
                            + "because it is not a directory; not attempting to move "
                            + srcPath);
             return false;
         }
 
-        String filename = (destIndex == null)
-            ? destBaseName + destSuffix
-            : destBaseName + VERSION_SEPARATOR_STRING + destIndex + destSuffix;
-        Path destPath = destRoot.resolve(filename);
-
+        Path destPath = destDir.resolve(filename);
         if (Files.exists(destPath)) {
             if (destPath.equals(srcPath)) {
                 logger.info("nothing to be done to " + srcPath);
