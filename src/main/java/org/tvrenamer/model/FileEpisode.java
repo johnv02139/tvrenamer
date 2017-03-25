@@ -17,6 +17,7 @@ import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.NameFormatter;
 import org.tvrenamer.controller.SeriesLookup;
 import org.tvrenamer.controller.SeriesLookupListener;
+import org.tvrenamer.controller.util.FileUtilities;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -259,6 +260,10 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (seriesStatus == SeriesStatus.PARSED_ALL);
     }
 
+    public boolean isRenamed() {
+        return (fileStatus == FileStatus.RENAMED);
+    }
+
     public boolean isReady() {
         if ((seasonNum == 0) || (episodeNum == 0)) {
             return false;
@@ -365,6 +370,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     }
 
     public void setPath(Path pathObj) {
+        Path oldPath = this.pathObj;
         this.pathObj = pathObj;
         try {
             fileSize = Files.size(pathObj);
@@ -379,7 +385,10 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         } else {
             parseStatus = ParseStatus.BAD_PARSE;
         }
-
+        if ((oldPath != null) && FileUtilities.differentFiles(oldPath, pathObj)) {
+            fileStatus = FileStatus.RENAMED;
+        }
+        update();
     }
 
     public long getFileSize() {
@@ -395,13 +404,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     public void setMoving() {
         if (fileStatus != FileStatus.MOVING) {
             fileStatus = FileStatus.MOVING;
-            update();
-        }
-    }
-
-    public void setRenamed() {
-        if (fileStatus != FileStatus.RENAMED) {
-            fileStatus = FileStatus.RENAMED;
             update();
         }
     }
