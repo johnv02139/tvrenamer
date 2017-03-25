@@ -1,48 +1,84 @@
 package org.tvrenamer.controller.util;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileUtilities {
     private static Logger logger = Logger.getLogger(FileUtilities.class.getName());
 
     public static boolean areSameDisk(String pathA, String pathB) {
-        File[] roots = File.listRoots();
-        if (roots.length < 2) {
+        FileSystem fsA = Paths.get(pathA).getFileSystem();
+        if (fsA == null) {
+            return false;
+        }
+        FileSystem fsB = Paths.get(pathB).getFileSystem();
+        if (fsB == null) {
+            return false;
+        }
+        return fsA.equals(fsB);
+    }
+
+    public static boolean differentFiles(final Path pathA, final Path pathB) {
+        if (Files.notExists(pathA)) {
             return true;
         }
-        for (File root : roots) {
-            String rootPath = root.getAbsolutePath();
-            if (pathA.startsWith(rootPath)) {
-                return pathB.startsWith(rootPath);
-            }
+        if (Files.notExists(pathB)) {
+            return true;
+        }
+        try {
+            return !Files.isSameFile(pathA, pathB);
+        } catch (IOException ioe) {
+            logger.log(Level.FINER, "exception inspecting files", ioe);
+            return true;
+        }
+    }
+
+    public static boolean isDirEmpty(final Path dir) {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
+            return !dirStream.iterator().hasNext();
+        } catch (IOException ioe) {
+            logger.log(Level.WARNING, "exception checking directory " + dir, ioe);
+            return false;
+        }
+    }
+
+    public static boolean rmdir(final Path dir) {
+        try {
+            Files.delete(dir);
+        } catch (IOException ioe) {
+            logger.log(Level.WARNING, "exception trying to remove directory " + dir, ioe);
+            return false;
+        }
+        if (Files.notExists(dir)) {
+            return true;
         }
         return false;
     }
 
-    public static boolean removeWhileEmpty(File dir) {
+    public static boolean removeWhileEmpty(final Path dir) {
         if (dir == null) {
             return false;
         }
-        if (!dir.exists()) {
+        if (Files.notExists(dir)) {
             return false;
         }
-        if (!dir.isDirectory()) {
+        if (!Files.isDirectory(dir)) {
             return false;
         }
-
-        String[] files = dir.list(null);
-        if (files == null) {
-            // This shouldn't happen.
-            return false;
-        }
-        if (files.length > 0) {
+        if (!isDirEmpty(dir)) {
             // If the directory is not empty, then doing nothing is correct,
             // and we have succeeded.
             return true;
         }
-        File parent = dir.getParentFile();
-        boolean success = dir.delete();
+
+        Path parent = dir.getParent();
+        boolean success = rmdir(dir);
         if (success) {
             logger.info("removed empty directory " + dir);
             if (parent != null) {

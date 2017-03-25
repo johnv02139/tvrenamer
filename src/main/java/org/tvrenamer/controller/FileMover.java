@@ -116,7 +116,7 @@ public class FileMover {
 
         logger.info("successful:\n  " + srcPath.toAbsolutePath().toString()
                     + "\n  " + destPath.toAbsolutePath().toString());
-        FileUtilities.removeWhileEmpty(srcDir.toFile());
+        FileUtilities.removeWhileEmpty(srcDir);
         return true;
     }
 
