@@ -11,23 +11,12 @@
  *   - we also pass the FileEpisode the instance of the UIStarter, which implements
  *     EpisodeInformationListener.  The FileEpisode will register the listener, and
  *     notify us when it gets more information about the episode.
- *   - assuming the filename parsed correctly (basically meaning that we were able
- *     to find a season number and episode number in the filename), the FileEpisode
- *     constructor will spawn a thread to look up the show and episode information
  * - once the FileEpisode constructor returns, we add the table item to the table;
  *   for the "Proposed File Name" field, we have a status text rather than an actual
  *   new filename.  Files start out un-selected, and with a status that indicates
  *   they have not been processed yet.
  * - we also add the FileEpisode to a filename-to-object mapping in case the same
  *   file is added again later
- * - then, when the spawned thread gets information about the TV series that the
- *   file is an episode of, it updates the listener, which updates the information
- *   displayed in the table
- * - after we know which series it is, information about the particular episode is
- *   looked up; when that information becomes available, we again get a callback
- *   and update the table again
- * - at that point, we know the "new" name of the file, and it is ready to be renamed
- *   on demand
  *
  */
 
@@ -37,7 +26,6 @@ import static org.tvrenamer.model.util.Constants.*;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
-import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetAdapter;
@@ -51,7 +39,6 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -74,14 +61,9 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.swt.widgets.TaskBar;
-import org.eclipse.swt.widgets.TaskItem;
-import org.eclipse.swt.widgets.Text;
 
 import org.tvrenamer.controller.EpisodeInformationListener;
-import org.tvrenamer.controller.FileMover;
 import org.tvrenamer.controller.SeriesLookup;
-import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.Series;
@@ -97,9 +79,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Collator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
@@ -111,10 +91,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private static Logger logger = Logger.getLogger(UIStarter.class.getName());
 
-    private static final int SELECTED_COLUMN = 0;
+    private static final int STATUS_COLUMN = 0;
     private static final int CURRENT_FILE_COLUMN = 1;
-    private static final int NEW_FILENAME_COLUMN = 2;
-    private static final int STATUS_COLUMN = 3;
+    private static final int FILENAME_SERIES_COLUMN = 2;
+    private static final int FILENAME_EPISODE_COLUMN = 3;
 
     private static final int ITEM_NOT_IN_TABLE = -1;
 
@@ -130,7 +110,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     private Button deselectAllButton;
     private Link updatesAvailableLink;
     private Button renameSelectedButton;
-    private TableColumn destinationColumn;
     private Table resultsTable;
     private Font italicFont;
     private ProgressBar totalProgressBar;
@@ -205,14 +184,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
     }
 
-    private static String destColumnText(boolean isMoveEnabled) {
-        if (isMoveEnabled) {
-            return MOVE_HEADER;
-        } else {
-            return RENAME_HEADER;
-        }
-    }
-
     private TableItem[] getTableItems() {
         return resultsTable.getItems();
     }
@@ -243,69 +214,53 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return false;
     }
 
-    private void setEpisodeIsChecked(final TableItem item, final FileEpisode episode) {
-        String fileName = episode.getFilepath();
-        if (fileName.equals(episode.getProposedFilename())) {
-            // If the file is already in the "destination", there's nothing to be done,
-            // and so it obviously shouldn't be checked.
-            item.setChecked(false);
-            return;
-        }
-        episodeMap.put(fileName, episode);
-
-        if (episode.wasNotParsed()) {
-            logger.severe("Couldn't parse file: " + fileName);
-        }
-        // Set if the item is checked or not according
-        // to a list of banned keywords
-        item.setChecked(!isNameIgnored(fileName) && episode.isReady());
-    }
-
     private void setEpisodeFilenameText(final TableItem item, final FileEpisode episode) {
         item.setText(CURRENT_FILE_COLUMN, episode.getFilepath());
     }
 
-    private void setEpisodeNewFilenameText(final TableItem item, final FileEpisode episode) {
-        String valueForNewFilename;
-        if (episode.isFailed()) {
-            valueForNewFilename = getFailMessage(episode);
-        } else if (episode.isReady()) {
-            valueForNewFilename = episode.getProposedFilename();
-        } else if (episode.isSeriesReady()) {
-            valueForNewFilename = PROCESSING_EPISODES;
+    private void setEpisodeSeriesText(final TableItem item, final FileEpisode episode) {
+        String bestName;
+        if (episode.wasParsed()) {
+            bestName = episode.getBestSeriesName();
+        } else if (episode.isFailToParse()) {
+            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
+            item.setFont(italicFont);
+            bestName = CANT_PARSE_FILENAME;
         } else {
-            valueForNewFilename = ADDED_PLACEHOLDER_FILENAME;
+            bestName = ADDED_PLACEHOLDER_FILENAME;
         }
 
-        item.setText(NEW_FILENAME_COLUMN, valueForNewFilename);
+        item.setText(FILENAME_SERIES_COLUMN, bestName);
+    }
+
+    private void setEpisodeNumberText(final TableItem item, final FileEpisode episode) {
+        String episodeId;
+        if (episode.wasParsed()) {
+            episodeId = episode.makeEpisodeId();
+        } else if (episode.isFailToParse()) {
+            episodeId = CANT_PARSE_EPISODE_TEXT;
+        } else {
+            episodeId = HAVENT_PARSED_EPISODE_TEXT;
+        }
+
+        item.setText(FILENAME_EPISODE_COLUMN, episodeId);
     }
 
     private void setEpisodeStatusImage(final TableItem item, final FileEpisode episode) {
         if (episode.isNewlyAdded()) {
             item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
-        } else if (episode.isInvestigating()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
         } else if (episode.isReady()) {
             item.setImage(STATUS_COLUMN, FileMoveIcon.SUCCESS.icon);
-        } else if (episode.isFailed()) {
-            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
-            item.setFont(italicFont);
-            item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
-        } else if (episode.isRenameInProgress()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.RENAMING.icon);
         } else {
-            item.setGrayed(true); // makes checkbox use a dot; very weird
-            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
-            item.setFont(italicFont);
             item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
         }
     }
 
     private void updateTableItemText(final TableItem item, final FileEpisode episode) {
-        setEpisodeFilenameText(item, episode);
-        setEpisodeNewFilenameText(item, episode);
         setEpisodeStatusImage(item, episode);
-        setEpisodeIsChecked(item, episode);
+        setEpisodeFilenameText(item, episode);
+        setEpisodeSeriesText(item, episode);
+        setEpisodeNumberText(item, episode);
     }
 
     private TableItem addRowCopy(TableItem oldItem, FileEpisode oldEpisode, int index) {
@@ -313,9 +268,9 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         int oldStyle = oldItem.getStyle();
 
         TableItem newItem = new TableItem(resultsTable, oldStyle, index);
-        newItem.setChecked(wasChecked);
         newItem.setText(CURRENT_FILE_COLUMN, getFilenameRowText(oldItem));
-        newItem.setText(NEW_FILENAME_COLUMN, oldItem.getText(NEW_FILENAME_COLUMN));
+        newItem.setText(FILENAME_SERIES_COLUMN, oldItem.getText(FILENAME_SERIES_COLUMN));
+        newItem.setText(FILENAME_EPISODE_COLUMN, oldItem.getText(FILENAME_EPISODE_COLUMN));
         newItem.setImage(STATUS_COLUMN, oldItem.getImage(STATUS_COLUMN));
         newItem.setForeground(oldItem.getForeground());
         newItem.setFont(oldItem.getFont());
@@ -420,6 +375,8 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         final String key = absPath.toString();
         if (episodeMap.containsKey(key)) {
             logger.info("already in table: " + key);
+        } else if (isNameIgnored(key)) {
+            logger.fine("ignoring path " + key);
         } else {
             final TableItem item = new TableItem(resultsTable, SWT.NONE);
             final FileEpisode episode = new FileEpisode(absPath, item, this);
@@ -572,55 +529,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.deselectAll();
     }
 
-    private void renameFiles() {
-        TaskBar taskBar = display.getSystemTaskBar();
-
-        TaskItem taskItem = null;
-        if (taskBar != null) {
-            taskItem = taskBar.getItem(shell);
-            if (taskItem == null) {
-                taskItem = taskBar.getItem(null);
-            }
-        }
-        if (taskItem == null) {
-            // There is no task bar on linux
-            // In this case, we should execute the futures without the task bar
-            // (TODO)
-            logger.info("not moving files becasue no task item");
-            return;
-        }
-
-        final List<FileEpisode> episodesToMove = new LinkedList<FileEpisode>();
-        for (final TableItem item : getTableItems()) {
-            if (item.getChecked()) {
-                final FileEpisode episode = verifyEpisode(item);
-
-                // Skip files not successfully downloaded and ready to be moved
-                if (!episode.isReady()) {
-                    logger.info("selected but not ready: " + episode.getFilepath());
-                    continue;
-                }
-
-                episodesToMove.add(episode);
-            }
-        }
-
-        final Map<Path, List<FileMover>> moves = FileMover.listOfFileToMove(episodesToMove);
-        ProgressBarUpdater updater = new ProgressBarUpdater(moves, this);
-
-        taskItem.setProgressState(SWT.NORMAL);
-        taskItem.setOverlayImage(FileMoveIcon.RENAMING.icon);
-
-        updater.runThread();
-    }
-
-    private void setColumnDestText() {
-        if (!isUIRunning) {
-            return;
-        }
-        destinationColumn.setText(destColumnText(prefs.isMoveEnabled()));
-    }
-
     private void setRenameButtonText() {
         if (!isUIRunning) {
             return;
@@ -649,7 +557,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             || (upref == UserPreference.RENAME_ENABLED))
         {
             boolean isMoveEnabled = observed.isMoveEnabled();
-            destinationColumn.setText(destColumnText(isMoveEnabled));
             renameSelectedButton.setText(renameButtonText(isMoveEnabled));
             shell.changed(new Control[] {renameSelectedButton});
             shell.layout(false, true);
@@ -684,7 +591,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void doCleanup() {
-        ProgressBarUpdater.shutDown();
         // TODO: may not be necessary if they're daemon threads
         SeriesLookup.cleanUp();
         shell.dispose();
@@ -704,104 +610,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         aboutDialog.open();
     }
 
-    private void setupEditableTableListener() {
-        // editable table
-        final TableEditor editor = new TableEditor(resultsTable);
-        editor.horizontalAlignment = SWT.CENTER;
-        editor.grabHorizontal = true;
-
-        Listener tblEditListener =
-            new Listener() {
-                @Override
-                public void handleEvent(Event event) {
-                    Rectangle clientArea = resultsTable.getClientArea();
-                    Point pt = new Point(event.x, event.y);
-                    int index = resultsTable.getTopIndex();
-                    while (index < resultsTable.getItemCount()) {
-                        boolean visible = false;
-                        final TableItem item = getTableItem(index);
-                        for (int i = 0; i < resultsTable.getColumnCount(); i++) {
-                            Rectangle rect = item.getBounds(i);
-                            if (rect.contains(pt)) {
-                                final int column = i;
-                                final Text text = new Text(resultsTable, SWT.NONE);
-                                Listener textListener =
-                                    new Listener() {
-                                        @Override
-                                        @SuppressWarnings("fallthrough")
-                                        public void handleEvent(final Event e) {
-                                            switch (e.type) {
-                                            case SWT.FocusOut:
-                                                item.setText(column, text.getText());
-                                                text.dispose();
-                                                break;
-                                            case SWT.Traverse:
-                                                switch (e.detail) {
-                                                case SWT.TRAVERSE_RETURN:
-                                                    item.setText(column, text.getText());
-                                                    // fall through
-                                                case SWT.TRAVERSE_ESCAPE:
-                                                    text.dispose();
-                                                    e.doit = false;
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    };
-                                text.addListener(SWT.FocusOut, textListener);
-                                text.addListener(SWT.FocusIn, textListener);
-                                editor.setEditor(text, item, i);
-                                text.setText(item.getText(i));
-                                text.selectAll();
-                                text.setFocus();
-                                return;
-                            }
-                            if (!visible && rect.intersects(clientArea)) {
-                                visible = true;
-                            }
-                        }
-                        if (!visible) {
-                            return;
-                        }
-                        index++;
-                    }
-                }
-            };
-        resultsTable.addListener(SWT.MouseDown, tblEditListener);
-    }
-
-    private void setupSelectionListener() {
-        resultsTable.addListener(
-                SWT.Selection,
-                new Listener() {
-                    public void handleEvent(Event event) {
-                        if (event.detail == SWT.CHECK) {
-                            TableItem eventItem = (TableItem) event.item;
-                            // This assumes that the current status of the TableItem
-                            // already reflects its toggled state, which appears to
-                            // be the case.
-                            boolean checked = eventItem.getChecked();
-                            boolean isSelected = false;
-
-                            for (final TableItem item : resultsTable.getSelection()) {
-                                if (item == eventItem) {
-                                    isSelected = true;
-                                    break;
-                                }
-                            }
-                            if (isSelected) {
-                                for (final TableItem item : resultsTable.getSelection()) {
-                                    item.setChecked(checked);
-                                }
-                            } else {
-                                resultsTable.deselectAll();
-                            }
-                        }
-                        // else, it's a SELECTED event, which we just don't care about
-                    }
-                });
-    }
-
     private TableColumn setupTableColumn(final int position,
                                          final int width,
                                          final String text)
@@ -819,7 +627,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void setupResultsTable() {
-        resultsTable = new Table(shell, SWT.CHECK | SWT.FULL_SELECTION | SWT.MULTI);
+        resultsTable = new Table(shell, SWT.FULL_SELECTION | SWT.MULTI);
         resultsTable.setHeaderVisible(true);
         resultsTable.setLinesVisible(true);
         GridData gridData = new GridData(GridData.FILL_BOTH);
@@ -828,12 +636,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         gridData.horizontalSpan = 3;
         resultsTable.setLayoutData(gridData);
 
-        boolean isMoveEnabled = prefs.isMoveEnabled();
-        setupTableColumn(SELECTED_COLUMN, 60, CHECKBOX_LABEL);
+        setupTableColumn(STATUS_COLUMN, 100, CHECKBOX_LABEL);
         setupTableColumn(CURRENT_FILE_COLUMN, 550, FILENAME_LABEL);
-        destinationColumn = setupTableColumn(NEW_FILENAME_COLUMN, 550,
-                                             destColumnText(isMoveEnabled));
-        setupTableColumn(STATUS_COLUMN, 60, STATUS_LABEL);
+        setupTableColumn(FILENAME_SERIES_COLUMN, 350, "Series");
+        setupTableColumn(FILENAME_EPISODE_COLUMN, 150, "Episode");
 
         // Allow deleting of elements
         resultsTable.addKeyListener(
@@ -856,9 +662,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                         }
                     }
                 });
-
-        // setupEditableTableListener();
-        setupSelectionListener();
     }
 
     private void setupTableDragDrop() {
@@ -891,44 +694,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return totalProgressBar;
     }
 
-    private void setupUpdateStuff(final Composite topButtonsComposite) {
-        updatesAvailableLink = new Link(topButtonsComposite, SWT.VERTICAL);
-        //updatesAvailableLink.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, true));
-        updatesAvailableLink.setVisible(false);
-        updatesAvailableLink.setText(UPDATE_IS_AVAILABLE_1
-                                     + TVRENAMER_DOWNLOAD_URL
-                                     + UPDATE_IS_AVAILABLE_2);
-        updatesAvailableLink.addSelectionListener(
-                new SelectionAdapter() {
-                    @Override
-                    public void widgetSelected(SelectionEvent arg0) {
-                        Program.launch(TVRENAMER_DOWNLOAD_URL);
-                    }
-                });
-
-        // Show the label if updates are available (in a new thread)
-        Thread updateCheckThread =
-            new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (prefs.checkForUpdates()) {
-                            final boolean updatesAvailable =
-                                UpdateChecker.isUpdateAvailable();
-
-                            if (updatesAvailable) {
-                                display.asyncExec(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            updatesAvailableLink.setVisible(true);
-                                        }
-                                    });
-                            }
-                        }
-                    }
-                });
-        updateCheckThread.start();
-    }
-
     private void setupMainWindow() {
         final Composite topButtonsComposite = new Composite(shell, SWT.FILL);
         topButtonsComposite.setLayout(new RowLayout());
@@ -948,7 +713,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         deselectAllButton = new Button(topButtonsComposite, SWT.PUSH);
         deselectAllButton.setText(DESELECT_ALL_LABEL);
 
-        setupUpdateStuff(topButtonsComposite);
         setupResultsTable();
         setupTableDragDrop();
 
@@ -964,21 +728,9 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         GridData bottomButtonsCompositeGridData = new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
         bottomButtonsComposite.setLayoutData(bottomButtonsCompositeGridData);
 
-        final Button quitButton = new Button(bottomButtonsComposite, SWT.PUSH);
-        GridData quitButtonGridData =
-                new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
-        quitButtonGridData.minimumWidth = 70;
-        quitButtonGridData.widthHint = 70;
-        quitButton.setLayoutData(quitButtonGridData);
-        quitButton.setText(QUIT_LABEL);
-
-        totalProgressBar = new ProgressBar(bottomButtonsComposite, SWT.SMOOTH);
-        totalProgressBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-
         boolean isMoveEnabled = prefs.isMoveEnabled();
         renameSelectedButton = new Button(bottomButtonsComposite, SWT.PUSH);
-        GridData renameSelectedButtonGridData =
-                new GridData(GridData.END, GridData.CENTER, false, false);
+        GridData renameSelectedButtonGridData = new GridData(GridData.BEGINNING, GridData.CENTER, false, false);
         renameSelectedButton.setLayoutData(renameSelectedButtonGridData);
         renameSelectedButton.setText(renameButtonText(isMoveEnabled));
         renameSelectedButton.setToolTipText(renameButtonToolTip(isMoveEnabled,
@@ -988,10 +740,19 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 new SelectionAdapter() {
                     @Override
                     public void widgetSelected(SelectionEvent e) {
-                        renameFiles();
+                        logger.info("renameFiles();");
                     }
                 });
 
+        totalProgressBar = new ProgressBar(bottomButtonsComposite, SWT.SMOOTH);
+        totalProgressBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+
+        final Button quitButton = new Button(bottomButtonsComposite, SWT.PUSH);
+        GridData quitButtonGridData = new GridData(GridData.END, GridData.CENTER, false, false);
+        quitButtonGridData.minimumWidth = 70;
+        quitButtonGridData.widthHint = 70;
+        quitButton.setLayoutData(quitButtonGridData);
+        quitButton.setText(QUIT_LABEL);
         quitButton.addSelectionListener(
                 new SelectionAdapter() {
                     @Override
@@ -1049,17 +810,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         selectAllButton.addSelectionListener(
                 new SelectionAdapter() {
                     public void widgetSelected(SelectionEvent e) {
-                        for (final TableItem item : getTableItems()) {
-                            item.setChecked(true);
-                        }
                     }
                 });
         deselectAllButton.addSelectionListener(
                 new SelectionAdapter() {
                     public void widgetSelected(SelectionEvent e) {
-                        for (final TableItem item : getTableItems()) {
-                            item.setChecked(false);
-                        }
                     }
                 });
     }

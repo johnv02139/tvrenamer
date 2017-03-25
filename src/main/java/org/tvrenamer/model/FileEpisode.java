@@ -408,6 +408,13 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         }
     }
 
+    public void setRenamed() {
+        if (fileStatus != FileStatus.RENAMED) {
+            fileStatus = FileStatus.RENAMED;
+            update();
+        }
+    }
+
     public void setFailToMove() {
         if (fileStatus != FileStatus.FAIL_TO_MOVE) {
             fileStatus = FileStatus.FAIL_TO_MOVE;

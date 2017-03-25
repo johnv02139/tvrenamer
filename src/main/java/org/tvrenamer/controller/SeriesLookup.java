@@ -74,13 +74,13 @@ public class SeriesLookup {
     }
 
     /**
-     * For the given queryString, notify all registered listeners that we now know
-     * the series that the string maps to.
+     * Add a series to the store, registered by the show name.<br />
+     * Added this distinct method to enable unit testing
      *
-     * @param queryString
-     *            the string used to query for the series
+     * @param showName
+     *            the show name
      * @param series
-     *            the {@link Series} that we found for that string
+     *            the {@link Series}
      */
     private static void notifyListeners(String queryString, Series series) {
         ShowRegistrations registrations = SHOW_LISTENERS.get(queryString);
@@ -144,14 +144,8 @@ public class SeriesLookup {
         storeShowQueryResult(makeQueryString(showName), series);
     }
 
-    /**
-     * Given a list of two or more options for which show we're dealing with,
-     * choose the best one and return it.
-     *
-     * @param options the potentisl shows that match the string we searched for
-     * @param showName the part of the filename that is presumed to name the show
-     * @return the series from the list which best matches the show information
-     */
+    // Given a list of two or more options for which show we're dealing with,
+    // choose the best one and return it.
     private static Series selectShowOption(List<Series> options, String showName) {
         // for (Series s : options) {
         //     logger.info("option: " + s.getName() + " for " + showName);
@@ -161,13 +155,11 @@ public class SeriesLookup {
     }
 
     /**
-     * Fetch the best option for a given series name, and provide a Series object that
+     * Fetch the best option for a given series name, and return a Series object that
      * represents it.
      *
-     * @param queryString series the name of the TV series (presumably from a filename) that
-     *            we are going to query for and try to figure out which show it refers to
-     * @param showName series the name of the TV series (presumably from a filename) that
-     *            we are going to query for and try to figure out which show it refers to
+     * @queryString series the name of the TV series (presumably from a filename) that we are
+     *           going to query for and try to figure out which show it refers to
      * @return returns immediately, and later passes its true result via callback
      */
     private static void downloadShow(final String queryString, final String showName) {
@@ -218,8 +210,8 @@ public class SeriesLookup {
      * I'm marking the method deprecated.  That's not the exact right fit; it was never a
      * supported method.  But it shouldn't be used, and "deprecated" serves that purpose.
      *
-     * @param showName series the name of the TV series (presumably from a filename) that we
-     *            are going to query for and try to figure out which show it refers to
+     * @showName series the name of the TV series (presumably from a filename) that we are
+     *           going to query for and try to figure out which show it refers to
      * @return a Series object: either one representing the show we found which we think
      *         is the correct option, or an UnresolvedShow instance if we didn't find anything.
      */

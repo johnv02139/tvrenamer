@@ -103,11 +103,11 @@ public class TheTVDBProvider {
     }
 
     private static Path seriesOptionsCachePath(String showName) {
-        return TvDbCache.resolve(StringUtils.sanitiseTitle(showName) + ".xml");
+        return TvDbCache.resolve(StringUtils.sanitiseTitle(showName) + XML_SUFFIX);
     }
 
     private static Path episodeListingsCachePath(String seriesId) {
-        return TvDbCache.resolve(seriesId + ".xml");
+        return TvDbCache.resolve(seriesId + XML_SUFFIX);
     }
 
     private static File performShowQuery(String showName)

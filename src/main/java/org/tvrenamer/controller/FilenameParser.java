@@ -111,7 +111,8 @@ public class FilenameParser {
                     // an error if it does, but not important.
                     continue;
                 }
-                episode.setRawSeries(matcher.group(1));
+                String rawShow = matcher.group(1);
+                episode.setRawSeries(rawShow);
                 episode.setFilenameSeason(matcher.group(2));
                 episode.setFilenameEpisode(matcher.group(3));
                 episode.setFilenameResolution(resolution);
