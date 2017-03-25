@@ -114,8 +114,6 @@ public class FileMover {
             return false;
         }
 
-        episode.setRenamed();
-        episode.setPath(destPath);
         logger.info("successful:\n  " + srcPath.toAbsolutePath().toString()
                     + "\n  " + destPath.toAbsolutePath().toString());
         FileUtilities.removeWhileEmpty(srcDir.toFile());
