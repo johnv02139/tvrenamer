@@ -593,7 +593,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         final List<FileEpisode> episodesToMove = new LinkedList<FileEpisode>();
         for (final TableItem item : getTableItems()) {
             if (item.getChecked()) {
-                final FileEpisode episode = (FileEpisode) item.getData();
+                final FileEpisode episode = verifyEpisode(item);
 
                 // Skip files not successfully downloaded and ready to be moved
                 if (!episode.isReady()) {
