@@ -156,14 +156,31 @@ public class KnownShow {
     }
 
     public static String mapFilenameToShow(String filename) {
+        List<String> allMatches = new ArrayList<>();
         Set<String> shows = patterns.keySet();
         for (String show : shows) {
             Pattern patt = patterns.get(show);
             Matcher matcher = patt.matcher(filename);
             if (matcher.matches()) {
-                return show;
+                allMatches.add(show);
             }
         }
+
+        int count = allMatches.size();
+        if (count == 0) {
+            return null;
+        }
+
+        if (count == 1) {
+            return allMatches.get(0);
+        }
+
+        logger.warning("matched multiple: " + filename);
+        for (String showName : allMatches) {
+            logger.warning("    " + showName);
+        }
+        // TODO: if we had more than one match, we could choose, somehow.
+        // But for now, just give up, and rely on FilenameParser to do better.
         return null;
     }
 
