@@ -153,9 +153,9 @@ public class SeriesLookup {
      * @return the series from the list which best matches the show information
      */
     private static Series selectShowOption(List<Series> options, String showName) {
-        for (Series s : options) {
-            logger.info("option: " + s.getName() + " for " + showName);
-        }
+        // for (Series s : options) {
+        //     logger.info("option: " + s.getName() + " for " + showName);
+        // }
         // TODO: might not always be option zero...
         return options.get(0);
     }
@@ -190,7 +190,7 @@ public class SeriesLookup {
                 } else if (nOptions == 1) {
                     storeShowQueryResult(queryString, options.get(0));
                 } else {
-                    logger.info("got " + nOptions + " options for " + showName);
+                    // logger.info("got " + nOptions + " options for " + showName);
                     storeShowQueryResult(queryString, selectShowOption(options, showName));
                 }
 
