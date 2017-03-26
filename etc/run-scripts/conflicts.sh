@@ -2,6 +2,14 @@
 
 indir=~/Movies/intest
 outdir=~/Movies/outtest
+runprog=run-osx.sh
+
+if [ "`uname`" != "Darwin" ]
+then
+  indir=~/Desktop/testdir/intest
+  outdir=~/Desktop/testdir/outtest
+  runprog=run-mingw.sh
+fi
 
 /bin/rm -rf ${indir}
 /bin/rm -rf ${outdir}
@@ -24,7 +32,7 @@ echo contents1 > ${indir}/Veep/Veep.S04E07.Mommy.Meyer.2015.05.24~7.mp4
 echo contents12 > ${indir}/Veep/Veep.S04E07.Mommy.Meyer.2015.05.24~11.mp4
 
 cd ~/Documents/VC/tvrenamer
-./etc/run-scripts/run-osx.sh -build || exit 1
+./etc/run-scripts/${runprog} -build || exit 1
 
 echo
 echo '** indir'
