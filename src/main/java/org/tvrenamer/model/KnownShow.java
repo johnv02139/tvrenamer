@@ -55,7 +55,6 @@ public class KnownShow {
 
     private final String showName;
     private final List<String> aliases;
-    private String nameKey;
     private String idString;
     private int idNum;
 
@@ -84,10 +83,6 @@ public class KnownShow {
 
     public String getName() {
         return showName;
-    }
-
-    public String getNameKey() {
-        return nameKey;
     }
 
     @Override
