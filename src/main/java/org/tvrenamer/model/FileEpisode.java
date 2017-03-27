@@ -305,11 +305,20 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return seriesName;
     }
 
-    public String getBestSeriesName() {
-        if (seriesName != null) {
-            return seriesName;
+    public String getSeriesInformationString() {
+        String display = "";
+        if (series == null) {
+            display += "(not found)";
+        } else {
+            display += series.getName() + " [" + series.getIdString() + "]; ";
         }
-        return filenameSeries;
+        if (seriesName == null) {
+            display += "parse: " + filenameSeries;
+        } else {
+            display += "show: " + seriesName;
+        }
+
+        return display;
     }
 
     public String getFilenameSeason() {

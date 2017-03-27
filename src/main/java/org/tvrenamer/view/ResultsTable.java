@@ -26,6 +26,7 @@ import static org.tvrenamer.model.util.Constants.*;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
+import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetAdapter;
@@ -39,6 +40,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -61,6 +63,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Text;
 
 import org.tvrenamer.controller.EpisodeInformationListener;
 import org.tvrenamer.controller.SeriesLookup;
@@ -214,14 +217,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return false;
     }
 
-    private void setEpisodeFilenameText(final TableItem item, final FileEpisode episode) {
-        item.setText(CURRENT_FILE_COLUMN, episode.getFilepath());
-    }
-
     private void setEpisodeSeriesText(final TableItem item, final FileEpisode episode) {
         String bestName;
         if (episode.wasParsed()) {
-            bestName = episode.getBestSeriesName();
+            bestName = episode.getSeriesInformationString();
         } else if (episode.isFailToParse()) {
             item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
             item.setFont(italicFont);
@@ -231,6 +230,10 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
 
         item.setText(FILENAME_SERIES_COLUMN, bestName);
+    }
+
+    private void setEpisodeFilenameText(final TableItem item, final FileEpisode episode) {
+        item.setText(CURRENT_FILE_COLUMN, episode.getFilepath());
     }
 
     private void setEpisodeNumberText(final TableItem item, final FileEpisode episode) {
@@ -257,9 +260,9 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void updateTableItemText(final TableItem item, final FileEpisode episode) {
-        setEpisodeStatusImage(item, episode);
         setEpisodeFilenameText(item, episode);
         setEpisodeSeriesText(item, episode);
+        setEpisodeStatusImage(item, episode);
         setEpisodeNumberText(item, episode);
     }
 
@@ -610,6 +613,104 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         aboutDialog.open();
     }
 
+    private void setupEditableTableListener() {
+        // editable table
+        final TableEditor editor = new TableEditor(resultsTable);
+        editor.horizontalAlignment = SWT.CENTER;
+        editor.grabHorizontal = true;
+
+        Listener tblEditListener =
+            new Listener() {
+                @Override
+                public void handleEvent(Event event) {
+                    Rectangle clientArea = resultsTable.getClientArea();
+                    Point pt = new Point(event.x, event.y);
+                    int index = resultsTable.getTopIndex();
+                    while (index < resultsTable.getItemCount()) {
+                        boolean visible = false;
+                        final TableItem item = getTableItem(index);
+                        for (int i = 0; i < resultsTable.getColumnCount(); i++) {
+                            Rectangle rect = item.getBounds(i);
+                            if (rect.contains(pt)) {
+                                final int column = i;
+                                final Text text = new Text(resultsTable, SWT.NONE);
+                                Listener textListener =
+                                    new Listener() {
+                                        @Override
+                                        @SuppressWarnings("fallthrough")
+                                        public void handleEvent(final Event e) {
+                                            switch (e.type) {
+                                            case SWT.FocusOut:
+                                                item.setText(column, text.getText());
+                                                text.dispose();
+                                                break;
+                                            case SWT.Traverse:
+                                                switch (e.detail) {
+                                                case SWT.TRAVERSE_RETURN:
+                                                    item.setText(column, text.getText());
+                                                    // fall through
+                                                case SWT.TRAVERSE_ESCAPE:
+                                                    text.dispose();
+                                                    e.doit = false;
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    };
+                                text.addListener(SWT.FocusOut, textListener);
+                                text.addListener(SWT.FocusIn, textListener);
+                                editor.setEditor(text, item, i);
+                                text.setText(item.getText(i));
+                                text.selectAll();
+                                text.setFocus();
+                                return;
+                            }
+                            if (!visible && rect.intersects(clientArea)) {
+                                visible = true;
+                            }
+                        }
+                        if (!visible) {
+                            return;
+                        }
+                        index++;
+                    }
+                }
+            };
+        resultsTable.addListener(SWT.MouseDown, tblEditListener);
+    }
+
+    private void setupSelectionListener() {
+        resultsTable.addListener(
+                SWT.Selection,
+                new Listener() {
+                    public void handleEvent(Event event) {
+                        if (event.detail == SWT.CHECK) {
+                            TableItem eventItem = (TableItem) event.item;
+                            // This assumes that the current status of the TableItem
+                            // already reflects its toggled state, which appears to
+                            // be the case.
+                            boolean checked = eventItem.getChecked();
+                            boolean isSelected = false;
+
+                            for (final TableItem item : resultsTable.getSelection()) {
+                                if (item == eventItem) {
+                                    isSelected = true;
+                                    break;
+                                }
+                            }
+                            if (isSelected) {
+                                for (final TableItem item : resultsTable.getSelection()) {
+                                    item.setChecked(checked);
+                                }
+                            } else {
+                                resultsTable.deselectAll();
+                            }
+                        }
+                        // else, it's a SELECTED event, which we just don't care about
+                    }
+                });
+    }
+
     private TableColumn setupTableColumn(final int position,
                                          final int width,
                                          final String text)
@@ -662,6 +763,9 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                         }
                     }
                 });
+
+        // setupEditableTableListener();
+        setupSelectionListener();
     }
 
     private void setupTableDragDrop() {
