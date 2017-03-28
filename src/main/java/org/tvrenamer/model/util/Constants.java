@@ -35,6 +35,7 @@ import java.util.Set;
 public class Constants {
 
     public static final Charset TVR_CHARSET = Charset.forName("UTF-8");
+    public static final Charset TVDB_CHARSET = Charset.forName("ISO-8859-1");
 
     public static final String APPLICATION_NAME = "TVRenamer";
     public static final String ABOUT_LABEL = "About " + APPLICATION_NAME;
@@ -217,6 +218,7 @@ public class Constants {
     private static final String PREFERENCES_FILENAME = "prefs.xml";
     private static final String APPDATA_FILENAME = "appdata.xml";
     private static final String OVERRIDES_FILENAME = "overrides.xml";
+    private static final String LEGACY_TVDB_DL_DIRNAME = "v1tvdb";
 
     public static final Path WORKING_DIRECTORY = Paths.get(Environment.USER_DIR);
     public static final Path TMP_DIR = Paths.get(Environment.TMP_DIR_NAME);
@@ -227,6 +229,7 @@ public class Constants {
     public static final Path PREFERENCES_FILE = CONFIGURATION_DIRECTORY.resolve(PREFERENCES_FILENAME);
     public static final Path APPDATA_FILE = CONFIGURATION_DIRECTORY.resolve(APPDATA_FILENAME);
     public static final Path OVERRIDES_FILE = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
+    public static final Path LEGACY_TVDB_DIR = CONFIGURATION_DIRECTORY.resolve(LEGACY_TVDB_DL_DIRNAME);
 
     public static final Path PREFERENCES_FILE_LEGACY = USER_HOME_DIR.resolve("tvrenamer.preferences");
     public static final Path OVERRIDES_FILE_LEGACY = USER_HOME_DIR.resolve(".tvrenameroverrides");

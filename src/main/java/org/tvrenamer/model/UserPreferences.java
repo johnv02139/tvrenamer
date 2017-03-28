@@ -165,6 +165,7 @@ public class UserPreferences extends Observable {
             }
         }
         setUpOverrides();
+        FileUtilities.ensureWritableDirectory(LEGACY_TVDB_DIR);
     }
 
     /*
