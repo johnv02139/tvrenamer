@@ -61,6 +61,7 @@ public class Constants {
     public static final String SEND_SUPPORT_EMAIL = "Send support email";
     public static final String SOURCE_CODE_LINK = "Source Code";
 
+    public static final String JSON_SUFFIX = ".json";
     public static final String XML_SUFFIX = ".xml";
     public static final String ICON_PARENT_DIRECTORY = "src/main/resources";
     public static final String APPLICATION_ICON_PATH = "/icons/tvrenamer.png";
@@ -236,6 +237,7 @@ public class Constants {
     private static final String PREFERENCES_FILENAME = "prefs.xml";
     private static final String APPDATA_FILENAME = "appdata.xml";
     private static final String OVERRIDES_FILENAME = "overrides.xml";
+    private static final String TVDB_DOWNLOAD_DIRNAME = "thetvdb";
     private static final String LEGACY_TVDB_DL_DIRNAME = "v1tvdb";
 
     public static final Path TMP_DIR = Paths.get(Environment.TMP_DIR_NAME);
@@ -246,6 +248,7 @@ public class Constants {
     public static final Path PREFERENCES_FILE = CONFIGURATION_DIRECTORY.resolve(PREFERENCES_FILENAME);
     public static final Path APPDATA_FILE = CONFIGURATION_DIRECTORY.resolve(APPDATA_FILENAME);
     public static final Path OVERRIDES_FILE = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
+    public static final Path THE_TVDB_DL_DIR = CONFIGURATION_DIRECTORY.resolve(TVDB_DOWNLOAD_DIRNAME);
     public static final Path LEGACY_TVDB_DIR = CONFIGURATION_DIRECTORY.resolve(LEGACY_TVDB_DL_DIRNAME);
 
     public static final Path PREFERENCES_FILE_LEGACY = USER_HOME_DIR.resolve("tvrenamer.preferences");

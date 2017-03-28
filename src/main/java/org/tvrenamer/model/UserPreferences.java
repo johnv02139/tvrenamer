@@ -128,6 +128,7 @@ public class UserPreferences extends Observable {
                 }
             }
         }
+        FileUtilities.ensureWritableDirectory(THE_TVDB_DL_DIR);
         FileUtilities.ensureWritableDirectory(LEGACY_TVDB_DIR);
     }
 
