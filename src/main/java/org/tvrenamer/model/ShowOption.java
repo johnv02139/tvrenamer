@@ -8,7 +8,7 @@ public class ShowOption {
     final String idString;
     final String name;
 
-    ShowOption(final String idString, final String name) {
+    public ShowOption(final String idString, final String name) {
         this.idString = idString;
         this.name = name;
     }

@@ -321,6 +321,20 @@ public class ShowName {
     }
 
     /**
+     * Add possible Show options that could be mapped to this ShowName
+     *
+     * @param options
+     *    the Show options, which may include null values
+     */
+    public synchronized void addShowOptions(final ShowOption[] options) {
+        for (int i = 0; i < options.length; i++) {
+            if (options[i] != null) {
+                showOptions.add(options[i]);
+            }
+        }
+    }
+
+    /**
      * Create a stand-in Show object in the case of failure from the provider.
      *
      * @param err any TVRenamerIOException that occurred trying to look up the show.
