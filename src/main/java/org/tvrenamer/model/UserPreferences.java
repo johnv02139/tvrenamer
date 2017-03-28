@@ -140,6 +140,13 @@ public class UserPreferences extends Observable {
                 }
             }
         }
+        if (Files.notExists(THETVDB_DL_DIR)) {
+            try {
+                Files.createDirectories(THETVDB_DL_DIR);
+            } catch (Exception e) {
+                logger.log(Level.WARNING, e.getMessage(), e);
+            }
+        }
     }
 
     /**
