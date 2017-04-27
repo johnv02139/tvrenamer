@@ -160,6 +160,16 @@ public class FileEpisodeTest {
                    .documentation("makes sure illegal characters are not included in filename")
                    .expectedReplacement("Steven Seagal - Lawman [1x1] The Way of the Gun")
                    .build());
+        values.add(new EpisodeTestData.Builder()
+                   .filenameShow("supernatural")
+                   .properShowName("Supernatural")
+                   .seasonNumString("9")
+                   .episodeNumString("21")
+                   .filenameSuffix(".mp4")
+                   .episodeTitle("King of the Damned")
+                   .replacementMask("%S S%0sE%0e %t")
+                   .expectedReplacement("Supernatural S09E21 King of the Damned")
+                   .build());
     }
 
     @BeforeClass
@@ -629,17 +639,6 @@ public class FileEpisodeTest {
                    .episodeId("4874676")
                    .replacementMask("%S S%0sE%0e %t")
                    .expectedReplacement("Robot Chicken S07E04 Rebel Appliance")
-                   .build());
-        values.add(new EpisodeTestData.Builder()
-                   .filenameShow("supernatural")
-                   .properShowName("Supernatural")
-                   .seasonNumString("9")
-                   .episodeNumString("21")
-                   .filenameSuffix(".mp4")
-                   .episodeTitle("King of the Damned")
-                   .episodeId("4837871")
-                   .replacementMask("%S S%0sE%0e %t")
-                   .expectedReplacement("Supernatural S09E21 King of the Damned")
                    .build());
     }
 
