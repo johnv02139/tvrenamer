@@ -2,6 +2,8 @@
 
 prefs=~/.tvrenamer/prefs.xml
 
+srcdir=~/Documents/VC/tvrenamer
+
 indir=~/Desktop/Videos/testdir/intest
 outdir=~/Desktop/Videos/testdir/outtest
 runprog=run-mingw.sh
@@ -111,9 +113,9 @@ echo contents > ${indir}/Futurama/S01E07.My.Three.Suns.avi
 echo contents > ${outdir}/Veep/Veep.S04E07.Mommy.Meyer.2015.05.24.mp4
 
 # Figure out where the script lives.  That tells us the project's root directory.
-proj=`dirname $0`
-cd ${proj}/../..
-srcdir=`pwd`
+# proj=`dirname $0`
+# cd ${proj}/../..
+# srcdir=`pwd`
 
 cd ${srcdir}
 
