@@ -6,7 +6,9 @@ import org.tvrenamer.controller.util.StringUtils;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
@@ -187,6 +189,13 @@ public class ShowName {
         }
     }
 
+    private enum DownloadStatus {
+        NOT_STARTED,
+        IN_PROGRESS,
+        SUCCESS,
+        FAILURE
+    }
+
     /*
      * Instance variables
      */
@@ -195,7 +204,9 @@ public class ShowName {
     private final QueryString queryString;
 
     private final List<ShowOption> showOptions;
+    private final Queue<ShowInformationListener> registrations;
 
+    private DownloadStatus downloadStatus = DownloadStatus.NOT_STARTED;
     private Future<Boolean> downloadTask = null;
 
     /*
@@ -203,18 +214,6 @@ public class ShowName {
      * functionality, but they are just pass-throughs to the real implementations
      * kept inside the QueryString inner class.
      */
-
-    /**
-     * Add a listener for this ShowName's query string.
-     *
-     * @param listener
-     *            the listener registering interest
-     */
-    public void addListener(ShowInformationListener listener) {
-        synchronized (queryString) {
-            queryString.addListener(listener);
-        }
-    }
 
     /**
      * Determine if this ShowName's query string has any listeners yet
@@ -268,6 +267,82 @@ public class ShowName {
         queryString = QueryString.lookupQueryString(foundName);
 
         showOptions = new LinkedList<>();
+        registrations = new ConcurrentLinkedQueue<>();
+    }
+
+    /**
+     * Called to indicate the caller is about to initiate downloading the
+     * options for this show.  If we find that the options are already
+     * in progress (or, already finished), we return false, and the caller
+     * should abort.  Otherwise, we will return true, and we assume that
+     * means the caller will immediately initiate a download right after that,
+     * so we update the download status to "in progress".
+     *
+     * @return true if the lookup need to be downloaded, false otherwise
+     */
+    public synchronized boolean beginDownload() {
+        if (downloadStatus == DownloadStatus.NOT_STARTED) {
+            downloadStatus = DownloadStatus.IN_PROGRESS;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Called by ShowStore to let us know that it has finished trying to look up
+     * the options for this Show.  If it found a matching show from the provider,
+     * it will return us a proper Show, not a subclass.  If it was unable to, it
+     * has instead provided us with an instance of "FailedShow", and we should
+     * notify our listeners of failure to find a real matching show.
+     *
+     * @param show
+     *     the Show that we should notify the listeners that we're mapping this
+     *     ShowName to.
+     */
+    synchronized void notifyListeners(Show show) {
+        if (show instanceof FailedShow) {
+            downloadStatus = DownloadStatus.FAILURE;
+            for (ShowInformationListener listener : registrations) {
+                listener.downloadFailed(show);
+            }
+        } else {
+            downloadStatus = DownloadStatus.SUCCESS;
+            for (ShowInformationListener listener : registrations) {
+                listener.downloaded(show);
+            }
+        }
+    }
+
+    /**
+     * Registers a listener interested in this ShowName's lookup.  Note that we
+     * (i.e., the ShowStore class) might already have the Show for this ShowName,
+     * in which case, it will notify the listenr itself.  We still want to keep
+     * this list of the listeners interested in this ShowName, in case we add
+     * other types of notification later.
+     *
+     * Add a listener for this ShowName's query string.
+     *
+     * @param listener
+     *   the listener to add to the registrations
+     *            the listener registering interest
+     */
+    synchronized void addListener(ShowInformationListener listener) {
+        if (listener == null) {
+            // This method should only be called by ShowStore, which should
+            // have done a null check before calling us.
+            logger.warning("internal error: do not call without a listener");
+            return;
+        }
+
+        synchronized (queryString) {
+            queryString.addListener(listener);
+        }
+
+        registrations.add(listener);
+    }
+
+    public void clear() {
+        registrations.clear();
     }
 
     /**

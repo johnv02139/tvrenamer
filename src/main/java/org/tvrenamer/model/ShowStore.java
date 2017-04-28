@@ -202,6 +202,10 @@ public class ShowStore {
      * matches the series information.
      */
     private static void downloadShow(final ShowName showName) {
+        if (!showName.beginDownload()) {
+            logger.warning("should not call downloadShow; Show is already download[ing/ed].");
+            return;
+        }
         Callable<Boolean> showFetcher = () -> {
             Show thisShow;
             try {
