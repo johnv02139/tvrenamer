@@ -753,7 +753,7 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
                 logger.info("no show name found for " + episode);
                 continue;
             }
-            ShowStore.getShow(showName, new ShowInformationListener() {
+            ShowStore.getShow(episode, new ShowInformationListener() {
                     @Override
                     public void downloaded(Show show) {
                         episode.setEpisodeShow(show);

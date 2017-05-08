@@ -374,6 +374,16 @@ public class EpisodeTestData {
         }
     }
 
+    public FileEpisode fileEpisodeForParsing() {
+        final FileEpisode fileEpisode = new FileEpisode();
+        fileEpisode.setFilenameShow(queryString);
+        fileEpisode.setFilenameSeason(seasonNumString);
+        fileEpisode.setFilenameEpisode(episodeNumString);
+        fileEpisode.setFilenameResolution("");
+        fileEpisode.setParsed();
+        return fileEpisode;
+    }
+
     @Override
     public String toString() {
         return "EpisodeTestData[" + inputFilename + "]";

@@ -131,18 +131,21 @@ public class ShowStore {
      *     kick off the download</li>
      * </ul>
      *
-     * @param filenameShow
-     *            the name of the show as it appears in the filename
+     * @param fileEpisode
+     *            the object created based on the filename, which has all the information
+     *            we need to look up the show
      * @param listener
      *            the listener to notify or register
      */
-    public static void getShow(String filenameShow, ShowInformationListener listener) {
+    public static void getShow(FileEpisode fileEpisode, ShowInformationListener listener) {
         if (listener == null) {
             logger.warning("cannot look up show without a listener");
             return;
         }
-        ShowName showName = ShowName.lookupShowName(filenameShow);
+        ShowName showName = fileEpisode.getShowName();
+        logger.info("got showName " + showName);
         Show show = showName.getMatchedShow();
+        logger.info("got show " + show);
 
         if (show == null) {
             // Since "show" is null, we know we haven't downloaded the options for
@@ -151,14 +154,20 @@ public class ShowStore {
             // listeners, that means the download is already underway.
             synchronized (showName) {
                 boolean needsDownload = !showName.hasListeners();
+                logger.info("needs download: " + needsDownload);
                 // We add this listener whether or not the download has been started.
                 showName.addListener(listener);
+                logger.info("added listener: " + listener);
                 // Now we start a download only if we need to.
                 if (needsDownload) {
+                    logger.info("starting download");
                     downloadShow(showName);
+                } else {
+                    logger.info("download apparently already underway");
                 }
             }
         } else {
+            logger.info("already downloaded: " + show);
             // Since we've already downloaded the show, we don't need to involve the
             // ShowName at all.  We invoke the listener's callback immediately and
             // directly.  If, in the future, we expand ShowInformationListener so

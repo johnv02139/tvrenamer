@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import org.tvrenamer.model.Episode;
 import org.tvrenamer.model.EpisodeTestData;
+import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowName;
 import org.tvrenamer.model.ShowStore;
@@ -819,10 +820,11 @@ public class TheTVDBProviderTest {
     // We use a brief failure message as the show title in cases where we detect failure.
     // Just make sure to not add a test case where the actual episode's title is one of
     // the failure messages.  :)
-    private Show testQueryShow(final EpisodeTestData testInput, final String queryString) {
+    private Show testQueryShow(final FileEpisode fileEpisode) {
+        final String showName = fileEpisode.getFilenameShow();
         try {
             final CompletableFuture<Show> futureShow = new CompletableFuture<>();
-            ShowStore.getShow(queryString, new ShowInformationListener() {
+            ShowStore.getShow(fileEpisode, new ShowInformationListener() {
                     @Override
                     public void downloaded(Show show) {
                         futureShow.complete(show);
@@ -835,14 +837,14 @@ public class TheTVDBProviderTest {
                 });
             Show gotShow = futureShow.get(4, TimeUnit.SECONDS);
             if (gotShow == null) {
-                fail("could not parse show name input " + queryString);
+                fail("could not parse show name input " + showName);
                 return null;
             }
             assertFalse(gotShow.isLocalShow());
             // assertEquals(testInput.actualShowName, gotShow.getName());
             return gotShow;
         } catch (TimeoutException e) {
-            String failMsg = "timeout trying to query for " + queryString;
+            String failMsg = "timeout trying to query for " + showName;
             String exceptionMessage = e.getMessage();
             if (exceptionMessage != null) {
                 failMsg += exceptionMessage;
@@ -852,7 +854,7 @@ public class TheTVDBProviderTest {
             fail(failMsg);
             return null;
         } catch (Exception e) {
-            fail("failure (possibly timeout?) trying to query for " + queryString
+            fail("failure (possibly timeout?) trying to query for " + showName
                  + ": " + e.getMessage());
             return null;
         }
@@ -862,11 +864,12 @@ public class TheTVDBProviderTest {
     public void testGetEpisodeTitle() {
         for (EpisodeTestData testInput : values) {
             if (testInput.episodeTitle != null) {
-                final String queryString = testInput.queryString;
-                final int seasonNum = testInput.seasonNum;
-                final int episodeNum = testInput.episodeNum;
+                final FileEpisode fileEpisode = testInput.fileEpisodeForParsing();
+                // fileEpisode = new FileEpisode(testInput.inputFilename);
                 try {
-                    final Show show = testQueryShow(testInput, queryString);
+                    final Show show = testQueryShow(fileEpisode);
+                    final int seasonNum = testInput.seasonNum;
+                    final int episodeNum = testInput.episodeNum;
                     final CompletableFuture<String> future = new CompletableFuture<>();
                     show.addListingsListener(new ShowListingsListener() {
                         @Override
@@ -886,11 +889,10 @@ public class TheTVDBProviderTest {
                         }
                     });
 
-                    String got = future.get(15, TimeUnit.SECONDS);
+                    String got = future.get(25, TimeUnit.SECONDS);
                     assertEquals(testInput.episodeTitle, got);
                 } catch (TimeoutException e) {
-                    String failMsg = "timeout trying to query for " + queryString
-                        + ", season " + seasonNum + ", episode " + episodeNum;
+                    String failMsg = "timeout trying to query for " + fileEpisode;
                     String exceptionMessage = e.getMessage();
                     if (exceptionMessage != null) {
                         failMsg += exceptionMessage;
@@ -899,8 +901,7 @@ public class TheTVDBProviderTest {
                     }
                     fail(failMsg);
                 } catch (Exception e) {
-                    String failMsg = "failure trying to query for " + queryString
-                        + ", season " + seasonNum + ", episode " + episodeNum
+                    String failMsg = "failure trying to query for " + fileEpisode
                         + e.getClass().getName() + " ";
                     String exceptionMessage = e.getMessage();
                     if (exceptionMessage != null) {

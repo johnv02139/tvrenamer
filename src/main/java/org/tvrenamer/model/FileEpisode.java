@@ -95,10 +95,10 @@ public class FileEpisode {
     private final String filenameSuffix;
 
     // These four fields reflect the information derived from the filename.  In particular,
-    // filenameShow is based on the part of the filename we "guessed" represented the name
+    // showName is based on the part of the filename we "guessed" represented the name
     // of the show, and which we use to query the provider.  Note that the actual show name
     // that we get back from the provider will likely differ from what we have here.
-    private String filenameShow = "";
+    private ShowName showName = null;
     private String filenameSeason = "";
     private String filenameEpisode = "";
     private String filenameResolution = "";
@@ -127,7 +127,7 @@ public class FileEpisode {
     private boolean exists = false;
     private long fileSize = NO_FILE_SIZE;
 
-    // After we've looked up the filenameShow from the provider, we should get back an
+    // After we've looked up the ShowName from the provider, we should get back an
     // actual Show object.  This is true even if the show was not found; in that case,
     // we should get a failed Show.
     private Show actualShow = null;
@@ -210,11 +210,20 @@ public class FileEpisode {
     }
 
     public String getFilenameShow() {
-        return filenameShow;
+        return showName.getFoundName();
     }
 
     public void setFilenameShow(String filenameShow) {
-        this.filenameShow = filenameShow;
+        if (filenameShow == null) {
+            logger.warning("should not set filenameShow to null");
+            showName = null;
+        } else {
+            showName = ShowName.lookupShowName(filenameShow);
+        }
+    }
+
+    public ShowName getShowName() {
+        return showName;
     }
 
     public int getSeasonNum() {
@@ -392,7 +401,7 @@ public class FileEpisode {
         if (actualEpisode == null) {
             logger.log(Level.FINE, "Season #" + seasonNum + ", Episode #"
                        + episodeNum + " not found for show '"
-                       + filenameShow + "'");
+                       + showName.getFoundName() + "'");
             seriesStatus = SeriesStatus.NO_MATCH;
             return false;
         }
@@ -481,7 +490,7 @@ public class FileEpisode {
         String showName;
         if (actualShow == null) {
             logger.warning("should not be renaming without an actual Show.");
-            showName = filenameShow;
+            showName = getFilenameShow();
         } else {
             if (actualShow.isFailedShow()) {
                 logger.warning("should not be renaming with a failed Show.");
@@ -572,7 +581,6 @@ public class FileEpisode {
     }
 
     private String getNoShowPlaceholder() {
-        ShowName showName = ShowName.lookupShowName(filenameShow);
         String queryString = showName.getQueryString();
         return BROKEN_PLACEHOLDER_FILENAME + " \""
             + StringUtils.decodeSpecialCharacters(queryString)
@@ -640,7 +648,7 @@ public class FileEpisode {
 
     @Override
     public String toString() {
-        return "FileEpisode { title:" + filenameShow + ", season:" + seasonNum + ", episode:" + episodeNum
-            + ", file:" + fileNameString + " }";
+        return "FileEpisode { title:" + getFilenameShow() + ", season:" + seasonNum
+            + ", episode:" + episodeNum + ", file:" + fileNameString + " }";
     }
 }
