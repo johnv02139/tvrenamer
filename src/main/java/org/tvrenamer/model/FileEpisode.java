@@ -260,7 +260,7 @@ public class FileEpisode {
     }
 
     private void checkFile(boolean mustExist) {
-        if (Files.exists(path)) {
+        if ((path != null) && Files.exists(path)) {
             exists = true;
             try {
                 fileStatus = FileStatus.ORIGINAL;
@@ -272,7 +272,7 @@ public class FileEpisode {
             }
         } else {
             if (mustExist) {
-                logger.warning("creating FileEpisode for nonexistent path, " + path);
+                logger.warning("FileEpisode with nonexistent path, " + path);
             }
             exists = false;
             fileStatus = FileStatus.NO_FILE;
@@ -282,14 +282,21 @@ public class FileEpisode {
 
     public void setPath(Path p) {
         path = p;
-        fileNameString = path.getFileName().toString();
+        // Can receive null for a file which existed at the time this FileEpisode
+        // was created, but disappears while the program is running.
+        if (path == null) {
+            fileNameString = "";
+            checkFile(false);
+        } else {
+            fileNameString = path.getFileName().toString();
 
-        String newSuffix = StringUtils.getExtension(fileNameString);
-        if (!filenameSuffix.equals(newSuffix)) {
-            throw new IllegalStateException("suffix of a FileEpisode may not change!");
+            String newSuffix = StringUtils.getExtension(fileNameString);
+            if (!filenameSuffix.equals(newSuffix)) {
+                throw new IllegalStateException("suffix of a FileEpisode may not change!");
+            }
+
+            checkFile(true);
         }
-
-        checkFile(true);
     }
 
     public long getFileSize() {
