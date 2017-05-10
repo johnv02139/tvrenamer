@@ -860,7 +860,7 @@ public class TheTVDBProviderTest {
         }
     }
 
-    // @Test
+    @Test
     public void testGetEpisodeTitle() {
         for (EpisodeTestData testInput : values) {
             if (testInput.episodeTitle != null) {
