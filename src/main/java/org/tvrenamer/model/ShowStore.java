@@ -6,6 +6,7 @@ import org.tvrenamer.controller.TheTVDBSwaggerProvider;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 /**
@@ -209,7 +210,8 @@ public class ShowStore {
             }
             return true;
         };
-        threadPool.submit(showFetcher);
+        Future<Boolean> future = threadPool.submit(showFetcher);
+        showName.addFuture(future);
     }
 
     public static void cleanUp() {

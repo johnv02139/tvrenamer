@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 /**
@@ -194,6 +195,8 @@ public class ShowName {
     private final QueryString queryString;
 
     private final List<ShowOption> showOptions;
+
+    private Future<Boolean> downloadTask = null;
 
     /*
      * QueryString methods -- these four methods are the public interface to the
@@ -412,6 +415,28 @@ public class ShowName {
      */
     synchronized Show getMatchedShow() {
         return queryString.getMatchedShow();
+    }
+
+    /**
+     * Give this Show a reference to the task that is downloading its listings.
+     *
+     * We use a queue in case of synchronization problems.  If we do it right,
+     * there should never be more than one for any given show.
+     *
+     * We're not doing anything with these objects yet.  We don't really care
+     * about the return value.  We do care whether it actually finishes, and
+     * as I said, we care that we never run two tasks simultaneously for the
+     * same show, but testing those things will have to wait.  (TODO)
+     *
+     * @param future
+     *          the pending completion of the task to download listings
+     *          for this show
+     */
+    public synchronized void addFuture(Future<Boolean> future) {
+        if (downloadTask != null) {
+            logger.warning("starting second download task for " + this);
+        }
+        downloadTask = future;
     }
 
     /**

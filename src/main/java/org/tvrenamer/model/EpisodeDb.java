@@ -326,7 +326,9 @@ public class EpisodeDb {
         boolean descend = prefs.isRecursivelyAddFolders();
         for (final String fileName : fileNames) {
             final Path path = Paths.get(fileName);
-            if (descend) {
+            if (path == null) {
+                logger.warning("could not get path " + fileName);
+            } else if (descend) {
                 addFilesRecursively(contents, null, path);
             } else {
                 addFileIfVisible(contents, path);

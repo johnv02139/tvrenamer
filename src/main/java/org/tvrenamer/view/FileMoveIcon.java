@@ -5,6 +5,7 @@ import org.eclipse.swt.widgets.Display;
 
 import org.tvrenamer.model.util.Constants;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 public enum FileMoveIcon {
@@ -17,12 +18,17 @@ public enum FileMoveIcon {
     public final Image icon;
 
     FileMoveIcon(String path) {
-        InputStream stream = getClass().getResourceAsStream(path);
-        if (stream != null) {
-            icon = new Image(Display.getCurrent(), stream);
-        } else {
-            icon = new Image(Display.getCurrent(), Constants.ICON_PARENT_DIRECTORY
-                             + "/" + path);
+        Image readIcon = null;
+        try (InputStream stream = getClass().getResourceAsStream(path)) {
+            if (stream != null) {
+                readIcon = new Image(Display.getCurrent(), stream);
+            } else {
+                readIcon = new Image(Display.getCurrent(),
+                                     Constants.ICON_PARENT_DIRECTORY + "/" + path);
+            }
+        } catch (IOException ioe) {
+            readIcon = null;
         }
+        icon = readIcon;
     }
 }

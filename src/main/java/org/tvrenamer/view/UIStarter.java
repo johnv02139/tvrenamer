@@ -474,6 +474,7 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
 
                     // delete
                     case '\u007F':
+                    default:
                         deleteSelectedTableItems();
                         break;
                 }
