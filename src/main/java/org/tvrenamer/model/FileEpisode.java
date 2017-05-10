@@ -161,7 +161,13 @@ public class FileEpisode {
             throw new IllegalArgumentException(FILE_EPISODE_NEEDS_PATH);
         }
         path = p;
-        fileNameString = p.getFileName().toString();
+        Path fileName = path.getFileName();
+        if (fileName == null) {
+            fileNameString = "";
+            logger.warning("setting FileEpisode path to no name: " + path);
+        } else {
+            fileNameString = fileName.toString();
+        }
         filenameSuffix = StringUtils.getExtension(fileNameString);
         checkFile(true);
         FilenameParser.parseFilename(this);
@@ -175,7 +181,13 @@ public class FileEpisode {
             throw new IllegalArgumentException(FILE_EPISODE_NEEDS_PATH);
         }
         path = Paths.get(filename);
-        fileNameString = path.getFileName().toString();
+        Path fileName = path.getFileName();
+        if (fileName == null) {
+            fileNameString = "";
+            logger.warning("setting FileEpisode path to no name: " + path);
+        } else {
+            fileNameString = fileName.toString();
+        }
         filenameSuffix = StringUtils.getExtension(fileNameString);
         checkFile(false);
     }
@@ -288,14 +300,21 @@ public class FileEpisode {
             fileNameString = "";
             checkFile(false);
         } else {
-            fileNameString = path.getFileName().toString();
+            Path fileName = path.getFileName();
+            if (fileName == null) {
+                fileNameString = "";
+                logger.warning("setting FileEpisode path to no name: " + p);
+                checkFile(false);
+            } else {
+                fileNameString = fileName.toString();
 
-            String newSuffix = StringUtils.getExtension(fileNameString);
-            if (!filenameSuffix.equals(newSuffix)) {
-                throw new IllegalStateException("suffix of a FileEpisode may not change!");
+                String newSuffix = StringUtils.getExtension(fileNameString);
+                if (!filenameSuffix.equals(newSuffix)) {
+                    throw new IllegalStateException("suffix of a FileEpisode may not change!");
+                }
+
+                checkFile(true);
             }
-
-            checkFile(true);
         }
     }
 
