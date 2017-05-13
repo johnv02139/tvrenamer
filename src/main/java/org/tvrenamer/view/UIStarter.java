@@ -843,6 +843,21 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
         });
     }
 
+    public static void setTableItemStatus(Display display, final TableItem item, final FileMoveIcon fmi) {
+        if (display.isDisposed()) {
+            return;
+        }
+        display.asyncExec(new Runnable() {
+            @Override
+            public void run() {
+                if (item.isDisposed()) {
+                    return;
+                }
+                item.setImage(STATUS_COLUMN, fmi.icon);
+            }
+        });
+    }
+
     private TableItem createTableItem(Table tblResults, String fileName, FileEpisode episode) {
         TableItem item = new TableItem(tblResults, SWT.NONE);
 
