@@ -12,7 +12,7 @@ import org.tvrenamer.model.FileEpisode;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TVRenamerTest {
+public class FilenameParserTest {
     private static final List<EpisodeTestData> values = new LinkedList<>();
 
     @BeforeClass
@@ -750,7 +750,7 @@ public class TVRenamerTest {
         for (EpisodeTestData testInput : values) {
             String input = testInput.inputFilename;
             FileEpisode retval = new FileEpisode(input);
-            TVRenamer.parseFilename(retval);
+            FilenameParser.parseFilename(retval);
             assertTrue(input, retval.wasParsed());
             assertEquals(input, testInput.filenameShow, retval.getFilenameShow());
             assertEquals(input, Integer.parseInt(testInput.seasonNumString), retval.getSeasonNum());
