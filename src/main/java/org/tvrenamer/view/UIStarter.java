@@ -16,7 +16,6 @@ import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
@@ -61,7 +60,6 @@ import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Environment;
 
-import java.io.InputStream;
 import java.text.Collator;
 import java.util.LinkedList;
 import java.util.List;
@@ -128,8 +126,6 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
         setupClearFilesButton();
         setupSelectButtons();
         setupMenuBar();
-
-        setupIcons();
 
         shell.pack(true);
     }
@@ -545,20 +541,6 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
                 }
             }
         });
-    }
-
-    private void setupIcons() {
-        try {
-            InputStream icon = getClass().getResourceAsStream(TVRENAMER_ICON_PATH);
-            if (icon != null) {
-                shell.setImage(new Image(display, icon));
-            } else {
-                shell.setImage(new Image(display, ICON_PARENT_DIRECTORY + TVRENAMER_ICON_PATH));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     Display getDisplay() {

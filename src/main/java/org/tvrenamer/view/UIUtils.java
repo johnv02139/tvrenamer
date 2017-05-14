@@ -3,6 +3,7 @@ package org.tvrenamer.view;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -11,6 +12,7 @@ import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.UserPreferences;
 
 import java.awt.HeadlessException;
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,9 +22,34 @@ class UIUtils {
     private static final Logger logger = Logger.getLogger(UIUtils.class.getName());
 
     private static Shell shell = null;
+    private static Image image = null;
 
     private UIUtils() {
         // utility class; prevent instantiation
+    }
+
+    /**
+     * Get the application icon.
+     *
+     * @return an Image giving the application icon
+     */
+    static Image getApplicationIcon() {
+        final Display display = shell.getDisplay();
+        if (image == null) {
+            try (final InputStream icon = UIUtils.class.getClassLoader()
+                 .getResourceAsStream(TVRENAMER_ICON_PATH))
+            {
+                if (icon != null) {
+                    image = new Image(display, icon);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (image == null) {
+                image = new Image(display, TVRENAMER_ICON_DIRECT_PATH);
+            }
+        }
+        return image;
     }
 
     /**
@@ -33,6 +60,7 @@ class UIUtils {
      */
     public static void setShell(Shell shell) {
         UIUtils.shell = shell;
+        shell.setImage(getApplicationIcon());
     }
 
     /**
