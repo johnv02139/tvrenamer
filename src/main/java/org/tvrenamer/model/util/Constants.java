@@ -35,6 +35,7 @@ public class Constants {
     public static final Charset TVDB_CHARSET = Charset.forName("ISO-8859-1");
 
     public static final String APPLICATION_NAME = "TVRenamer";
+    public static final String ABOUT_LABEL = "About " + APPLICATION_NAME;
 
     public static final String VERSION_NUMBER = Environment.readVersionNumber();
 
@@ -44,6 +45,7 @@ public class Constants {
     public static final String TVRENAMER_VERSION_URL = TVRENAMER_PROJECT_URL + "/version";
     public static final String TVRENAMER_REPOSITORY_URL = TVRENAMER_PROJECT_URL + "/source";
     public static final String TVRENAMER_SUPPORT_EMAIL = "support@tvrenamer.org";
+    public static final String TVRENAMER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
 
     public static final String XML_SUFFIX = ".xml";
     public static final String ICON_PARENT_DIRECTORY = "res";

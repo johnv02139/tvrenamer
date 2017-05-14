@@ -30,8 +30,6 @@ import java.util.logging.Logger;
 final class AboutDialog extends Dialog {
     private static final Logger logger = Logger.getLogger(AboutDialog.class.getName());
 
-    private static final String TVRENAMER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
-
     private Shell aboutShell;
 
     /**
@@ -47,7 +45,7 @@ final class AboutDialog extends Dialog {
     public void open() {
         // Create the dialog window
         aboutShell = new Shell(getParent(), getStyle());
-        aboutShell.setText("About TVRenamer");
+        aboutShell.setText(ABOUT_LABEL);
 
         // Add the contents of the dialog window
         createContents();
