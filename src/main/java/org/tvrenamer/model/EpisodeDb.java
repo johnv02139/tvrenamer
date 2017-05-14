@@ -18,6 +18,7 @@ public class EpisodeDb {
     private static final Logger logger = Logger.getLogger(EpisodeDb.class.getName());
 
     private final Map<String, FileEpisode> episodes = new ConcurrentHashMap<>(1000);
+    private final Queue<AddEpisodeListener> listeners = new ConcurrentLinkedQueue<>();
     private final UserPreferences prefs = UserPreferences.getInstance();
 
     public void put(String key, FileEpisode value) {
@@ -34,19 +35,31 @@ public class EpisodeDb {
         episodes.put(key, value);
     }
 
-    private FileEpisode add(final String pathname) {
-        Path path = Paths.get(pathname);
+    private FileEpisode createFileEpisode(final Folder parent,
+                                          final Path fileName)
+    {
+        Path path = parent.resolve(fileName);
         final FileEpisode episode = new FileEpisode(path);
         if (!episode.wasParsed()) {
             // TODO: we can add these episodes to the table anyway,
             // to provide information to the user, and in the future,
             // to let them help us parse the filenames.
-            logger.severe("Couldn't parse file: " + pathname);
-            put(pathname, episode);
+            logger.severe("Couldn't parse file: " + fileName);
+            return null;
+        }
+        return episode;
+    }
+
+    private FileEpisode createFileEpisode(final Path path) {
+        final FileEpisode episode = new FileEpisode(path);
+        if (!episode.wasParsed()) {
+            // TODO: we can add these episodes to the table anyway,
+            // to provide information to the user, and in the future,
+            // to let them help us parse the filenames.
+            logger.severe("Couldn't parse file: " + path);
             return episode;
             // return null;
         }
-        put(pathname, episode);
         return episode;
     }
 
@@ -61,12 +74,10 @@ public class EpisodeDb {
         return episodes.remove(key);
     }
 
-    @SuppressWarnings("unused")
     public boolean remove(String key, FileEpisode value) {
         return episodes.remove(key, value);
     }
 
-    @SuppressWarnings("unused")
     public boolean replaceKey(String oldKey, FileEpisode ep, String newKey) {
         if (ep == null) {
             throw new IllegalStateException("cannot have null value in EpisodeDb!!!");
@@ -124,70 +135,172 @@ public class EpisodeDb {
     }
 
     private void addFileToQueue(final Queue<FileEpisode> contents,
-                                final Path path)
+                                final Folder parent,
+                                final Path fileName,
+                                final Path realpath)
     {
-        final Path absPath = path.toAbsolutePath();
-        final String key = absPath.toString();
+        final String key = realpath.toString();
         if (episodes.containsKey(key)) {
             logger.info("already in table: " + key);
         } else {
-            FileEpisode ep = add(key);
+            FileEpisode ep = createFileEpisode(parent, fileName);
             if (ep != null) {
+                put(key, ep);
+                contents.add(ep);
+            }
+        }
+    }
+
+    private void addFileToQueue(final Queue<FileEpisode> contents,
+                                final Path realpath)
+    {
+        final String key = realpath.toString();
+        if (episodes.containsKey(key)) {
+            logger.info("already in table: " + key);
+        } else {
+            FileEpisode ep = createFileEpisode(realpath);
+            if (ep != null) {
+                put(key, ep);
                 contents.add(ep);
             }
         }
     }
 
     private void addFileIfVisible(final Queue<FileEpisode> contents,
-                                  final Path path)
+                                  final Folder root,
+                                  final Path subpath)
     {
-        if (fileIsVisible(path) && Files.isRegularFile(path)) {
-            addFileToQueue(contents, path);
+        final Path resolved = root.resolve(subpath);
+        if (fileIsVisible(resolved) && Files.isRegularFile(resolved)) {
+            addFileToQueue(contents, root, subpath, resolved);
+        }
+    }
+
+    private void addFileIfVisible(final Queue<FileEpisode> contents, final Path resolved) {
+        if (fileIsVisible(resolved) && Files.isRegularFile(resolved)) {
+            final Folder root = Folder.getFolder(resolved.getRoot());
+            final Path subpath = root.relativize(resolved);
+            logger.info("for " + resolved + " adding as " + root + ", "
+                        + subpath);
+            addFileToQueue(contents, root, subpath, resolved);
         }
     }
 
     private void addFilesRecursively(final Queue<FileEpisode> contents,
-                                     final Path parent,
-                                     final Path filename)
+                                     final Folder parent,
+                                     final Path fileName)
     {
-        if (parent == null) {
-            logger.warning("cannot add files; parent is null");
-            return;
-        }
-        if (filename == null) {
-            logger.warning("cannot add files; filename is null");
-            return;
-        }
-        final Path fullpath = parent.resolve(filename);
-        if (fileIsVisible(fullpath)) {
-            if (Files.isDirectory(fullpath)) {
-                try (DirectoryStream<Path> files = Files.newDirectoryStream(fullpath)) {
-                    if (files != null) {
-                        // recursive call
-                        files.forEach(pth -> addFilesRecursively(contents,
-                                                                 fullpath,
-                                                                 pth.getFileName()));
-                    }
-                } catch (IOException ioe) {
-                    logger.warning("IO Exception descending " + fullpath);
-                }
-            } else {
-                addFileToQueue(contents, fullpath);
+        final Path resolved = parent.resolve(fileName);
+
+        Path realpath = null;
+        try {
+            realpath = resolved.toRealPath();
+        } catch (IOException ioe) {
+            if (Files.notExists(resolved)) {
+                logger.warning("will not add nonexistent file: " + resolved);
+                return;
             }
+            logger.warning("skipping " + parent + " / " + fileName
+                           + " due to I/O exception");
+            return;
         }
-    }
 
-    public void addFolderToQueue(final String pathname) {
-        Queue<FileEpisode> contents = new ConcurrentLinkedQueue<>();
-        final Path path = Paths.get(pathname);
-        if (prefs.isRecursivelyAddFolders()) {
-            addFilesRecursively(contents, path.getParent(), path.getFileName());
-            publish(contents);
+        if (!fileIsVisible(realpath)) {
+            return;
+        }
+
+        if (Files.isDirectory(realpath)) {
+            final Folder folder = Folder.getFolder(realpath);
+            try (DirectoryStream<Path> files = Files.newDirectoryStream(realpath)) {
+                if (files != null) {
+                    // recursive call
+                    files.forEach(p -> addFilesRecursively(contents, folder,
+                                                           p.getFileName()));
+                }
+            } catch (IOException ioe) {
+                logger.warning("IO Exception descending " + realpath);
+            }
         } else {
-            logger.warning("cannot add folder when preference \"add files recursively\" is off");
+            logger.info("adding file from " + parent + ":\n  " + fileName);
+            addFileToQueue(contents, parent, fileName, realpath);
         }
     }
 
+    /**
+     * Recursively add the given folder to the queue.
+     *
+     * @param folder
+     *     an existing folder
+     */
+    public void addRealPathFolderToQueue(final Folder folder) {
+        Queue<FileEpisode> contents = new ConcurrentLinkedQueue<>();
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(folder.toPath())) {
+            if (files != null) {
+                files.forEach(p -> addFilesRecursively(contents, folder,
+                                                       p.getFileName()));
+            }
+        } catch (IOException ioe) {
+            logger.warning("IO Exception descending " + folder);
+        }
+        publish(contents);
+    }
+
+    /**
+     * Add the given folder to the queue.  This is intended to support the
+     * "Add Folder" functionality.  This method itself does only sanity
+     * checking, and if everything's in order, calls addRealPathFolderToQueue()
+     * to do the actual work.
+     *
+     * @param pathname the name of a folder
+     */
+    public void addFolderToQueue(final String pathname) {
+        if (!prefs.isRecursivelyAddFolders()) {
+            logger.warning("cannot add folder when preference \"add files recursively\" is off");
+            return;
+        }
+
+        if (pathname == null) {
+            logger.warning("cannot add files; pathname is null");
+            return;
+        }
+
+        final Path filepath = Paths.get(pathname);
+        if (filepath == null) {
+            logger.warning("cannot add files; filepath is null");
+            return;
+        }
+
+        Path realpath = null;
+        try {
+            realpath = filepath.toRealPath();
+        } catch (IOException ioe) {
+            if (Files.notExists(filepath)) {
+                logger.warning("will not add nonexistent file: " + filepath);
+                return;
+            }
+            logger.warning("skipping " + pathname + " due to I/O exception");
+            return;
+        }
+
+        if (!fileIsVisible(realpath)) {
+            return;
+        }
+
+        if (!Files.isDirectory(realpath)) {
+            logger.warning("argument to 'add folder' is not a folder");
+        }
+
+        final Folder folder = Folder.getFolder(realpath);
+        addRealPathFolderToQueue(folder);
+    }
+
+    /**
+     * Add the given array of filename Strings, each of which are expected to be
+     * found within the directory given by the pathPrefix, to the queue.
+     * This is intended to support the "Add Files" functionality.
+     *
+     * @param fileNames an array of Strings presumed to represent filenames
+     */
     public void addFilesToQueue(final String pathPrefix, String[] fileNames) {
         Queue<FileEpisode> contents = new ConcurrentLinkedQueue<>();
         if (pathPrefix != null) {
@@ -202,13 +315,19 @@ public class EpisodeDb {
         }
     }
 
+    /**
+     * Add the given array of filename Strings to the queue.  This is intended
+     * to support Drag and Drop.
+     *
+     * @param fileNames an array of Strings presumed to represent filenames
+     */
     public void addArrayOfStringsToQueue(final String[] fileNames) {
         Queue<FileEpisode> contents = new ConcurrentLinkedQueue<>();
         boolean descend = prefs.isRecursivelyAddFolders();
         for (final String fileName : fileNames) {
             final Path path = Paths.get(fileName);
             if (descend) {
-                addFilesRecursively(contents, path.getParent(), path.getFileName());
+                addFilesRecursively(contents, null, path);
             } else {
                 addFileIfVisible(contents, path);
             }
@@ -216,11 +335,10 @@ public class EpisodeDb {
         publish(contents);
     }
 
-    @Override
-    public String toString() {
-        return "{EpisodeDb with " + episodes.size() + " files}";
-    }
-
+    /**
+     * Add the contents of the preload folder to the queue.
+     *
+     */
     public void preload() {
         if (prefs.isRecursivelyAddFolders()) {
             String preload = prefs.getPreloadFolder();
@@ -231,13 +349,38 @@ public class EpisodeDb {
         }
     }
 
-    private final Queue<AddEpisodeListener> listeners = new ConcurrentLinkedQueue<>();
+    /**
+     * Standard object method to represent this EpisodeDb as a string.
+     *
+     * @return string version of this; just says how many episodes are in the map.
+     */
+    @Override
+    public String toString() {
+        return "{EpisodeDb with " + episodes.size() + " files}";
+    }
 
+    /**
+     * Register interest in files and folders that are added to the queue.
+     *
+     * @param listener
+     *    the AddEpisodeListener that should be called when we have finished processing
+     *    a folder or array of files
+     */
     public void subscribe(AddEpisodeListener listener) {
         listeners.add(listener);
     }
 
+    /**
+     * Notify registered interested parties that we've finished adding a folder or
+     * array of files to the queue, and pass the queue to each listener.
+     *
+     * @param episodes
+     *    the queue of FileEpisode objects we've created
+     */
     private void publish(Queue<FileEpisode> episodes) {
+        for (FileEpisode episode : episodes) {
+            logger.info(episode.toString());
+        }
         for (AddEpisodeListener listener : listeners) {
             listener.addEpisodes(episodes);
         }
