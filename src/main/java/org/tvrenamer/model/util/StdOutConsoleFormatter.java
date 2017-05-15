@@ -39,7 +39,7 @@ public class StdOutConsoleFormatter extends Formatter {
         String className = rec.getSourceClassName();
         buffer.append(className.substring(className.lastIndexOf(".") + 1));
         buffer.append("#");
-        buffer.append(rec.getSourceMethodName()).append(" ");
+        buffer.append(rec.getSourceMethodName()).append("\n  ");
 
         // Message
         buffer.append(rec.getMessage());
