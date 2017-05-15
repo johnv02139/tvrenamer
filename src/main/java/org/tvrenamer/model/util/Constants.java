@@ -67,7 +67,7 @@ public class Constants {
     public static final String SUBLINK_PATH = "/icons/SweetieLegacy/";
     public static final String LOGGING_PROPERTIES = "/logging.properties";
 
-    public static final int DEFAULT_TABLE_HEIGHT = 750;
+    public static final int DEFAULT_TABLE_HEIGHT = 350;
     public static final int SELECTED_COLUMN_DEFAULT_WIDTH = 60;
     public static final int SOURCE_COLUMN_DEFAULT_WIDTH = 550;
     public static final int DEST_COLUMN_DEFAULT_WIDTH = 550;
