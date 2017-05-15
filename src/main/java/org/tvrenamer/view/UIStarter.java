@@ -439,7 +439,7 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
         resultsTable.setLinesVisible(true);
         GridData gridData = new GridData(GridData.FILL_BOTH);
         // gridData.widthHint = 780;
-        gridData.heightHint = 750;
+        gridData.heightHint = 350;
         gridData.horizontalSpan = 3;
         resultsTable.setLayoutData(gridData);
 
@@ -449,11 +449,11 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
 
         final TableColumn sourceColumn = new TableColumn(resultsTable, SWT.LEFT);
         sourceColumn.setText("Current File");
-        sourceColumn.setWidth(750);
+        sourceColumn.setWidth(400);
 
         destinationColumn = new TableColumn(resultsTable, SWT.LEFT);
         setColumnDestText();
-        destinationColumn.setWidth(750);
+        destinationColumn.setWidth(550);
 
         final TableColumn statusColumn = new TableColumn(resultsTable, SWT.LEFT);
         statusColumn.setText("Status");
