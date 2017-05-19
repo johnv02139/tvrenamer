@@ -48,6 +48,7 @@ public class MoveRunner implements Runnable {
         while (true) {
             int remaining = futures.size();
             if (updater != null) {
+                logger.info("setting progress: " + numMoves + " out of " + remaining + "!");
                 updater.setProgress(numMoves, remaining);
             }
 
@@ -61,6 +62,7 @@ public class MoveRunner implements Runnable {
                 }
             } else {
                 if (updater != null) {
+                    logger.info("finishing updater");
                     updater.finish();
                 }
                 return;
@@ -267,16 +269,12 @@ public class MoveRunner implements Runnable {
      * bar, using the specified timeout.
      *
      * @param episodes a list of FileMovers to execute
-     * @param updater a ProgressUpdater to be informed of our progress
      * @param timeout the number of seconds to allow each FileMover to run, before killing it
      *
      */
-    @SuppressWarnings("SameParameterValue")
     private MoveRunner(final List<FileMover> episodes,
-                       final ProgressUpdater updater,
                        final int timeout)
     {
-        this.updater = updater;
         this.timeout = timeout;
 
         progressThread.setName(FILE_MOVE_THREAD_LABEL);
@@ -305,7 +303,7 @@ public class MoveRunner implements Runnable {
      *
      */
     public MoveRunner(final List<FileMover> episodes) {
-        this(episodes, null, DEFAULT_TIMEOUT);
+        this(episodes, DEFAULT_TIMEOUT);
     }
 
     /**
@@ -315,6 +313,7 @@ public class MoveRunner implements Runnable {
      *
      */
     public void setUpdater(final ProgressUpdater updater) {
+        logger.info("setting updater!");
         this.updater = updater;
     }
 

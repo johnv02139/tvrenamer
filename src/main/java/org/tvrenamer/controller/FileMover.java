@@ -277,17 +277,15 @@ public class FileMover implements Callable<Boolean> {
         Path srcDir = srcPath.getParent();
 
         episode.setMoving();
-        //noinspection PointlessBooleanExpression
-        if (false == doActualMove(srcPath, destPath, tryRename)) {
-            return false;
+        if (doActualMove(srcPath, destPath, tryRename)) {
+            logger.info("successful:\n  " + srcPath.toAbsolutePath().toString()
+                        + "\n  " + destPath.toAbsolutePath().toString());
+            if (userPrefs.isRemoveEmptiedDirectories()) {
+                FileUtilities.removeWhileEmpty(srcDir);
+            }
+            return true;
         }
-
-        logger.info("successful:\n  " + srcPath.toAbsolutePath().toString()
-                    + "\n  " + destPath.toAbsolutePath().toString());
-        if (userPrefs.isRemoveEmptiedDirectories()) {
-            FileUtilities.removeWhileEmpty(srcDir);
-        }
-        return true;
+        return false;
     }
 
     /**
