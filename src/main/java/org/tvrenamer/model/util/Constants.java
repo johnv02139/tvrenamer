@@ -92,6 +92,8 @@ public class Constants {
     public static final String OK_LABEL = "OK";
     public static final String PREFERENCES_LABEL = "Preferences";
     public static final String FILE_MOVE_THREAD_LABEL = "MoveRunnerThread";
+    public static final String CHECK_ALL = "Check All";
+    public static final String UNCHECK_ALL = "Uncheck All";
     public static final String RENAME_LABEL = "Rename Checked";
     public static final String JUST_MOVE_LABEL = "Move Checked";
     public static final String RENAME_AND_MOVE = "Rename && Move Checked";
