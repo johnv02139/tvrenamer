@@ -213,6 +213,26 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
             }
         });
 
+        final Button checkAllButton = new Button(topButtonsComposite, SWT.PUSH);
+        checkAllButton.setText(CHECK_ALL);
+        checkAllButton.addSelectionListener(new SelectionAdapter() {
+                public void widgetSelected(SelectionEvent e) {
+                    for (final TableItem item : swtTable.getItems()) {
+                        item.setChecked(true);
+                    }
+                }
+            });
+
+        final Button uncheckAllButton = new Button(topButtonsComposite, SWT.PUSH);
+        uncheckAllButton.setText(UNCHECK_ALL);
+        uncheckAllButton.addSelectionListener(new SelectionAdapter() {
+                public void widgetSelected(SelectionEvent e) {
+                    for (final TableItem item : swtTable.getItems()) {
+                        item.setChecked(false);
+                    }
+                }
+            });
+
         setupUpdateStuff(topButtonsComposite);
     }
 
