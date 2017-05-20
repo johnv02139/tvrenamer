@@ -142,7 +142,7 @@ public class Show {
     private final Queue<Future<Boolean>> lookups = new ConcurrentLinkedQueue<>();
 
     // Not final.  Could be changed during the program's run.
-    private NumberingScheme numberingScheme = NumberingScheme.GUESS;
+    private NumberingScheme numberingScheme = NumberingScheme.REGULAR;
 
     /**
      * The current status of downloading listings for the Show.
