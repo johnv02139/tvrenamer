@@ -105,6 +105,8 @@ public class FilenameParser {
             }
         }
 
+        logger.info("failed to parse: \"" + strippedName + "\"");
+
         episode.setFailToParse();
     }
 
@@ -118,13 +120,16 @@ public class FilenameParser {
     private static String extractParentName(Path parent) {
         Path parentPathname = parent.getFileName();
         String parentName = parentPathname.toString();
-        return parentName.replaceFirst(EXCESS_SEASON, "");
+        String filtered = parentName.replaceFirst(EXCESS_SEASON, "");
+        logger.info("extracted \"" + filtered + "\"");
+        return filtered;
     }
 
     private static String insertShowNameIfNeeded(final Path filePath) {
         String pName = filePath.getFileName().toString();
         logger.fine("pName = " + pName);
         if (pName.matches(FILENAME_BEGINS_WITH_SEASON)) {
+            logger.fine("starts with season!");
             Path parent = filePath.getParent();
             String parentName = extractParentName(parent);
             while (StringUtils.toLower(parentName).startsWith("season")
@@ -142,6 +147,7 @@ public class FilenameParser {
             logger.fine("appending parent directory '" + parentName + "' to filename '" + pName + "'");
             return parentName + " " + pName;
         } else {
+            logger.fine("does not start with season: " + pName);
             return pName;
         }
     }
