@@ -750,6 +750,10 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
         MoveRunner mover = new MoveRunner(pendingMoves);
         mover.setUpdater(new ProgressBarUpdater(this));
         mover.runThread();
+
+        for (final TableItem item : resultsTable.getItems()) {
+            item.setChecked(false);
+        }
     }
 
     public static void setTableItemStatus(Display display, final TableItem item, final FileMoveIcon fmi) {
