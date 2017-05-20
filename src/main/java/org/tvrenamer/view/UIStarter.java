@@ -87,6 +87,8 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
     private Button addFilesButton;
     private Button addFolderButton;
     private Button clearFilesButton;
+    private Button selectAllButton;
+    private Button deselectAllButton;
     private Link updatesAvailableLink;
     private Button renameSelectedButton;
     private TableColumn destinationColumn;
@@ -124,6 +126,7 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
         setupMainWindow();
         setupAddFilesDialog();
         setupClearFilesButton();
+        setupSelectButtons();
         setupMenuBar();
 
         setupIcons();
@@ -143,6 +146,12 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
 
         clearFilesButton = new Button(topButtonsComposite, SWT.PUSH);
         clearFilesButton.setText("Clear List");
+
+        selectAllButton = new Button(topButtonsComposite, SWT.PUSH);
+        selectAllButton.setText("Select All");
+
+        deselectAllButton = new Button(topButtonsComposite, SWT.PUSH);
+        deselectAllButton.setText("Deselect All");
 
         updatesAvailableLink = new Link(topButtonsComposite, SWT.VERTICAL);
         //updatesAvailableLink.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, true));
@@ -318,6 +327,23 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
                 deleteAllTableItems();
             }
         });
+    }
+
+    private void setupSelectButtons() {
+        selectAllButton.addSelectionListener(new SelectionAdapter() {
+                public void widgetSelected(SelectionEvent e) {
+                    for (final TableItem item : resultsTable.getItems()) {
+                        item.setChecked(true);
+                    }
+                }
+            });
+        deselectAllButton.addSelectionListener(new SelectionAdapter() {
+                public void widgetSelected(SelectionEvent e) {
+                    for (final TableItem item : resultsTable.getItems()) {
+                        item.setChecked(false);
+                    }
+                }
+            });
     }
 
     private void setupSelectionListener() {
