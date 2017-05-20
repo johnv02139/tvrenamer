@@ -670,6 +670,10 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
             final TableItem item = createTableItem(resultsTable, fileName, episode);
 
             final String showName = episode.getFilenameShow();
+            if (StringUtils.isBlank(showName)) {
+                logger.info("no show name found for " + episode);
+                continue;
+            }
             ShowStore.getShow(showName, new ShowInformationListener() {
                     @Override
                     public void downloaded(Show show) {
