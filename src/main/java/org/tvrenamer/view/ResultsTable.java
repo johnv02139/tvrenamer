@@ -641,6 +641,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         MoveRunner mover = new MoveRunner(pendingMoves);
         mover.setUpdater(new ProgressBarUpdater(this));
         mover.runThread();
+
+        for (final TableItem item : swtTable.getItems()) {
+            item.setChecked(false);
+        }
         swtTable.setFocus();
     }
 
