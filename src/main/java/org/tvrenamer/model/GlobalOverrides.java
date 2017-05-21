@@ -42,11 +42,11 @@ public class GlobalOverrides {
         logger.fine("Successfully saved/updated overrides");
     }
 
-    public String getShowName(String showName) {
+    public String getQueryOverride(String showName) {
         String name = this.showNames.get(showName);
-        if (name == null) {
-            name = showName;
+        if (name != null) {
+            return name;
         }
-        return name;
+        return showName;
     }
 }

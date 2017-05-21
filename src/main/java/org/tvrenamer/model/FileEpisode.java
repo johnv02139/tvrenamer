@@ -479,7 +479,6 @@ public class FileEpisode {
 
         // Ensure that all special characters in the replacement are quoted
         showName = Matcher.quoteReplacement(showName);
-        showName = GlobalOverrides.getInstance().getShowName(showName);
 
         // Make whatever modifications are required
         String episodeNumberString = StringUtils.formatDigits(episodeNum);

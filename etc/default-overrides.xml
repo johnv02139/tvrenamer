@@ -1,16 +1,20 @@
 <overrides>
   <showNames>
     <entry>
-      <string>House of Cards (2013)</string>
-      <string>House of Cards</string>
+      <string>archer</string>
+      <string>Archer%20(2009)</string>
     </entry>
     <entry>
-      <string>Archer (2009)</string>
-      <string>Archer</string>
+      <string>the%20newsroom</string>
+      <string>The%20%20Newsroom%20(2012)</string>
     </entry>
     <entry>
-      <string>The Newsroom (2012)</string>
-      <string>The Newsroom</string>
+      <string>louie</string>
+      <string>Louie%20(2010)</string>
+    </entry>
+    <entry>
+      <string>the%20goldbergs</string>
+      <string>The%20Goldbergs%20(2013)</string>
     </entry>
   </showNames>
 </overrides>
