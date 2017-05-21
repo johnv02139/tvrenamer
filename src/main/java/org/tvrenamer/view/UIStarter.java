@@ -612,6 +612,51 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
         return rval;
     }
 
+    private String makeBasename(String filename) {
+        int slash = filename.lastIndexOf('\\');
+        if (slash <= 0) {
+            return filename;
+        }
+
+        int tilde = filename.lastIndexOf('~');
+        if (tilde > slash) {
+            return filename.substring(slash + 1, tilde);
+        }
+
+        int dot = filename.lastIndexOf('.');
+        if (dot > slash) {
+            return filename.substring(slash + 1, dot);
+        }
+
+        return filename;
+    }
+
+    private void deleteIfDifferentName(TableItem item, FileEpisode episode) {
+        if (episode.isReady()) {
+            String oldName = makeBasename(item.getText(CURRENT_FILE_COLUMN));
+            String newName = makeBasename(item.getText(NEW_FILENAME_COLUMN));
+
+            if (oldName.equals(newName)) {
+                logger.info("same name: " + newName);
+                return;
+            }
+
+            logger.info("removing: " + newName + " / " + oldName);
+        }
+
+        int index = getTableItemIndex(item);
+        if (ITEM_NOT_IN_TABLE == index) {
+            logger.info("error: somehow selected item not found in table");
+            return;
+        }
+
+        String filename = item.getText(CURRENT_FILE_COLUMN);
+        episodeMap.remove(filename);
+
+        resultsTable.remove(index);
+        item.dispose();
+    }
+
     private void listingsDownloaded(TableItem item, FileEpisode episode) {
         episode.listingsComplete();
         display.asyncExec(() -> {
@@ -619,6 +664,7 @@ public final class UIStarter implements Observer,  AddEpisodeListener {
                 item.setText(NEW_FILENAME_COLUMN, episode.getReplacementText());
                 item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
             }
+            // deleteIfDifferentName(item, episode);
         });
     }
 
