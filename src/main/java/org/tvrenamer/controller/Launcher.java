@@ -2,6 +2,7 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import org.tvrenamer.devel.Restorer;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.view.UIStarter;
@@ -67,7 +68,12 @@ class Launcher {
         initializeLogger();
         int status = DID_NOT_RUN;
 
-        status = launchUi(args);
+        int nArgs = args.length;
+        if ((args.length == 3) || "restore".equals(args[0])) {
+            Restorer.restoreToOriginalNames(args[1], args[2]);
+        } else {
+            status = launchUi(args);
+        }
 
         tvRenamerThreadShutdown();
         System.exit(status);
