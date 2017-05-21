@@ -2,6 +2,7 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import org.tvrenamer.devel.Restorer;
 import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.view.UIStarter;
 
@@ -12,6 +13,8 @@ import java.util.logging.Logger;
 
 class Launcher {
     private static final Logger logger = Logger.getLogger(Launcher.class.getName());
+
+    public static final int DID_NOT_RUN = -99;
 
     private static void initializeLogger() {
         // Find logging.properties file inside jar
@@ -57,7 +60,15 @@ class Launcher {
      */
     public static void main(String[] args) {
         initializeLogger();
-        int status = launchUi();
+        int status = DID_NOT_RUN;
+
+        int nArgs = args.length;
+        if ((args.length == 3) && "restore".equals(args[0])) {
+            Restorer.restoreToOriginalNames(args[1], args[2]);
+        } else {
+            status = launchUi();
+        }
+
         tvRenamerThreadShutdown();
         System.exit(status);
     }
