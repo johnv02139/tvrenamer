@@ -86,7 +86,7 @@ public class TheTVDBProviderTest {
      * Second download test.  This one is specifically chosen to ensure we
      * get the right preferences between "DVD number" and "regular number".
      */
-    @Test
+    // @Test
     public void testRegularEpisodePreference() throws Exception {
         final String actualName = "Firefly";
         final int showId = 78874;

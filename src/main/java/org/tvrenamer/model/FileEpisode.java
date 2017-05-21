@@ -349,27 +349,31 @@ public class FileEpisode {
             logger.warning("error: should not get listings, do not have show!");
             seriesStatus = SeriesStatus.NOT_STARTED;
             return false;
-        } else if (actualShow.isFailedShow()) {
+        }
+
+        if (actualShow.isFailedShow()) {
             logger.warning("error: should not get listings, have a failed show!");
             seriesStatus = SeriesStatus.UNFOUND;
             return false;
-        } else if (!actualShow.hasEpisodes()) {
+        }
+
+        if (!actualShow.hasEpisodes()) {
             seriesStatus = SeriesStatus.NO_LISTINGS;
             return false;
-        } else {
-            actualEpisode = actualShow.getEpisode(seasonNum, episodeNum);
-            if (actualEpisode == null) {
-                logger.log(Level.FINE, "Season #" + seasonNum + ", Episode #"
-                           + episodeNum + " not found for show '"
-                           + filenameShow + "'");
-                seriesStatus = SeriesStatus.NO_MATCH;
-                return false;
-            } else {
-                // Success!!!
-                seriesStatus = SeriesStatus.GOT_LISTINGS;
-                return true;
-            }
         }
+
+        actualEpisode = actualShow.getEpisode(seasonNum, episodeNum);
+        if (actualEpisode == null) {
+            logger.log(Level.FINE, "Season #" + seasonNum + ", Episode #"
+                       + episodeNum + " not found for show '"
+                       + filenameShow + "'");
+            seriesStatus = SeriesStatus.NO_MATCH;
+            return false;
+        }
+
+        // Success!!!
+        seriesStatus = SeriesStatus.GOT_LISTINGS;
+        return true;
     }
 
     public void listingsFailed(Exception err) {
