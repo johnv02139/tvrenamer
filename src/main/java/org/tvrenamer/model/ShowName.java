@@ -170,8 +170,10 @@ public class ShowName {
      *            the name of the show as it appears in the filename
      * @return the ShowName object for that filenameShow
      */
-    public static ShowName mapShowName(String filenameShow) {
-        ShowName showName = SHOW_NAMES.get(filenameShow);
+    public static ShowName mapShowName(final String filenameShow) {
+        String queryString = StringUtils.makeQueryString(filenameShow);
+        queryString = GlobalOverrides.getInstance().getQueryOverride(queryString);
+        ShowName showName = SHOW_NAMES.get(queryString);
         if (showName == null) {
             showName = new ShowName(filenameShow);
             SHOW_NAMES.put(filenameShow, showName);
@@ -192,8 +194,10 @@ public class ShowName {
      *            the name of the show as it appears in the filename
      * @return the ShowName object for that filenameShow
      */
-    public static ShowName lookupShowName(String filenameShow) {
-        ShowName showName = SHOW_NAMES.get(filenameShow);
+    public static ShowName lookupShowName(final String filenameShow) {
+        String queryString = StringUtils.makeQueryString(filenameShow);
+        queryString = GlobalOverrides.getInstance().getQueryOverride(queryString);
+        ShowName showName = SHOW_NAMES.get(queryString);
         if (showName == null) {
             showName = new ShowName(filenameShow);
             SHOW_NAMES.put(filenameShow, showName);

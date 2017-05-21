@@ -704,6 +704,8 @@ public class FileEpisode {
             logger.fine("truncating episode title to " + episodeTitle);
             episodeTitle = episodeTitle.substring(0, MAX_TITLE_LENGTH);
         }
+        String finalShowName = GlobalOverrides.getInstance()
+            .getQueryOverride(Matcher.quoteReplacement(showName));
         String newFilename = replacementTemplate
             .replaceAll(SEASON_NUM.getToken(),
                         String.valueOf(placement.season))
@@ -714,7 +716,8 @@ public class FileEpisode {
             .replaceAll(EPISODE_NUM_LEADING_ZERO.getToken(),
                         StringUtils.zeroPadThreeDigits(placement.episode))
             .replaceAll(SHOW_NAME.getToken(),
-                        Matcher.quoteReplacement(showName))
+                        // need to call quoteReplacement again?
+                        Matcher.quoteReplacement(finalShowName))
             .replaceAll(EPISODE_TITLE.getToken(),
                         Matcher.quoteReplacement(episodeTitle))
             .replaceAll(EPISODE_TITLE_NO_SPACES.getToken(),
