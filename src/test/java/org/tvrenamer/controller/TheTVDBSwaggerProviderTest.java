@@ -77,7 +77,7 @@ public class TheTVDBSwaggerProviderTest {
      * Second download test.  This one is specifically chosen to ensure we
      * get the right preferences between "DVD number" and "regular number".
      */
-    @Test
+    // @Test
     public void testRegularEpisodePreference() throws Exception {
         final String actualName = "Firefly";
         final int showId = 78874;
@@ -522,7 +522,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues41() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -532,7 +532,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues42() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -542,7 +542,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues43() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -552,7 +552,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues44() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -562,7 +562,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues45() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -572,7 +572,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues46() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -582,7 +582,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues47() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -592,7 +592,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues48() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -602,7 +602,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues49() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -612,7 +612,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues50() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -622,7 +622,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues51() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -632,7 +632,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues52() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -642,7 +642,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues53() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -652,7 +652,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    @BeforeClass
+    // @BeforeClass
     public static void setupValues54() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("firefly")
@@ -662,7 +662,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    // @BeforeClass
+    @BeforeClass
     public static void setupValues55() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("strike back")

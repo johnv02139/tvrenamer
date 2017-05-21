@@ -29,7 +29,6 @@ public class EpisodeListPersistence {
         xstream.aliasField("ShowName", Show.class, "name");
         xstream.aliasField("id", Show.class, "idString");
         xstream.aliasField("Language", Show.class, "language");
-        xstream.aliasField("IMDB_ID", Show.class, "imdb");
 
         xstream.omitField(Show.class, "seasons");
         xstream.omitField(Show.class, "idNum");
