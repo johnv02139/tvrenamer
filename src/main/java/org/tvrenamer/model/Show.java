@@ -341,7 +341,7 @@ public class Show extends ShowOption {
     public List<Episode> getEpisodes(final EpisodePlacement placement) {
         Season season = seasons.get(placement.season);
         if (season == null) {
-            logger.warning("no season " + placement.season + " found for show " + name);
+            logger.fine("no season " + placement.season + " found for show " + name);
             return null;
         }
         List<Episode> rval;

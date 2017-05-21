@@ -585,7 +585,7 @@ public class FileEpisode {
             actualEpisodes = null;
         }
         if (actualEpisodes == null) {
-            logger.info("Season #" + placement.season + ", Episode #"
+            logger.fine("Season #" + placement.season + ", Episode #"
                         + placement.episode + " not found for show '"
                         + filenameShow + "'");
             seriesStatus = SeriesStatus.NO_MATCH;
