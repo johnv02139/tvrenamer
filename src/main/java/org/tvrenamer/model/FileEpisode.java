@@ -531,6 +531,8 @@ public class FileEpisode {
             season = placement.season;
             episode = placement.episode;
         }
+        String finalShowName = GlobalOverrides.getInstance()
+            .getQueryOverride(Matcher.quoteReplacement(showName));
         String newFilename = replacementTemplate
             .replaceAll(ReplacementToken.SEASON_NUM.getToken(),
                         String.valueOf(season))
@@ -541,7 +543,7 @@ public class FileEpisode {
             .replaceAll(ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken(),
                         StringUtils.zeroPadThreeDigits(episode))
             .replaceAll(ReplacementToken.SHOW_NAME.getToken(),
-                        Matcher.quoteReplacement(showName))
+                        Matcher.quoteReplacement(finalShowName))
             .replaceAll(ReplacementToken.EPISODE_TITLE.getToken(),
                         Matcher.quoteReplacement(episodeTitle))
             .replaceAll(ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken(),
