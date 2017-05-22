@@ -3,6 +3,7 @@ package org.tvrenamer.model;
 import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.ShowListingsListener;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -66,6 +67,10 @@ public class Series extends Show {
     // the given idNum.  That's what the factory method is for.
     private Series(int idNum, String name) {
         super(idNum, String.valueOf(idNum), name);
+    }
+
+    public static Collection<Series> getKnownSeries() {
+        return KNOWN_SERIES.values();
     }
 
     /**
