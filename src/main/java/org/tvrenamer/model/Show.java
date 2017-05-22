@@ -1,10 +1,14 @@
 package org.tvrenamer.model;
 
+import static org.tvrenamer.model.util.Constants.*;
+
+import org.tvrenamer.controller.EpisodeListPersistence;
 import org.tvrenamer.controller.ListingsLookup;
 import org.tvrenamer.controller.ShowListingsListener;
 import org.tvrenamer.controller.TheTVDBProvider;
 import org.tvrenamer.controller.util.StringUtils;
 
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -142,11 +146,13 @@ public class Show {
     private final transient Queue<Future<Boolean>> lookups = new ConcurrentLinkedQueue<>();
 
     // Not final.  Could be changed during the program's run.
-    private NumberingScheme numberingScheme = NumberingScheme.REGULAR;
+    private transient NumberingScheme numberingScheme = NumberingScheme.REGULAR;
 
     /**
      * The current status of downloading listings for the Show.
      */
+    // Theoretically transient.  But actually it's nice/correct to have the status
+    // set to "SUCCESS" when loading from the XML, so write it out.
     private DownloadStatus listingsStatus = DownloadStatus.NOT_STARTED;
 
     /**
@@ -202,6 +208,14 @@ public class Show {
         dirName = StringUtils.sanitiseTitle(name);
 
         UNKNOWN_SHOWS.put(name, this);
+    }
+
+    /**
+     * Zero-arg constructor, for serialization
+     *
+     */
+    public Show() {
+        err = null;
     }
 
     /**
@@ -557,6 +571,27 @@ public class Show {
     }
 
     /**
+     * Loading the Show from the XML just sets the instance variables that are
+     * saved into the XML.  There's more work to be done before the Show is
+     * really ready to go.
+     */
+    private void finishCachedShow() {
+        synchronized (this) {
+            dirName = StringUtils.sanitiseTitle(name);
+
+            if (idNum > 0) {
+                KNOWN_SHOWS.put(idNum, this);
+            } else {
+                UNKNOWN_SHOWS.put(name, this);
+            }
+        }
+
+        numberingScheme = NumberingScheme.REGULAR;
+        indexEpisodesBySeason();
+        listingsSucceeded();
+    }
+
+    /**
      * Add a single episode to this Show's list.  Does not add the episode to the
      * (season number/episode number) index, nor does it generate any log messages
      * if anything goes wrong.  It is expected that the caller will handle any of
@@ -581,6 +616,14 @@ public class Show {
             }
         }
         return false;
+    }
+
+    public static Path episodeListingsCacheFile(String id) {
+        return EPLIST_CACHE.resolve(StringUtils.sanitiseTitle(id) + XML_SUFFIX);
+    }
+
+    public Path episodeListingsCacheFile() {
+        return episodeListingsCacheFile(String.valueOf(idNum));
     }
 
     /**
@@ -608,6 +651,7 @@ public class Show {
         indexEpisodesBySeason();
         logEpisodeProblems(problems);
         listingsSucceeded();
+        EpisodeListPersistence.persist(this, episodeListingsCacheFile());
     }
 
     /**
