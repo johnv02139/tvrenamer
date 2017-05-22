@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 public class Constants {
 
     public static final Charset TVR_CHARSET = Charset.forName("UTF-8");
+    public static final Charset TVDB_CHARSET = Charset.forName("ISO-8859-1");
 
     public static final String APPLICATION_NAME = "TVRenamer";
 
