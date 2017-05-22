@@ -2,6 +2,7 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.view.UIStarter;
 
@@ -49,8 +50,10 @@ class Launcher {
      *    not actually processed, at this time
      */
     public static int launchUi(String[] args) {
+        Show.readAllShows();
         UIStarter ui = new UIStarter();
         int status = ui.run();
+        Show.writeAllShows();
         return status;
     }
 
