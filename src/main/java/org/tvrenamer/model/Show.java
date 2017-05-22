@@ -104,14 +104,14 @@ public class Show {
      * In the case of a successfully found show, the show ID is a positive integer.
      * But the idNum may be negative in a show we didn't find.
      */
-    private final int idNum;
+    private int idNum;
 
     /**
      * The best, most presentable name of the show, ideally with proper capitalization,
      * punctuation, etc.  In the case of a successfully found show, this should be the
      * exact text we get back from the provider.
      */
-    private final String name;
+    private String name;
 
     /**
      * A String that names the Show, but in a way that can be used as a directory name,
@@ -120,10 +120,10 @@ public class Show {
     // TODO: this should be guaranteed to be unique.  In practice, it probably already
     // will be, but it's currently theoretically possible for two show names to map
     // to the same dirName.
-    private final String dirName;
+    private String dirName;
 
-    private final boolean isFailed;
-    private final TVRenamerIOException err;
+    private boolean isFailed;
+    private final transient TVRenamerIOException err;
 
     /**
      * A mapping from episode ID to Episode object.  These are all the Episodes we
@@ -138,8 +138,8 @@ public class Show {
      */
     private final Map<Integer, Map<Integer, Episode>> seasons = new ConcurrentHashMap<>();
 
-    private final Queue<ShowListingsListener> registrations = new ConcurrentLinkedQueue<>();
-    private final Queue<Future<Boolean>> lookups = new ConcurrentLinkedQueue<>();
+    private final transient Queue<ShowListingsListener> registrations = new ConcurrentLinkedQueue<>();
+    private final transient Queue<Future<Boolean>> lookups = new ConcurrentLinkedQueue<>();
 
     // Not final.  Could be changed during the program's run.
     private NumberingScheme numberingScheme = NumberingScheme.REGULAR;
@@ -210,6 +210,8 @@ public class Show {
      * been created.  Otherwise, we create a new Show, put it into the
      * table, and return it.
      *
+     * @param id
+     *     The ID of this show, from the provider, as a String
      * @param name
      *     The proper name of this show, from the provider.  May contain a distinguisher,
      *     such as a year.

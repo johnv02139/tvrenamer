@@ -14,19 +14,19 @@ public class Episode {
     // Unlike java.text.DateFormat, DateTimeFormatter is thread-safe, so we can create just one instance here.
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
 
-    private final String title;
-    private final String airDateString;
+    private String title;
+    private String airDateString;
     private LocalDate firstAired = null;
 
     // This object does not have an opinion of its place within the series ordering.
     // It does serve as a useful place to hang information about such questions, as
     // we do, below.  But it's up to the Show to decide what the "real" answer is.
-    private final String seasonNumber;
-    private final String episodeNumber;
-    private final String dvdSeason;
-    private final String dvdEpisodeNumber;
+    private String seasonNumber;
+    private String episodeNumber;
+    private String dvdSeason;
+    private String dvdEpisodeNumber;
 
-    private final String episodeId;
+    private String episodeId;
 
     public Episode(EpisodeInfo info) {
         this.title = info.episodeName;
@@ -36,6 +36,9 @@ public class Episode {
         this.dvdSeason = info.dvdSeason;
         this.dvdEpisodeNumber = info.dvdEpisodeNumber;
         this.episodeId = info.episodeId;
+    }
+
+    public Episode() {
     }
 
     public String getTitle() {
