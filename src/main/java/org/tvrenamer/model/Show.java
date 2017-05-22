@@ -8,6 +8,9 @@ import org.tvrenamer.controller.ShowListingsListener;
 import org.tvrenamer.controller.TheTVDBProvider;
 import org.tvrenamer.controller.util.StringUtils;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
@@ -783,6 +786,44 @@ public class Show {
      */
     public boolean hasEpisodes() {
         return (episodes.size() > 0);
+    }
+
+    /**
+     *
+     */
+    public static void readShow(Path path) {
+        if (Files.exists(path)) {
+            Show matchedShow = EpisodeListPersistence.readShow(path);
+            if (matchedShow != null) {
+                matchedShow.finishCachedShow();
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    public static void readAllShows() {
+        logger.info("starting read all shows");
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(EPLIST_CACHE, "*.xml")) {
+            if (files != null) {
+                files.forEach(pth -> readShow(pth));
+            }
+        } catch (IOException ioe) {
+            logger.warning("IO Exception descending " + EPLIST_CACHE);
+        }
+        logger.info("finished read all shows");
+    }
+
+    /**
+     *
+     */
+    public static void writeAllShows() {
+        logger.info("starting write all shows");
+        for (Show s : KNOWN_SHOWS.values()) {
+            EpisodeListPersistence.persist(s, s.episodeListingsCacheFile());
+        }
+        logger.info("finished write all shows");
     }
 
     /**
