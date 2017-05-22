@@ -150,6 +150,7 @@ public class Constants {
     private static final String PREFERENCES_FILENAME = "prefs.xml";
     private static final String OVERRIDES_FILENAME = "overrides.xml";
     private static final String TVDB_DOWNLOAD_DIRNAME = "thetvdb";
+    private static final String EPLIST_CACHE_NAME = "episodes";
 
     @SuppressWarnings("WeakerAccess")
     public static final Path USER_HOME_DIR = Paths.get(Environment.USER_HOME);
@@ -161,6 +162,7 @@ public class Constants {
     public static final Path PREFERENCES_FILE = CONFIGURATION_DIRECTORY.resolve(PREFERENCES_FILENAME);
     public static final Path OVERRIDES_FILE = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
     public static final Path THETVDB_DL_DIR = CONFIGURATION_DIRECTORY.resolve(TVDB_DOWNLOAD_DIRNAME);
+    public static final Path EPLIST_CACHE = CONFIGURATION_DIRECTORY.resolve(EPLIST_CACHE_NAME);
 
     public static final Path PREFERENCES_FILE_LEGACY = USER_HOME_DIR.resolve("tvrenamer.preferences");
     public static final Path OVERRIDES_FILE_LEGACY = USER_HOME_DIR.resolve(".tvrenameroverrides");
