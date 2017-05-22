@@ -250,7 +250,7 @@ public class TheTVDBProvider {
                                               + showName);
             cacheXml(cachePath, doc);
         } else {
-            try (BufferedReader reader = Files.newBufferedReader(cachePath, TVR_CHARSET)) {
+            try (BufferedReader reader = Files.newBufferedReader(cachePath, TVDB_CHARSET)) {
                 input = new InputSource(reader);
                 doc = readDocumentFromInputSource(input, " while reading from " + cachePath);
             } catch (IOException e) {
@@ -410,7 +410,7 @@ public class TheTVDBProvider {
                 throw new TVRenamerIOException(ERROR_PARSING_XML, e);
             }
         } else {
-            try (BufferedReader reader = Files.newBufferedReader(cachePath, TVR_CHARSET))  {
+            try (BufferedReader reader = Files.newBufferedReader(cachePath, TVDB_CHARSET))  {
                 InputSource input = new InputSource(reader);
                 doc = readDocumentFromInputSource(input, " while reading listings for "
                                                   + show.getName() + " from " + cachePath);
