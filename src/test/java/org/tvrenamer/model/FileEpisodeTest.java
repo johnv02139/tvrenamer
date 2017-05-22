@@ -1056,6 +1056,7 @@ public class FileEpisodeTest {
     public void testGetReplacementText() {
         prefs.setRenameSelected(true);
         prefs.setMoveSelected(false);
+        Show.clearAllEpisodes();
         List<Path> testFiles = new ArrayList<>();
         for (EpisodeTestData data : values) {
             try {
@@ -1067,7 +1068,7 @@ public class FileEpisodeTest {
                 FileEpisode episode = data.createFileEpisode(OUR_TEMP_DIR);
                 assertEquals("suffix fail on " + data.inputFilename,
                              data.filenameSuffix, episode.getFilenameSuffix());
-                assertEquals("test which " + data.documentation,
+                assertEquals("test which " + data.documentation + ":",
                              data.expectedReplacement, episode.getRenamedBasename(0));
             } catch (Exception e) {
                 verboseFail("testing " + data, e);
