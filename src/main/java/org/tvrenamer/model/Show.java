@@ -267,6 +267,23 @@ public class Show extends ShowOption {
     }
 
     /**
+     * Clears any episodes from this Show.  Safe to call even if Show has no episodes.
+     */
+    public void clearEpisodes() {
+        episodes.clear();
+        seasons.clear();
+    }
+
+    /**
+     * Clears any episodes from all Shows.
+     */
+    public static void clearAllEpisodes() {
+        for (Show show : Series.getKnownSeries()) {
+            show.clearEpisodes();
+        }
+    }
+
+    /**
      * Look up an episode for the given placement of this show.
      * Returns null if no such episode was found.
      *
