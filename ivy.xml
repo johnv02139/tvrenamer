@@ -12,6 +12,7 @@
     <dependency org="xpp3" name="xpp3_min" rev="1.1.4c" />
     <dependency org="com.squareup.okhttp3" name="okhttp" rev="3.8.0" />
     <dependency org="com.squareup.okio" name="okio" rev="1.13.0" />
+    <dependency org="com.squareup.moshi" name="moshi" rev="1.5.0" />
     <dependency org="org.eclipse.swt" name="org.eclipse.swt.cocoa.macosx" rev="4.3" />
     <dependency org="org.eclipse.swt" name="org.eclipse.swt.win32.win32.x86_64" rev="4.3" />
     <dependency org="org.eclipse.swt" name="org.eclipse.swt.win32.win32.x86" rev="4.3" />
