@@ -1,5 +1,10 @@
 <FindBugsFilter>
   <Match>
+  <Match>
+    <Class name="org.tvrenamer.controller.TheTVDBSwaggerProvider$Links" />
+    <Bug pattern="UWF_UNWRITTEN_FIELD" />
+  </Match>
+  <Match>
     <Class name="org.tvrenamer.controller.util.FileUtilsTest" />
     <Method name="testExistingAncestor" />
     <Bug pattern="DMI_HARDCODED_ABSOLUTE_FILENAME" />
