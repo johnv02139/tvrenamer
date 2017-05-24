@@ -46,7 +46,7 @@ public class ListingsLookup {
         }
         Callable<Boolean> listingsFetcher = () -> {
             try {
-                TheTVDBProvider.getSeriesListing(series);
+                TheTVDBSwaggerProvider.getSeriesListing(series);
                 return true;
             } catch (Exception e) {
                 // Because this is running in a separate thread, an uncaught
