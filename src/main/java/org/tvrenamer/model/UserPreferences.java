@@ -30,6 +30,7 @@ public class UserPreferences extends Observable {
     private String renameReplacementMask;
     private boolean checkForUpdates;
     private boolean recursivelyAddFolders;
+    private String apiToken;
     private final List<String> ignoreKeywords;
 
     private static final UserPreferences INSTANCE = load();
@@ -50,6 +51,7 @@ public class UserPreferences extends Observable {
         renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
         checkForUpdates = true;
         recursivelyAddFolders = true;
+        apiToken = null;
         ignoreKeywords = new ArrayList<>();
         ignoreKeywords.add(DEFAULT_IGNORED_KEYWORD);
     }
@@ -531,6 +533,24 @@ public class UserPreferences extends Observable {
 
             preferenceChanged(UserPreference.UPDATE_CHECK);
         }
+    }
+
+    /**
+     * Sets the API JWT Token
+     *
+     * @param token the token to use for API calls against TheTVDB's API
+     */
+    public void setApiToken(String token) {
+        apiToken = token;
+
+        preferenceChanged(UserPreference.API_TOKEN);
+    }
+
+    /**
+     * @return the token to use for API calls against TheTVDB's API
+     */
+    public String getApiToken() {
+        return apiToken;
     }
 
     /**

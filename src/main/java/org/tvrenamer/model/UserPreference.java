@@ -13,6 +13,7 @@ public enum UserPreference {
 
     // Since these are only meaningful at startup, they probably should not be watched
     UPDATE_CHECK,
+    API_TOKEN,
     @SuppressWarnings("unused")
     PRELOAD_FOLDER
 }
