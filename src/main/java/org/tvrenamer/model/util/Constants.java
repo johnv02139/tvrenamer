@@ -75,13 +75,25 @@ public class Constants {
     public static final int DEST_COLUMN_DEFAULT_WIDTH = 550;
     public static final int STATUS_COLUMN_DEFAULT_WIDTH = 60;
 
+    public static final String CHECKBOX_LABEL = "Selected";
+    public static final String FILENAME_LABEL = "Current File";
+    public static final String STATUS_LABEL = "Status";
+    public static final String FILE_MENU_LABEL = "File";
+    public static final String ABOUT_MENU_LABEL = "About";
     public static final String QUIT_LABEL = "Quit";
+    public static final String HELP_LABEL = "Help";
+    public static final String CLOSE_LABEL = "Close";
     public static final String CANCEL_LABEL = "Cancel";
     public static final String SAVE_LABEL = "Save";
     public static final String ERROR_LABEL = "Error";
     public static final String EXIT_LABEL = "Exit";
     public static final String OK_LABEL = "OK";
     public static final String PREFERENCES_LABEL = "Preferences";
+    public static final String ADD_FILES_LABEL = "Add files";
+    public static final String ADD_FOLDER_LABEL = "Add Folder";
+    public static final String CLEAR_LIST_LABEL = "Clear List";
+    public static final String SELECT_ALL_LABEL = "Select All";
+    public static final String DESELECT_ALL_LABEL = "Deselect All";
     public static final String FILE_MOVE_THREAD_LABEL = "MoveRunnerThread";
     public static final String CHECK_ALL = "Check All";
     public static final String UNCHECK_ALL = "Uncheck All";
@@ -90,6 +102,7 @@ public class Constants {
     public static final String RENAME_AND_MOVE = "Rename && Move Checked";
     public static final String CHECKBOX_HEADER = "Active";
     public static final String SOURCE_HEADER = "Current File";
+    public static final String RENAME_FAILED_LABEL = "Rename Failed";
     public static final String MOVE_HEADER = "Proposed File Path";
     public static final String RENAME_HEADER = "Proposed File Name";
     public static final String STATUS_HEADER = "Status";
