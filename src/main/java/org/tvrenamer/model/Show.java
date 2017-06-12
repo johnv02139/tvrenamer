@@ -33,6 +33,35 @@ public class Show {
 
     private static int fakeSeriesId = 0;
 
+    /**
+     * Episode numbers are not definitive.  Production companies sometimes
+     * re-order them.  In particular, they take liberties when releasing
+     * DVDs.  The TVDB tries to keep track of the original, production order,
+     * as well as the DVD ordering (when applicable).  The truth is that some
+     * shows still have ambiguity beyond these options, but those are the two
+     * basic options available.
+     *
+     * Therefore, within the code, we offer the option to order a show based
+     * on production ordering, or based on DVD ordering.  Or, we allow it to
+     * be set to "GUESS", which means that we look at all the episode information
+     * we have, and use DVD ordering if we have DVD information on enough of
+     * them, otherwise we choose production ordering.
+     *
+     * We also have an "absolute" ordering option, though this hasn't been
+     * tested well.
+     *
+     * Currently, we actually do not have anything in the UI to expose this to
+     * users.  The default value is "GUESS", and that's all that will be used,
+     * outside of the unit tests.  But we may be able to expose it in the future.
+     */
+    private enum NumberingScheme {
+        GUESS,
+        REGULAR,
+        DVD_RELEASE,
+        @SuppressWarnings("unused")
+        ABSOLUTE
+    }
+
     private enum DownloadStatus {
         NOT_STARTED,
         IN_PROGRESS,
@@ -111,6 +140,9 @@ public class Show {
 
     private final Queue<ShowListingsListener> registrations = new ConcurrentLinkedQueue<>();
     private final Queue<Future<Boolean>> lookups = new ConcurrentLinkedQueue<>();
+
+    // Not final.  Could be changed during the program's run.
+    private NumberingScheme numberingScheme = NumberingScheme.GUESS;
 
     /**
      * The current status of downloading listings for the Show.
@@ -383,22 +415,18 @@ public class Show {
     }
 
     /**
-     * Build an index of this show's episodes, by season and episode number.
-     *
-     * Episode numbers are not definitive.  Production companies sometimes
-     * re-order them.  In particular, they take liberties when releasing
-     * DVDs.  The TVDB tries to keep track of the original, production order,
-     * as well as the DVD ordering (when applicable).  The truth is that some
-     * shows still have ambiguity beyond these options, but those are the two
-     * basic options available.
+     * Build an index of this show's episodes, by season and episode number,
+     * according to the given numbering scheme.
      *
      * Does not change the episode list at all; just organizes them into seasons
      * and episode numbers.
      *
      * Clears the season index before beginning, and iterates over all known episodes.
      *
+     * @param effective
+     *           the numbering scheme to use
      */
-    public synchronized void indexEpisodesBySeason() {
+    private synchronized void indexEpisodesBySeason(NumberingScheme effective) {
         seasons.clear();
         for (Episode episode : episodes.values()) {
             if (episode == null) {
@@ -406,12 +434,18 @@ public class Show {
                 return;
             }
 
-            String seasonNumString = episode.getDvdSeasonNumber();
-            String episodeNumString = episode.getDvdEpisodeNumber();
-
-            if (StringUtils.isBlank(seasonNumString) || StringUtils.isBlank(episodeNumString)) {
+            String seasonNumString;
+            String episodeNumString;
+            if (effective == NumberingScheme.REGULAR) {
                 seasonNumString = episode.getSeasonNumber();
                 episodeNumString = episode.getEpisodeNumber();
+            } else if (effective == NumberingScheme.DVD_RELEASE) {
+                seasonNumString = episode.getDvdSeasonNumber();
+                episodeNumString = episode.getDvdEpisodeNumber();
+            } else {
+                // not supported
+                seasonNumString = "";
+                episodeNumString = "";
             }
 
             Integer seasonNum = StringUtils.stringToInt(seasonNumString);
@@ -426,6 +460,45 @@ public class Show {
             }
 
             addEpisodeToSeason(seasonNum, episodeNum, episode);
+        }
+    }
+
+    /**
+     * Build an index of this show's episodes, by season and episode number,
+     * according to the current numbering scheme.
+     *
+     * If the current numbering scheme is "GUESS", analyzes the episodes and
+     * decides if it's suitable to use the DVD ordering, and if not, uses the
+     * standard production ordering.
+     */
+    public synchronized void indexEpisodesBySeason() {
+        if (numberingScheme == NumberingScheme.GUESS) {
+            int withDVD = 0;
+            int withoutDVD = 0;
+            for (Episode episode : episodes.values()) {
+                if (episode == null) {
+                    logger.severe("internal error creating episodes for " + name);
+                    return;
+                }
+
+                Integer seasonNum = StringUtils.stringToInt(episode.getDvdSeasonNumber());
+                Integer episodeNum = StringUtils.stringToInt(episode.getDvdEpisodeNumber());
+
+                if ((seasonNum == null) || (episodeNum == null)) {
+                    withoutDVD++;
+                } else {
+                    withDVD++;
+                }
+            }
+            // Make the threshold 75%.  That's probably low, but the program has a history
+            // of preferring DVD episode numbers, and 75% is easy to do.
+            if (withDVD > (withoutDVD * 3)) {
+                indexEpisodesBySeason(NumberingScheme.DVD_RELEASE);
+            } else {
+                indexEpisodesBySeason(NumberingScheme.REGULAR);
+            }
+        } else {
+            indexEpisodesBySeason(numberingScheme);
         }
     }
 
