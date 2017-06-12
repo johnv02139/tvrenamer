@@ -309,6 +309,18 @@ public class ShowName {
     }
 
     /**
+     * Add a possible Show option that could be mapped to this ShowName
+     *
+     * @param tvdbId
+     *    the show's id in the TVDB database
+     * @param seriesName
+     *    the "official" show name
+     */
+    public void addShowOption(final int tvdbId, final String seriesName) {
+        addShowOption(String.valueOf(tvdbId), seriesName);
+    }
+
+    /**
      * Create a stand-in Show object in the case of failure from the provider.
      *
      * @param err any TVRenamerIOException that occurred trying to look up the show.
