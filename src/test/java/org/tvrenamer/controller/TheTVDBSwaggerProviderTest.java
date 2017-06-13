@@ -401,7 +401,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    // Although this test passes, it generates warnings due to conflicting episodes.
+    // TODO: this one does not just fail, it gets an exception
     // @BeforeClass
     public static void setupValues29() {
         values.add(new EpisodeTestData.Builder()
@@ -422,9 +422,6 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    // Although this test passes, it generates warnings due to conflicting episodes.
-    // This is due to our policy of preferring the DVD episode, but falling back
-    // on the production ordering.
     // @BeforeClass
     public static void setupValues31() {
         values.add(new EpisodeTestData.Builder()
@@ -475,9 +472,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    // This test passes just fine, but we get a warning querying for
-    // "the walking dead", due to an unpermitted option.
-    // @BeforeClass
+    @BeforeClass
     public static void setupValues36() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("the walking dead")
@@ -517,7 +512,6 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    // TODO: this one does not just fail, it gets an exception
     // @BeforeClass
     public static void setupValues40() {
         values.add(new EpisodeTestData.Builder()
@@ -668,7 +662,6 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    // This test fails, probably because we get the wrong show.
     // @BeforeClass
     public static void setupValues55() {
         values.add(new EpisodeTestData.Builder()
@@ -739,8 +732,7 @@ public class TheTVDBSwaggerProviderTest {
                    .build());
     }
 
-    // Although this test passes, it generates warnings due to conflicting episodes.
-    // @BeforeClass
+    @BeforeClass
     public static void setupValues62() {
         values.add(new EpisodeTestData.Builder()
                    .queryString("lucifer")
