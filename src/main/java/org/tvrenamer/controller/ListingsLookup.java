@@ -1,7 +1,6 @@
 package org.tvrenamer.controller;
 
 import org.tvrenamer.model.Series;
-import org.tvrenamer.model.TVRenamerIOException;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -49,9 +48,6 @@ public class ListingsLookup {
             try {
                 TheTVDBProvider.getSeriesListing(series);
                 return true;
-            } catch (TVRenamerIOException e) {
-                series.listingsFailed(e);
-                return false;
             } catch (Exception e) {
                 // Because this is running in a separate thread, an uncaught
                 // exception does not get caught by the main thread, and
