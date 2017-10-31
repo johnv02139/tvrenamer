@@ -165,6 +165,12 @@ public class FilenameParser {
             String parentName = extractParentName(parent);
             while (StringUtils.toLower(parentName).startsWith("season")
                    || parentName.matches(DIR_LOOKS_LIKE_SEASON)
+                   || parentName.equals("DVDRip")
+                   || parentName.equals("BDRip")
+                   || parentName.equals("Evolve")
+                   || parentName.equals("Fullscreen")
+                   || parentName.equals("Again")
+                   || parentName.equals("More")
                    || parentName.equals(Constants.DUPLICATES_DIRECTORY))
             {
                 parent = parent.getParent();
