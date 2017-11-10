@@ -496,9 +496,10 @@ public class FileEpisode {
     }
 
     private String getNoMatchPlaceholder() {
-        return EPISODE_NOT_FOUND + " <" + actualShow.getName() + " / "
-            + actualShow.getIdString() + ">: " + " season " + placement.season
-            + ", episode " + placement.episode + " not found";
+        // return EPISODE_NOT_FOUND + " <" + actualShow.getName() + " / "
+        //     + actualShow.getIdString() + ">: " + " season " + placement.season
+        //     + ", episode " + placement.episode + " not found";
+        return getMoveToPath().resolve(fileNameString).toString();
     }
 
     private String getNoListingsPlaceholder() {
@@ -508,9 +509,11 @@ public class FileEpisode {
 
     private String getNoShowPlaceholder() {
         ShowName showName = ShowName.lookupShowName(filenameShow);
-        return BROKEN_PLACEHOLDER_FILENAME + " for \""
-            + showName.getQueryString()
-            + "\"";
+        String queryString = showName.getQueryString();
+        // return BROKEN_PLACEHOLDER_FILENAME + " for \""
+        //     + queryString
+        //     + "\"";
+        return getMoveToPath().resolve("unfound").resolve(getFilepath()).toString();
     }
 
     private String getTimeoutPlaceholder() {
