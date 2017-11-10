@@ -20,6 +20,7 @@ import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.ProgressObserver;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowStore;
+import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Constants;
 
 import java.io.Serializable;
@@ -32,6 +33,8 @@ import java.util.logging.Logger;
 
 public class EpisodeView implements ShowListingsListener, ShowInformationListener, ProgressObserver {
     private static final Logger logger = Logger.getLogger(EpisodeView.class.getName());
+
+    private static final String FILE_SEPARATOR_STRING = java.io.File.separator;
 
     private final FileEpisode episode;
     private final ResultsTable rtable;
@@ -145,7 +148,14 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
      */
     private void updateProposedDestination() {
         int nOptions = episode.optionCount();
-        if (nOptions <= 1) {
+        if (nOptions == 0) {
+            String epPathString = episode.getFilepath();
+            String preload = UserPreferences.getInstance().getPreloadFolder()
+                + FILE_SEPARATOR_STRING;
+            epPathString = epPathString.replace(preload, "");
+            proposedDest = episode.getMoveToPath() + FILE_SEPARATOR_STRING
+                + epPathString;
+        } else if (nOptions == 1) {
             deleteComboBox();
             String newText = episode.getReplacementText();
             if (newText == null) {
