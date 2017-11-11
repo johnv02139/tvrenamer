@@ -16,5 +16,62 @@
       <string>the%20goldbergs</string>
       <string>The%20Goldbergs%20(2013)</string>
     </entry>
+    <entry>
+      <string>Aliens in America (2015)</string>
+      <string>Aliens in America</string>
+    </entry>
+    <entry>
+      <string>Battlestar Galactica (2003)</string>
+      <string>Battlestar Galactica</string>
+    </entry>
+    <entry>
+      <string>Bordertown (2016)</string>
+      <string>Bordertown</string>
+    </entry>
+    <entry>
+      <string>Brotherly Love (2000)</string>
+      <string>Brotherly Love</string>
+    </entry>
+    <entry>
+      <!-- <string>Doctor Who (2009)</string> -->
+      <string>Doctor Who (2005)</string>
+      <string>Doctor Who</string>
+    </entry>
+    <entry>
+      <string>Friends (2002)</string>
+      <string>Friends</string>
+    </entry>
+    <entry>
+      <string>Heroes (2010)</string>
+      <string>Heroes</string>
+    </entry>
+    <entry>
+      <string>Lie to Me (2011)</string>
+      <string>Lie to Me</string>
+    </entry>
+    <entry>
+      <string>Lost (2007)</string>
+      <string>Lost</string>
+    </entry>
+    <entry>
+      <string>Louie (2010)</string>
+      <string>Louie</string>
+    </entry>
+    <entry>
+      <string>The Cape (2011)</string>
+      <string>The Cape</string>
+    </entry>
+    <entry>
+      <string>The Goldbergs (2013)</string>
+      <string>The Goldbergs</string>
+    </entry>
+    <entry>
+      <string>The Office (1995)</string>
+      <string>BBC Office</string>
+    </entry>
+    <entry>
+      <string>The Office (US)</string>
+      <string>The Office</string>
+    </entry>
   </showNames>
 </overrides>
