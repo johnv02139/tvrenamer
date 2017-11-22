@@ -120,7 +120,14 @@ public class Show extends ShowOption {
     }
 
     /**
-     * Add an episode to a season's index of episodes, at the placement given.
+     * Clear this show's episodes.
+     */
+    public void clearEpisodeInfos() {
+        episodes.clear();
+    }
+
+    /**
+     * Add an episode to a season's index of episodes.
      *
      * This method is agnostic of which ordering is being used.  It just asks the
      * Season to add the episode at the placement given.

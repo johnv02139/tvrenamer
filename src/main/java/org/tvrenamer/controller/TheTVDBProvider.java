@@ -398,6 +398,7 @@ public class TheTVDBProvider {
         for (int i = 0; i < episodeCount; i++) {
             episodeInfos[i] = createEpisodeInfo(episodeList.item(i));
         }
+        series.clearEpisodeInfos();
         series.addEpisodeInfos(episodeInfos);
         series.listingsSucceeded();
     }
