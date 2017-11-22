@@ -76,7 +76,7 @@ public class ShowName {
             }
             if (matchedShow == showOption) {
                 // same object; not just equals() but ==
-                logger.info("confirming show in QueryString " + queryString);
+                logger.fine("confirming show in QueryString " + queryString);
                 return;
             }
             logger.warning("changing show in QueryString " + queryString);
@@ -293,6 +293,7 @@ public class ShowName {
      * @param seriesName
      *    the "official" show name
      */
+    // TODO: check if option already in list?
     public void addShowOption(final String tvdbId, final String seriesName) {
         ShowOption option = ShowOption.getShowOption(tvdbId, seriesName);
         showOptions.add(option);
