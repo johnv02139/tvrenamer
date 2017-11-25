@@ -58,6 +58,10 @@ public class Series extends Show {
         return KNOWN_SERIES.get(idString);
     }
 
+    public static synchronized void removeSeriesInstance(String idString) {
+        KNOWN_SERIES.remove(idString);
+    }
+
     /*
      * Instance data
      */

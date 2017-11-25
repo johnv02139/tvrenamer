@@ -76,7 +76,7 @@ public class ShowName {
             }
             if (matchedShow == showOption) {
                 // same object; not just equals() but ==
-                logger.info("re-setting show in QueryString " + queryString);
+                logger.info("confirming show in QueryString " + queryString);
                 return;
             }
             logger.warning("changing show in QueryString " + queryString);
@@ -147,6 +147,17 @@ public class ShowName {
                 QUERY_STRINGS.put(queryString, queryObj);
             }
             return queryObj;
+        }
+
+        /**
+         * Remove the mapping for the given "found name" from the query strings.
+         *
+         * @param foundName
+         *    the portion of the filename that is believed to represent the show's name
+         */
+        static void clearQueryString(String foundName) {
+            String queryString = StringUtils.makeQueryString(foundName);
+            QUERY_STRINGS.remove(queryString);
         }
     }
 
