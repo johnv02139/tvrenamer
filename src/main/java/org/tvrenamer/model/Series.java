@@ -58,8 +58,18 @@ public class Series extends Show {
         return KNOWN_SERIES.get(idString);
     }
 
-    public static synchronized void removeSeriesInstance(String idString) {
-        KNOWN_SERIES.remove(idString);
+    /**
+     *
+     * @param id
+     *     The ID of the show option, from the provider, as a String
+     */
+    public static void removeSeriesInstance(String id) {
+        System.out.println("to remove Show with id " + id);
+        synchronized (KNOWN_SERIES) {
+            Series togo = KNOWN_SERIES.get(id);
+            System.out.println("to remove Show: " + togo + " (" + togo.hashCode() + ")");
+            KNOWN_SERIES.remove(id);
+        }
     }
 
     /*

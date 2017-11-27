@@ -163,7 +163,7 @@ public class TheTVDBProviderTest {
      * @return the title of the given episode of the show returned by the provider, or null
      *         if we didn't get an episode title
      */
-    private String testSeriesNameAndEpisode(final EpisodeTestData epdata, boolean doCheck)
+    private synchronized String testSeriesNameAndEpisode(final EpisodeTestData epdata, boolean doCheck)
         throws Exception
     {
         final String actualName = epdata.properShowName;
@@ -171,23 +171,23 @@ public class TheTVDBProviderTest {
         if (queryString == null) {
             queryString = actualName;
         }
-        final ShowName showName = ShowName.lookupShowName(queryString);
-        ShowOption best = showName.getMatchedShow();
+        final ShowName showName = ShowName.freshShowName(queryString);
+        System.out.println("got showName " + showName + ", " + showName.hashCode());
 
-        if (best == null) {
-            try {
-                TheTVDBProvider.getShowOptions(showName);
-            } catch (DiscontinuedApiException api) {
-                fail("API deprecation discovered getting show options for " + queryString);
-            } catch (Exception e) {
-                fail("exception getting show options for " + queryString);
-            }
-            assertTrue("got no options on showName <[" + showName.getFoundName()
-                       + "]> (from input <[" + queryString + "]>)",
-                       showName.hasShowOptions());
-
-            best = showName.selectShowOption();
+        try {
+            TheTVDBProvider.getShowOptions(showName);
+        } catch (DiscontinuedApiException api) {
+            fail("API deprecation discovered getting show options for " + queryString);
+        } catch (Exception e) {
+            fail("exception getting show options for " + queryString);
         }
+        assertTrue("got no options on showName <[" + showName.getFoundName()
+                   + "]> (from input <[" + queryString + "]>)",
+                   showName.hasShowOptions());
+
+        final ShowOption best = showName.selectShowOption();
+        System.out.println("for showName " + showName.hashCode() + ", got ShowOption "
+                           + best.hashCode());
         assertEquals("resolved show name <[" + showName.getFoundName() + "]> to wrong series;",
                      actualName, best.getName());
 
@@ -195,13 +195,20 @@ public class TheTVDBProviderTest {
         assertTrue("expected valid Series (<[" + epdata.properShowName + "]>) for \""
                    + showName.getFoundName() + "\" but got <[" + show + "]>",
                    show.isValidSeries());
+        System.out.println("for showName " + showName.hashCode() + ", got Show "
+                           + show + " (" + show.hashCode() + ")");
         Series series = show.asSeries();
         assertEquals("got wrong series ID for <[" + actualName + "]>;",
                      epdata.showId, String.valueOf(series.getId()));
+        System.out.println("for showName " + showName.hashCode() + ", got Series "
+                           + series + " (" + series.hashCode() + ")");
+        series.clearEpisodeInfos();
 
         if (epdata.preferDvd != null) {
+            System.out.println("setting prefer DVD to " + epdata.preferDvd);
             series.setPreferDvd(epdata.preferDvd);
         }
+        System.out.println("prefer DVD now is " + series.getPreferDvd());
         if (!series.hasEpisodes()) {
             TheTVDBProvider.getSeriesListing(series);
         }
@@ -284,8 +291,66 @@ public class TheTVDBProviderTest {
                                       .properShowName("Robot Chicken")
                                       .showId("75734")
                                       .seasonNum(8)
-                                      .episodeNum(13)
+                                      .episodeNum(14)
                                       .preferDvd(true)
+                                      .episodeTitle("Joel Hurwitz Returns")
+                                      .build());
+        // In this first case, we specify we want the DVD ordering, so S08E14
+        // should resolve to the first one, "Joel Hurwitz Returns".
+        testSeriesNameAndEpisodeTitle(new EpisodeTestData.Builder()
+                                      .properShowName("Robot Chicken")
+                                      .showId("75734")
+                                      .seasonNum(8)
+                                      .episodeNum(14)
+                                      .episodeTitle("Joel Hurwitz Returns")
+                                      .build());
+        // In this first case, we specify we want the DVD ordering, so S08E14
+        // should resolve to the first one, "Joel Hurwitz Returns".
+        testSeriesNameAndEpisodeTitle(new EpisodeTestData.Builder()
+                                      .properShowName("Robot Chicken")
+                                      .showId("75734")
+                                      .seasonNum(8)
+                                      .episodeNum(14)
+                                      .episodeTitle("Joel Hurwitz Returns")
+                                      .build());
+        // In this first case, we specify we want the DVD ordering, so S08E14
+        // should resolve to the first one, "Joel Hurwitz Returns".
+        testSeriesNameAndEpisodeTitle(new EpisodeTestData.Builder()
+                                      .properShowName("Robot Chicken")
+                                      .showId("75734")
+                                      .seasonNum(8)
+                                      .episodeNum(14)
+                                      .episodeTitle("Joel Hurwitz Returns")
+                                      .build());
+        // In this first case, we specify we want the DVD ordering, so S08E14
+        // should resolve to the first one, "Joel Hurwitz Returns".
+        testSeriesNameAndEpisodeTitle(new EpisodeTestData.Builder()
+                                      .properShowName("Robot Chicken")
+                                      .showId("75734")
+                                      .seasonNum(8)
+                                      .episodeNum(14)
+                                      .episodeTitle("Joel Hurwitz Returns")
+                                      .build());
+        // Now we specify a preference of the non-DVD ordering, S08E14 should
+        // resolve to the other alternative, "Hopefully Salt"
+        testSeriesNameAndEpisodeTitle(new EpisodeTestData.Builder()
+                                      .properShowName("Robot Chicken")
+                                      .showId("75734")
+                                      .seasonNum(8)
+                                      .episodeNum(14)
+                                      .preferDvd(false)
+                                      .episodeTitle("Hopefully Salt")
+                                      .build());
+        // Here, we don't specify a preference.  This is actually testing the harness,
+        // as well as the functionality.  The previous test specified preferDvd(false),
+        // but that should NOT be carried over here.  Each test should "start" with
+        // a default configuration.
+        testSeriesNameAndEpisodeTitle(new EpisodeTestData.Builder()
+                                      .queryString("robot.chicken.")
+                                      .properShowName("Robot Chicken")
+                                      .showId("75734")
+                                      .seasonNum(8)
+                                      .episodeNum(13)
                                       .episodeTitle("Triple Hot Dog Sandwich on Wheat")
                                       .build());
         // Now we specify a preference of the non-DVD ordering, S08E13 should
@@ -313,6 +378,10 @@ public class TheTVDBProviderTest {
                                       .preferDvd(true)
                                       .episodeTitle("Yogurt in a Bag")
                                       .build());
+    }
+
+    @Test
+    public void testDvdEpisodePreference2() throws Exception {
         // Now we test S08E14, which was considered a true conflict in earlier versions.
         // That's because there are two episodes for which their BEST placement was the
         // same place.  In earlier versions, we "panicked" and put neither episode in

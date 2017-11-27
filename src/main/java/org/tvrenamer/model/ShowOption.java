@@ -27,10 +27,10 @@ public class ShowOption {
      * @return a ShowOption with the given ID
      */
     public static ShowOption getShowOption(String id, String name) {
-        ShowOption matchedShowOption = Series.getExistingSeries(id);
-        if (matchedShowOption != null) {
-            return matchedShowOption;
-        }
+        // ShowOption matchedShowOption = Series.getExistingSeries(id);
+        // if (matchedShowOption != null) {
+        //     return matchedShowOption;
+        // }
         return new ShowOption(id, name);
     }
 
@@ -41,23 +41,28 @@ public class ShowOption {
      * @return a version of this ShowOption that is an instance of a Show
      */
     public Show getShowInstance() {
+        // need to clear this out
         if (this instanceof Show) {
+            System.out.println("ShowOption " + hashCode() + " is already a Show");
             return (Show) this;
         }
         // Note that at this point, "this" could be either a FailedShow or a ShowOption,
         // but we won't make the distinction.
         Show reified = Series.getExistingSeries(idString);
         if (reified != null) {
-            return reified;
+            System.out.println("got Show reified " + reified.hashCode());
+            // return reified;
         }
 
         Integer parsedId;
         try {
             parsedId = Integer.parseInt(idString);
+            System.out.println("creating Series");
             return Series.createSeries(parsedId, name);
         } catch (Exception e) {
             String msg = "ShowOption could not be created with ID " + idString;
             logger.log(Level.WARNING, msg, e);
+            System.out.println("creating non-Series Show");
             return new Show(idString, name);
         }
     }

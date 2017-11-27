@@ -175,13 +175,46 @@ public class ShowName {
      *            the name of the show as it appears in the filename
      * @return the ShowName object for that filenameShow
      */
-    public static ShowName lookupShowName(String filenameShow) {
+    public static synchronized ShowName lookupShowName(String filenameShow) {
         ShowName showName = SHOW_NAMES.get(filenameShow);
+        // System.out.println("existing ShowName for " + filenameShow + " is " + showName);
         if (showName == null) {
             showName = new ShowName(filenameShow);
             SHOW_NAMES.put(filenameShow, showName);
         }
         return showName;
+    }
+
+    /**
+     * Get the ShowName object for the given String.  If one was already created,
+     * it is returned, and if not, one will be created, stored, and returned.
+     *
+     * This method exists for calling from the test suite.  Generally we want to
+     * do the exact opposite of this.  We want to re-use ShowNames; that's why
+     * we have the cache in the first place.  But for running a test, we want to
+     * be able to get a "clean" copy.
+     *
+     * @param filenameShow
+     *            the name of the show as it appears in the filename
+     * @return the ShowName object for that filenameShow
+     */
+    public static synchronized ShowName freshShowName(String filenameShow) {
+        synchronized (SHOW_NAMES) {
+            System.out.println("attempting to clear out any shows for " + filenameShow);
+            ShowName showName = SHOW_NAMES.get(filenameShow);
+            if (showName != null) {
+                System.out.println("found existing ShowName for " + filenameShow
+                                   + ": " + showName);
+                showName.clearShowOptions();
+                SHOW_NAMES.remove(filenameShow);
+            } else {
+                System.out.println("did not find existing ShowName for " + filenameShow);
+            }
+            // return lookupShowName(filenameShow);
+            showName = new ShowName(filenameShow);
+            SHOW_NAMES.put(filenameShow, showName);
+            return showName;
+        }
     }
 
     /*
@@ -310,6 +343,7 @@ public class ShowName {
     // TODO: check if option already in list?
     public void addShowOption(final String tvdbId, final String seriesName) {
         ShowOption option = ShowOption.getShowOption(tvdbId, seriesName);
+        System.out.println("adding ShowOption " + option.hashCode());
         showOptions.add(option);
     }
 
@@ -350,6 +384,9 @@ public class ShowName {
         }
         // logger.info("got " + nOptions + " options for " + foundName);
         ShowOption selected = null;
+        for (ShowOption s : showOptions) {
+            System.out.println("considering ShowOption " + s.hashCode());
+        }
         for (ShowOption s : showOptions) {
             String actualName = s.getName();
             // Possibly instead of ignore case, we should make the foundName be

@@ -70,6 +70,9 @@ public class Show extends ShowOption {
 
         this.idNum = idNum;
 
+        System.out.println("creating new Show for " + name + " with hash code "
+                           + this.hashCode());
+
         episodes = new ConcurrentHashMap<>();
         seasons = new ConcurrentHashMap<>();
         registrations = new ConcurrentLinkedQueue<>();
@@ -106,6 +109,16 @@ public class Show extends ShowOption {
      */
     public String getDirName() {
         return dirName;
+    }
+
+    /**
+     * Whether this show should prefer the DVD ordering or the over the air ordering.
+     *
+     * @return
+     *     whether this show should prefer the DVD ordering or the over the air ordering.
+     */
+    public synchronized boolean getPreferDvd() {
+        return preferDvd;
     }
 
     /**
