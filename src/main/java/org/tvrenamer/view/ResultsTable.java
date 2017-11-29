@@ -45,6 +45,7 @@ import org.tvrenamer.controller.ShowListingsListener;
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.controller.UrlLauncher;
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.AppData;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FailedShow;
 import org.tvrenamer.model.FileEpisode;
@@ -67,14 +68,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private static final Logger logger = Logger.getLogger(ResultsTable.class.getName());
     // load preferences
     private static final UserPreferences prefs = UserPreferences.getInstance();
+    private static final AppData appData = AppData.getInstance();
     private static final Collator COLLATOR = Collator.getInstance(Locale.getDefault());
 
     private static final int ITEM_NOT_IN_TABLE = -1;
-
-    private static final int WIDTH_CHECKED = 30;
-    private static final int WIDTH_CURRENT_FILE = 550;
-    private static final int WIDTH_NEW_FILENAME = 550;
-    private static final int WIDTH_STATUS = 60;
 
     private final UIStarter ui;
     private final Shell shell;
@@ -850,10 +847,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private synchronized void createColumns() {
-        CHECKBOX_FIELD.createColumn(this, swtTable, WIDTH_CHECKED);
-        CURRENT_FILE_FIELD.createColumn(this, swtTable, WIDTH_CURRENT_FILE);
-        NEW_FILENAME_FIELD.createColumn(this, swtTable, WIDTH_NEW_FILENAME);
-        STATUS_FIELD.createColumn(this, swtTable, WIDTH_STATUS);
+        CHECKBOX_FIELD.createColumn(this, swtTable, appData.getWidthChecked());
+        CURRENT_FILE_FIELD.createColumn(this, swtTable, appData.getWidthSource());
+        NEW_FILENAME_FIELD.createColumn(this, swtTable, appData.getWidthDest());
+        STATUS_FIELD.createColumn(this, swtTable, appData.getWidthStatus());
     }
 
     private void setSortColumn() {
@@ -871,7 +868,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         swtTable.setLinesVisible(true);
         GridData gridData = new GridData(GridData.FILL_BOTH);
         // gridData.widthHint = 780;
-        gridData.heightHint = 350;
+        gridData.heightHint = appData.getHeightHint();
         gridData.horizontalSpan = 3;
         swtTable.setLayoutData(gridData);
 
