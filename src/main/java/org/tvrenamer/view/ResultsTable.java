@@ -49,6 +49,7 @@ import org.tvrenamer.controller.ShowListingsListener;
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.controller.UrlLauncher;
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.AppData;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FailedShow;
 import org.tvrenamer.model.FileEpisode;
@@ -72,6 +73,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private static final Logger logger = Logger.getLogger(ResultsTable.class.getName());
     // load preferences
     private static final UserPreferences prefs = UserPreferences.getInstance();
+    private static final AppData appData = AppData.getInstance();
     private static final Collator COLLATOR = Collator.getInstance(Locale.getDefault());
 
     private static final int ITEM_NOT_IN_TABLE = -1;
@@ -116,6 +118,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void quit() {
+        appData.store();
         shell.dispose();
     }
 
@@ -371,7 +374,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         swtTable.setLinesVisible(true);
         GridData gridData = new GridData(GridData.FILL_BOTH);
         // gridData.widthHint = 780;
-        gridData.heightHint = 350;
+        gridData.heightHint = appData.getHeightHint();
         gridData.horizontalSpan = 3;
         swtTable.setLayoutData(gridData);
 

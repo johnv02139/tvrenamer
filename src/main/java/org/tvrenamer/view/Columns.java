@@ -7,11 +7,13 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.tvrenamer.model.AppData;
 
 import java.util.logging.Logger;
 
 public final class Columns {
     private static final Logger logger = Logger.getLogger(Columns.class.getName());
+    private static final AppData appData = AppData.getInstance();
 
     static final int CHECKBOX_COLUMN = 0;
     static final int CURRENT_FILE_COLUMN = 1;
@@ -21,7 +23,7 @@ public final class Columns {
     public static synchronized void createColumns(ResultsTable resultsTable, Table swtTable) {
         final TableColumn checkboxColumn = new TableColumn(swtTable, SWT.LEFT, CHECKBOX_COLUMN);
         checkboxColumn.setText(CHECKBOX_HEADER);
-        checkboxColumn.setWidth(60);
+        checkboxColumn.setWidth(appData.getWidthChecked());
         checkboxColumn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -31,7 +33,7 @@ public final class Columns {
 
         final TableColumn sourceColumn = new TableColumn(swtTable, SWT.LEFT, CURRENT_FILE_COLUMN);
         sourceColumn.setText(SOURCE_HEADER);
-        sourceColumn.setWidth(550);
+        sourceColumn.setWidth(appData.getWidthSource());
         sourceColumn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -40,7 +42,7 @@ public final class Columns {
         });
 
         final TableColumn destinationColumn = new TableColumn(swtTable, SWT.LEFT, NEW_FILENAME_COLUMN);
-        destinationColumn.setWidth(550);
+        destinationColumn.setWidth(appData.getWidthDest());
         destinationColumn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -50,7 +52,7 @@ public final class Columns {
 
         final TableColumn statusColumn = new TableColumn(swtTable, SWT.LEFT, STATUS_COLUMN);
         statusColumn.setText(STATUS_HEADER);
-        statusColumn.setWidth(60);
+        statusColumn.setWidth(appData.getWidthStatus());
         statusColumn.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
