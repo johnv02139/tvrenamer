@@ -264,6 +264,8 @@ class TheTVDBProvider {
 
             NodeList shows = nodeListValue(XPATH_SERIES, doc);
             synchronized (showName) {
+                showName.clearShowOptions();
+
                 for (int i = 0; i < shows.getLength(); i++) {
                     Node eNode = shows.item(i);
                     String seriesName = nodeTextValue(XPATH_NAME, eNode);

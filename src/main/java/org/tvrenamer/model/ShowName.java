@@ -286,6 +286,20 @@ public class ShowName {
     }
 
     /**
+     * Clear any previous show options
+     *
+     */
+    public synchronized void clearShowOptions() {
+        System.out.println("clearing show options");
+        for (ShowOption s : showOptions) {
+            System.out.println("removing series instance for " + s.getIdString());
+            Series.removeSeriesInstance(s.getIdString());
+        }
+        showOptions.clear();
+        QueryString.clearQueryString(foundName);
+    }
+
+    /**
      * Add a possible Show option that could be mapped to this ShowName
      *
      * @param tvdbId
