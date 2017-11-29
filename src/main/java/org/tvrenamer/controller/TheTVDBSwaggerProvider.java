@@ -47,6 +47,11 @@ public class TheTVDBSwaggerProvider {
         List<SeriesInfo> data;
     }
 
+    static class Language {
+        String episodeName;
+        String overview;
+    }
+
     static class TvdbEpisode {
         String airedEpisodeNumber;
         String airedSeason;
@@ -55,10 +60,19 @@ public class TheTVDBSwaggerProvider {
         String episodeName;
         String firstAired;
         String id;
+
+        String absoluteNumber;
+        String airedSeasonID;
+        Language language;
+        String lastUpdated;
+        String overview;
     }
 
     static class Links {
+        Integer first;
+        Integer last;
         Integer next;
+        Integer prev;
     }
 
     static class EpisodesResponse {

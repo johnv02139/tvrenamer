@@ -1,8 +1,18 @@
 package org.tvrenamer.model;
 
+import java.util.List;
+
 public class SeriesInfo {
     public Integer id;
     public String seriesName;
+
+    // following are currently not required
+    public List<String> aliases;
+    public String banner;
+    public String firstAired;
+    public String network;
+    public String overview;
+    public String status;
 
     SeriesInfo(final Integer id, final String seriesName) {
         this.id = id;
