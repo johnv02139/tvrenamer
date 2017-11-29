@@ -74,7 +74,15 @@ class Season {
             return null;
         }
 
-        return options.getAll(preferDvd);
+        List<Episode> found = options.getAll(preferDvd);
+        String foundMsg = "for season " + seasonNum + ", episode " + episodeNum
+            + ", found ";
+        for (Episode ep : found) {
+            foundMsg += ep.getTitle();
+            foundMsg += ", ";
+        }
+        logger.fine(foundMsg);
+        return found;
     }
 
     /**
