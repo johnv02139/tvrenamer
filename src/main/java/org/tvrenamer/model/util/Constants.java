@@ -65,6 +65,12 @@ public class Constants {
     public static final String LOGGING_PROPERTIES = "/logging.properties";
     public static final String DEVELOPER_DEFAULT_OVERRIDES_FILENAME = "etc/default-overrides.xml";
 
+    public static final int DEFAULT_TABLE_HEIGHT = 350;
+    public static final int SELECTED_COLUMN_DEFAULT_WIDTH = 60;
+    public static final int SOURCE_COLUMN_DEFAULT_WIDTH = 550;
+    public static final int DEST_COLUMN_DEFAULT_WIDTH = 550;
+    public static final int STATUS_COLUMN_DEFAULT_WIDTH = 60;
+
     @SuppressWarnings("SameParameterValue")
     private static String charsToSpaceString(final Set<Character> chars) {
         StringBuilder str = new StringBuilder(2 * chars.size());
@@ -206,6 +212,7 @@ public class Constants {
 
     private static final String CONFIGURATION_DIRECTORY_NAME = ".tvrenamer";
     private static final String PREFERENCES_FILENAME = "prefs.xml";
+    private static final String APPDATA_FILENAME = "appdata.xml";
     private static final String OVERRIDES_FILENAME = "overrides.xml";
 
     public static final Path TMP_DIR = Paths.get(Environment.TMP_DIR_NAME);
@@ -214,6 +221,7 @@ public class Constants {
     public static final Path DEFAULT_DESTINATION_DIRECTORY = USER_HOME_DIR.resolve("TV");
     public static final Path CONFIGURATION_DIRECTORY = USER_HOME_DIR.resolve(CONFIGURATION_DIRECTORY_NAME);
     public static final Path PREFERENCES_FILE = CONFIGURATION_DIRECTORY.resolve(PREFERENCES_FILENAME);
+    public static final Path APPDATA_FILE = CONFIGURATION_DIRECTORY.resolve(APPDATA_FILENAME);
     public static final Path OVERRIDES_FILE = CONFIGURATION_DIRECTORY.resolve(OVERRIDES_FILENAME);
 
     public static final Path PREFERENCES_FILE_LEGACY = USER_HOME_DIR.resolve("tvrenamer.preferences");

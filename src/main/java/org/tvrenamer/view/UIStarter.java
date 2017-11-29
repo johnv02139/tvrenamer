@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 
 import org.tvrenamer.controller.UrlLauncher;
+import org.tvrenamer.model.AppData;
 import org.tvrenamer.model.util.Environment;
 
 import java.awt.HeadlessException;
@@ -31,6 +32,8 @@ import javax.swing.JOptionPane;
 
 public final class UIStarter {
     private static final Logger logger = Logger.getLogger(UIStarter.class.getName());
+
+    private static final AppData appData = AppData.getInstance();
 
     final Shell shell;
     final Display display;
@@ -163,6 +166,7 @@ public final class UIStarter {
     }
 
     void quit() {
+        appData.store();
         shell.dispose();
     }
 
