@@ -733,33 +733,39 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private void sortTable(final Column column, final int sortDirection) {
         // Get the items
         TableItem[] items = swtTable.getItems();
+        int nItems = items.length;
 
-        TableColumn previousSort = swtTable.getSortColumn();
-        if (column.swtColumn.equals(previousSort)) {
-            for (int i = 0; i < items.length; i++) {
-                setSortedItem(swtTable, items[i], 0);
-            }
-            items = swtTable.getItems();
-        }
+        // Go through the item list and bubble rows down to the bottom as appropriate
+        int bottomDone = 0;
 
-        // Go through the item list and bubble rows up to the top as appropriate
-        for (int i = 1; i < items.length; i++) {
-            String value1 = getItemTextValue(items[i], column);
-            for (int j = 0; j < i; j++) {
-                String value2 = getItemTextValue(items[j], column);
+        while (bottomDone < nItems) {
+            int positionToInsert = nItems - bottomDone - 1;
+            int rowToCopy = positionToInsert;
+            String value1 = getItemTextValue(items[positionToInsert], column);
+            String value2 = "";
+            for (int rowToCompare = 0; rowToCompare < positionToInsert; rowToCompare++) {
+                value2 = getItemTextValue(items[rowToCompare], column);
                 // Compare the two values and order accordingly
                 int comparison = COLLATOR.compare(value1, value2);
                 if (((comparison < 0) && (sortDirection == SWT.UP))
                     || (comparison > 0) && (sortDirection == SWT.DOWN))
                 {
-                    // Insert a copy of row i at position j, and then delete
-                    // row i.  Then fetch the list of items anew, since we
-                    // just modified it.
-                    setSortedItem(swtTable, items[i], j);
-                    items = swtTable.getItems();
-                    break;
+                    value1 = value2;
+                    rowToCopy = rowToCompare;
                 }
             }
+            if (rowToCopy != positionToInsert) {
+                TableItem oldItem = items[rowToCopy];
+
+                for (int i=rowToCopy; i<positionToInsert; i++) {
+                    items[i] = items[i + 1];
+                }
+                items[positionToInsert] = oldItem;
+            }
+            bottomDone++;
+        }
+        for (int i=0; i<nItems; i++) {
+            setSortedItem(swtTable, items[i], i);
         }
         swtTable.setSortDirection(sortDirection);
         swtTable.setSortColumn(column.swtColumn);
