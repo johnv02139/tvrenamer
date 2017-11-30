@@ -63,6 +63,8 @@ import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Environment;
 
 import java.text.Collator;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -634,7 +636,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      *    the Column to sort by
      */
     void sortTable(final Column column) {
+        Instant start = Instant.now();
         sortTable(column, column.updateSortDirection());
+        Instant end = Instant.now();
+        logger.info("sorting took " + Duration.between(start, end));
     }
 
     private void deleteTableItem(final TableItem item, String filename) {
