@@ -61,6 +61,8 @@ import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Environment;
 
 import java.text.Collator;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -846,12 +848,16 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
             logger.severe("unable to locate column in table: " + column);
             return;
         }
+        Instant start = Instant.now();
         int sortDirection = SWT.UP;
         TableColumn previousSort = swtTable.getSortColumn();
         if (column.equals(previousSort)) {
             sortDirection = swtTable.getSortDirection() == SWT.DOWN ? SWT.UP : SWT.DOWN;
         }
         sortTable(column, columnNum, sortDirection);
+        Instant end = Instant.now();
+        logger.info("sorting " + swtTable.getItemCount() + " lines by \"" + columnNum
+                    + "\" took " + Duration.between(start, end));
     }
 
     public void refreshAll() {
