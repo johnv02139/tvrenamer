@@ -737,16 +737,20 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      * Note that insertion does not overwrite the row that is already there.  It pushes
      * the row, and every row below it, down one slot.
      *
+     * @param table
+     *   the table being sorted
      * @param oldItem
-     *   the TableItem to copy
+     *   the TableItem to copy and insert
      * @param positionToInsert
      *   the position where we should insert the row
      */
-    private void setSortedItem(final TableItem oldItem, final int positionToInsert) {
+    private static void setSortedItem(final Table table, final TableItem oldItem,
+                                      final int positionToInsert)
+    {
         boolean wasChecked = oldItem.getChecked();
         int oldStyle = oldItem.getStyle();
 
-        TableItem item = new TableItem(swtTable, oldStyle, positionToInsert);
+        TableItem item = new TableItem(table, oldStyle, positionToInsert);
         item.setChecked(wasChecked);
         setCellText(item, CURRENT_FILE_COLUMN, getCellText(oldItem, CURRENT_FILE_COLUMN));
         setCellText(item, NEW_FILENAME_COLUMN, getCellText(oldItem, NEW_FILENAME_COLUMN));
@@ -758,7 +762,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         // resources, it also deletes the item from the Table.
         oldItem.dispose();
         if (itemData != null) {
-            final TableEditor newEditor = new TableEditor(swtTable);
+            final TableEditor newEditor = new TableEditor(table);
             newEditor.grabHorizontal = true;
             setEditor(item, NEW_FILENAME_COLUMN, newEditor, (Control) itemData);
             item.setData(itemData);
@@ -794,7 +798,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                     // Insert a copy of row i at position j, and then delete
                     // row i.  Then fetch the list of items anew, since we
                     // just modified it.
-                    setSortedItem(items[i], j);
+                    setSortedItem(swtTable, items[i], j);
                     items = swtTable.getItems();
                     break;
                 }
