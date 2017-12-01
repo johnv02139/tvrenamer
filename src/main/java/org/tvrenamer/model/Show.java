@@ -161,6 +161,7 @@ public class Show extends ShowOption {
                 seasons.put(placement.season, season);
             }
             season.addEpisode(episode, useDvd);
+            // UserPreferences.createFakeEpisode(episode);
         }
     }
 

@@ -4,6 +4,7 @@ import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.controller.UserPreferencesPersistence;
 import org.tvrenamer.controller.util.FileUtilities;
+import org.tvrenamer.controller.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -582,6 +583,27 @@ public class UserPreferences extends Observable {
             this.checkForUpdates = checkForUpdates;
 
             preferenceChanged(UserPreference.UPDATE_CHECK);
+        }
+    }
+
+    public static void createFakeEpisode(Episode episode) {
+        String directory = "/Users/valentej/Movies/FakeFiles/AirSimpsons";
+        Path destDir = Paths.get(directory);
+        EpisodePlacement placement = episode.getEpisodePlacement(false);
+        if (placement != null) {
+            String filename = "The Simpsons S"
+                + StringUtils.zeroPadTwoDigits(placement.season) + "E"
+                + StringUtils.zeroPadTwoDigits(placement.episode) + " "
+                + episode.getTitle() + ".avi";
+            Path dest = destDir.resolve(filename);
+            try {
+                Files.write(dest, filename.getBytes());
+                logger.info("created:\n  " + dest);
+            } catch (IOException ioe) {
+                logger.log(Level.WARNING, "error writing file " + dest, ioe);
+            }
+        } else {
+            logger.info("no placement for episode " + episode);
         }
     }
 
