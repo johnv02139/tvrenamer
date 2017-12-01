@@ -595,6 +595,27 @@ public class UserPreferences extends Observable {
         }
     }
 
+    public static void createFakeEpisode(Episode episode) {
+        String directory = "/Users/valentej/Movies/FakeFiles/AirSimpsons";
+        Path destDir = Paths.get(directory);
+        EpisodePlacement placement = episode.getEpisodePlacement(false);
+        if (placement != null) {
+            String filename = "The Simpsons S"
+                + StringUtils.zeroPadTwoDigits(placement.season) + "E"
+                + StringUtils.zeroPadTwoDigits(placement.episode) + " "
+                + episode.getTitle() + ".avi";
+            Path dest = destDir.resolve(filename);
+            try {
+                Files.write(dest, filename.getBytes());
+                logger.info("created:\n  " + dest);
+            } catch (IOException ioe) {
+                logger.log(Level.WARNING, "error writing file " + dest, ioe);
+            }
+        } else {
+            logger.info("no placement for episode " + episode);
+        }
+    }
+
     /**
      * @return a string displaying attributes of this object
      */
