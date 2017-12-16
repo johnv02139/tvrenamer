@@ -63,4 +63,12 @@ public class ItemState {
         }
         return state.ordering;
     }
+
+    public static Status getImageStatus(final Image img) {
+        ItemState state = IMAGES.get(img);
+        if (state == null) {
+            return Status.FAIL;
+        }
+        return state.status;
+    }
 }
