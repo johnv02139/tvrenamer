@@ -2,6 +2,7 @@ package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
 import static org.tvrenamer.view.Columns.*;
+import static org.tvrenamer.view.Columns.AvailableColumn.*;
 import static org.tvrenamer.view.UIUtils.showMessageBox;
 
 import org.eclipse.swt.SWT;
@@ -62,6 +63,7 @@ import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Environment;
 
 import java.text.Collator;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -100,6 +102,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         episodeMap.preload();
     }
 
+    public Table getTable() {
+        return swtTable;
+    }
+
     Display getDisplay() {
         return display;
     }
@@ -112,34 +118,49 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         return taskItem;
     }
 
-    private static String getCellText(final TableItem item, final int columnId) {
-        return item.getText(columnId);
+    private static String getCellText(final TableItem item, final Column column) {
+        return item.getText(column.index);
     }
 
     private static void setCellText(final TableItem item,
-                                    final int columnId,
+                                    final Column column,
                                     final String newText)
     {
-        item.setText(columnId, newText);
+        item.setText(column.index, newText);
     }
 
-    private static Image getCellImage(final TableItem item, final int columnId) {
-        return item.getImage(columnId);
+    private static Image getCellImage(final TableItem item, final Column column) {
+        return item.getImage(column.index);
     }
 
     private static void setCellImage(final TableItem item,
-                                     final int columnId,
+                                     final Column column,
                                      final Image newImage)
     {
-        item.setImage(columnId, newImage);
+        item.setImage(column.index, newImage);
+    }
+
+    private static void setCellImage(final TableItem item,
+                                     final AvailableColumn columnId,
+                                     final Image newImage)
+    {
+        item.setImage(Columns.getColumnIndex(columnId), newImage);
     }
 
     private static void setEditor(final TableItem item,
-                                  final int columnId,
+                                  final Column column,
                                   final TableEditor editor,
                                   final Control control)
     {
-        editor.setEditor(control, item, columnId);
+        editor.setEditor(control, item, column.index);
+    }
+
+    private static void setEditor(final TableItem item,
+                                  final AvailableColumn columnId,
+                                  final TableEditor editor,
+                                  final Control control)
+    {
+        editor.setEditor(control, item, Columns.getColumnIndex(columnId));
     }
 
     private void deleteItemCombo(final TableItem item) {
@@ -153,12 +174,13 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void setComboBoxProposedDest(final TableItem item,
+                                         final Column destColumn,
                                          final FileEpisode ep,
                                          final List<String> options)
     {
         int chosen = ep.getChosenEpisode();
         String defaultOption = options.get(chosen);
-        setCellText(item, NEW_FILENAME_COLUMN, defaultOption);
+        setCellText(item, destColumn, defaultOption);
 
         final Combo combo = new Combo(swtTable, SWT.DROP_DOWN | SWT.READ_ONLY);
         options.forEach(combo::add);
@@ -168,7 +190,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
 
         final TableEditor editor = new TableEditor(swtTable);
         editor.grabHorizontal = true;
-        setEditor(item, NEW_FILENAME_COLUMN, editor, combo);
+        setEditor(item, destColumn, editor, combo);
     }
 
     /**
@@ -185,32 +207,36 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private void setProposedDestColumn(final TableItem item, final FileEpisode ep) {
         deleteItemCombo(item);
 
+        Column destColumn = Columns.getColumnWrapper(NEW_FILENAME_COLUMN);
         int nOptions = ep.optionCount();
         if (nOptions > 1) {
             final List<String> options = ep.getReplacementOptions();
-            setComboBoxProposedDest(item, ep, options);
+            setComboBoxProposedDest(item, destColumn, ep, options);
         } else if (nOptions == 1) {
-            setCellText(item, NEW_FILENAME_COLUMN, ep.getReplacementText());
+            setCellText(item, destColumn, ep.getReplacementText());
         } else {
-            setCellText(item, NEW_FILENAME_COLUMN, ep.getReplacementText());
+            setCellText(item, destColumn, ep.getReplacementText());
             item.setChecked(false);
         }
     }
 
     public void refreshAll() {
         logger.info("Refreshing table");
+
+        Column filenameColumn = Columns.getColumnWrapper(CURRENT_FILE_COLUMN);
         for (TableItem item : swtTable.getItems()) {
-            String fileName = getCellText(item, CURRENT_FILE_COLUMN);
+            String fileName = getCellText(item, filenameColumn);
             FileEpisode episode = episodeMap.remove(fileName);
             episode.refreshReplacement();
             String newFileName = episode.getFilepath();
             episodeMap.put(newFileName, episode);
-            setCellText(item, CURRENT_FILE_COLUMN, newFileName);
+            setCellText(item, filenameColumn, newFileName);
             setProposedDestColumn(item, episode);
         }
     }
 
-    private void setColumnDestText(final TableColumn destinationColumn) {
+    private void setColumnDestText(final AvailableColumn columnId) {
+        final TableColumn destinationColumn = Columns.getTableColumn(columnId);
         if (prefs.isMoveEnabled()) {
             destinationColumn.setText(MOVE_HEADER);
         } else {
@@ -252,7 +278,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         if ((userPref == UserPreference.MOVE_ENABLED)
             || (userPref == UserPreference.RENAME_ENABLED))
         {
-            setColumnDestText(swtTable.getColumn(NEW_FILENAME_COLUMN));
+            setColumnDestText(NEW_FILENAME_COLUMN);
             setRenameButtonText(actionButton);
         }
         if ((userPref == UserPreference.REPLACEMENT_MASK)
@@ -286,13 +312,26 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     {
         TableItem item = new TableItem(tblResults, SWT.NONE);
 
-        // Initially we add items to the table unchecked.  When we successfully obtain enough
-        // information about the episode to determine how to rename it, the check box will
-        // automatically be activated.
-        item.setChecked(false);
-        setCellText(item, CURRENT_FILE_COLUMN, fileName);
-        setProposedDestColumn(item, episode);
-        setCellImage(item, STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
+        Collection<Column> columns = Columns.getActiveColumns();
+        for (Column column : columns) {
+            switch (column.id) {
+                case CHECKBOX_COLUMN:
+                    // Initially we add items to the table unchecked.  When we successfully
+                    // obtain enough information about the episode to determine how to
+                    // rename it, the check box will automatically be selected.
+                    item.setChecked(false);
+                    break;
+                case STATUS_COLUMN:
+                    setCellImage(item, column, FileMoveIcon.DOWNLOADING.icon);
+                    break;
+                case CURRENT_FILE_COLUMN:
+                    setCellText(item, column, fileName);
+                    break;
+                default:
+                    setProposedDestColumn(item, episode);
+            }
+        }
+
         return item;
     }
 
@@ -406,7 +445,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                         display.asyncExec(() -> {
                             if (tableContainsTableItem(item)) {
                                 setProposedDestColumn(item, episode);
-                                item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
+                                setCellImage(item, STATUS_COLUMN, FileMoveIcon.ADDED.icon);
                             }
                         });
                         if (show.isValidSeries()) {
@@ -446,9 +485,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
 
         final List<FileMover> pendingMoves = new LinkedList<>();
+        Column filenameColumn = Columns.getColumnWrapper(CURRENT_FILE_COLUMN);
         for (final TableItem item : swtTable.getItems()) {
             if (item.getChecked()) {
-                String fileName = getCellText(item, CURRENT_FILE_COLUMN);
+                String fileName = getCellText(item, filenameColumn);
                 final FileEpisode episode = episodeMap.get(fileName);
                 // Skip files not successfully downloaded and ready to be moved
                 if (episode.optionCount() == 0) {
@@ -467,11 +507,11 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         swtTable.setFocus();
     }
 
-    private static String itemDestDisplayedText(final TableItem item) {
+    private static String itemDestDisplayedText(final TableItem item, final Column column) {
         synchronized (item) {
             final Object data = item.getData();
             if (data == null) {
-                return getCellText(item, NEW_FILENAME_COLUMN);
+                return getCellText(item, column);
             }
             final Combo combo = (Combo) data;
             final int selected = combo.getSelectionIndex();
@@ -480,8 +520,8 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
-    private static String getItemTextValue(final TableItem item, final int column) {
-        switch (column) {
+    private static String getItemTextValue(final TableItem item, final Column column) {
+        switch (column.id) {
             case CHECKBOX_COLUMN:
                 return (item.getChecked()) ? "0" : "1";
             case STATUS_COLUMN:
@@ -491,7 +531,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                 // same status.  I don't think it matters what order they're in.
                 return getCellImage(item, column).toString();
             case NEW_FILENAME_COLUMN:
-                return itemDestDisplayedText(item);
+                return itemDestDisplayedText(item, column);
             default:
                 return getCellText(item, column);
         }
@@ -512,10 +552,21 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         int oldStyle = oldItem.getStyle();
 
         TableItem item = new TableItem(swtTable, oldStyle, positionToInsert);
-        item.setChecked(wasChecked);
-        setCellText(item, CURRENT_FILE_COLUMN, getCellText(oldItem, CURRENT_FILE_COLUMN));
-        setCellText(item, NEW_FILENAME_COLUMN, getCellText(oldItem, NEW_FILENAME_COLUMN));
-        setCellImage(item, STATUS_COLUMN, getCellImage(oldItem, STATUS_COLUMN));
+
+        Collection<Column> columns = Columns.getActiveColumns();
+        for (Column column : columns) {
+            switch (column.id) {
+                case CHECKBOX_COLUMN:
+                    item.setChecked(wasChecked);
+                    break;
+                case STATUS_COLUMN:
+                    setCellImage(item, column, getCellImage(oldItem, column));
+                    break;
+                default:
+                    setCellText(item, column, getCellText(oldItem, column));
+                    break;
+            }
+        }
 
         final Object itemData = oldItem.getData();
 
@@ -534,24 +585,19 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      * Sort the table by the given column in the given direction.
      *
      * @param column
-     *    the TableColumn to sort by
+     *    the Column to sort by
      * @param sortDirection
      *    the direction to sort by; SWT.UP means sort A-Z, while SWT.DOWN is Z-A
      */
-    private void sortTable(final TableColumn column, final int sortDirection) {
-        final int columnNum = swtTable.indexOf(column);
-        if (ITEM_NOT_IN_TABLE == columnNum) {
-            logger.severe("unable to locate column in table: " + column);
-            return;
-        }
+    private void sortTable(final Column column, final int sortDirection) {
         // Get the items
         TableItem[] items = swtTable.getItems();
 
         // Go through the item list and bubble rows up to the top as appropriate
         for (int i = 1; i < items.length; i++) {
-            String value1 = getItemTextValue(items[i], columnNum);
+            String value1 = getItemTextValue(items[i], column);
             for (int j = 0; j < i; j++) {
-                String value2 = getItemTextValue(items[j], columnNum);
+                String value2 = getItemTextValue(items[j], column);
                 // Compare the two values and order accordingly
                 int comparison = COLLATOR.compare(value1, value2);
                 if (((comparison < 0) && (sortDirection == SWT.UP))
@@ -567,7 +613,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
             }
         }
         swtTable.setSortDirection(sortDirection);
-        swtTable.setSortColumn(column);
+        swtTable.setSortColumn(column.swtColumn);
     }
 
     /**
@@ -577,32 +623,23 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      * sorted by, then the effect is to reverse the ordering of the sort.
      *
      * @param column
-     *    the TableColumn to sort by
+     *    the Column to sort by
      */
-    void sortTable(final TableColumn column) {
-        final int columnNum = swtTable.indexOf(column);
-        if (ITEM_NOT_IN_TABLE == columnNum) {
-            logger.severe("unable to locate column in table: " + column);
-            return;
-        }
-        int sortDirection = SWT.UP;
-        TableColumn previousSort = swtTable.getSortColumn();
-        if (column.equals(previousSort)) {
-            sortDirection = swtTable.getSortDirection() == SWT.DOWN ? SWT.UP : SWT.DOWN;
-        }
-        sortTable(column, sortDirection);
+    void sortTable(final Column column) {
+        sortTable(column, column.updateSortDirection());
     }
 
-    private void deleteTableItem(final TableItem item) {
+    private void deleteTableItem(final TableItem item, String filename) {
         deleteItemCombo(item);
-        episodeMap.remove(getCellText(item, CURRENT_FILE_COLUMN));
+        episodeMap.remove(filename);
         item.dispose();
     }
 
     public void finishMove(final TableItem item, final boolean success) {
         if (success) {
             if (prefs.isDeleteRowAfterMove()) {
-                deleteTableItem(item);
+                Column filenameColumn = Columns.getColumnWrapper(CURRENT_FILE_COLUMN);
+                deleteTableItem(item, getCellText(item, filenameColumn));
             }
         } else {
             logger.info("failed to move item: " + item);
@@ -660,8 +697,9 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         clearFilesButton.setText("Clear List");
         clearFilesButton.addSelectionListener(new SelectionAdapter() {
             public void widgetSelected(SelectionEvent e) {
+                Column filenameColumn = Columns.getColumnWrapper(CURRENT_FILE_COLUMN);
                 for (final TableItem item : swtTable.getItems()) {
-                    deleteTableItem(item);
+                    deleteTableItem(item, getCellText(item, filenameColumn));
                 }
             }
         });
@@ -690,9 +728,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void deleteSelectedTableItems() {
+        Column filenameColumn = Columns.getColumnWrapper(CURRENT_FILE_COLUMN);
         for (final TableItem item : swtTable.getSelection()) {
             int index = getTableItemIndex(item);
-            deleteTableItem(item);
+            deleteTableItem(item, getCellText(item, filenameColumn));
 
             if (ITEM_NOT_IN_TABLE == index) {
                 logger.info("error: somehow selected item not found in table");
@@ -738,9 +777,9 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         gridData.horizontalSpan = 3;
         swtTable.setLayoutData(gridData);
 
-        Columns.createColumns(this, swtTable);
-        setColumnDestText(swtTable.getColumn(NEW_FILENAME_COLUMN));
-        swtTable.setSortColumn(swtTable.getColumn(CURRENT_FILE_COLUMN));
+        Columns.createColumns(this);
+        setColumnDestText(NEW_FILENAME_COLUMN);
+        swtTable.setSortColumn(Columns.getTableColumn(CURRENT_FILE_COLUMN));
         swtTable.setSortDirection(SWT.UP);
 
         // Allow deleting of elements
