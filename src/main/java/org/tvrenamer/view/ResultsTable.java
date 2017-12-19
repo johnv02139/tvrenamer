@@ -53,6 +53,7 @@ import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FailedShow;
 import org.tvrenamer.model.FileEpisode;
+import org.tvrenamer.model.FileMoveStatus;
 import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.Show;
@@ -131,6 +132,80 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                                      final ItemState.Status newStatus)
     {
         item.setImage(columnId, ItemState.getIcon(newStatus));
+    }
+
+    private static String getCellText(final TableItem item, final int columnId) {
+        return item.getText(columnId);
+    }
+
+    private static void setCellText(final TableItem item,
+                                    final int columnId,
+                                    final String newText)
+    {
+        item.setText(columnId, newText);
+    }
+
+    private static void setEditor(final TableItem item,
+                                  final int columnId,
+                                  final TableEditor editor,
+                                  final Control control)
+    {
+        editor.setEditor(control, item, columnId);
+    }
+
+    private static Image getCellImage(final TableItem item, final int columnId) {
+        return item.getImage(columnId);
+    }
+
+    private static void setCellImage(final TableItem item,
+                                     final int columnId,
+                                     final Image newImage)
+    {
+        item.setImage(columnId, newImage);
+    }
+
+    private static void setCellImage(final TableItem item,
+                                     final int columnId,
+                                     final ItemStatus.Icon newStatus)
+    {
+        item.setImage(columnId, ItemStatus.getImage(newStatus));
+    }
+
+    private static String getCellText(final TableItem item, final int columnId) {
+        return item.getText(columnId);
+    }
+
+    private static void setCellText(final TableItem item,
+                                    final int columnId,
+                                    final String newText)
+    {
+        item.setText(columnId, newText);
+    }
+
+    private static void setEditor(final TableItem item,
+                                  final int columnId,
+                                  final TableEditor editor,
+                                  final Control control)
+    {
+        editor.setEditor(control, item, columnId);
+    }
+
+    private static Image getCellImage(final TableItem item, final int columnId) {
+        return item.getImage(columnId);
+    }
+
+    private static void setCellImage(final TableItem item,
+                                     final int columnId,
+                                     final Image newImage)
+    {
+        item.setImage(columnId, newImage);
+    }
+
+    private static void setCellImage(final TableItem item,
+                                     final int columnId,
+                                     final FileMoveStatus newStatus)
+    {
+        item.setImage(columnId, UIUtils.getImage(newStatus));
     }
 
     private static String getCellText(final TableItem item, final int columnId) {
