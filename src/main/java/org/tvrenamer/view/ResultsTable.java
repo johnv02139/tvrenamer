@@ -593,6 +593,14 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         // Get the items
         TableItem[] items = swtTable.getItems();
 
+        TableColumn previousSort = swtTable.getSortColumn();
+        if (column.swtColumn.equals(previousSort)) {
+            for (int i = 0; i < items.length; i++) {
+                setSortedItem(items[i], 0);
+            }
+            items = swtTable.getItems();
+        }
+
         // Go through the item list and bubble rows up to the top as appropriate
         for (int i = 1; i < items.length; i++) {
             String value1 = getItemTextValue(items[i], column);
