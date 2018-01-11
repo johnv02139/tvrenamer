@@ -263,6 +263,11 @@ public class FileEpisode {
         }
     }
 
+    @SuppressWarnings("unused")
+    public String getBasename() {
+        return baseForRename;
+    }
+
     public String getFilenameSuffix() {
         return filenameSuffix;
     }
