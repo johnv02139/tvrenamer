@@ -2,6 +2,7 @@ package org.tvrenamer.model;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -125,6 +126,48 @@ public class Folder {
      */
     public Path getRelativePath() {
         return getRoot().relativize(realpath);
+    }
+
+    /**
+     * See {@link getRoot}
+     *
+     * @param location the file that we want the root of
+     * @return the "root" folder that caused this Folder to be added
+     */
+    public static Folder folderTree(Path location) {
+        if (location == null) {
+            return null;
+        }
+
+        Path realpath = null;
+        try {
+            realpath = location.toRealPath();
+        } catch (IOException ioe) {
+            if (Files.notExists(location)) {
+                logger.warning("cannot find tree of nonexstent file: " + location);
+                return null;
+            }
+            logger.warning("can't get tree of " + location + " due to I/O exception");
+            return null;
+        }
+
+        Folder leafFolder = null;
+        if (Files.isDirectory(realpath)) {
+            leafFolder = getFolder(realpath);
+        } else {
+            final Path parent = realpath.getParent();
+            leafFolder = ALL_FOLDERS.get(parent);
+        }
+        if (leafFolder == null) {
+            logger.warning("not found in Folders: " + location);
+            return null;
+        }
+
+        while (leafFolder.parent != null) {
+            leafFolder = leafFolder.parent;
+        }
+
+        return leafFolder;
     }
 
     /**
