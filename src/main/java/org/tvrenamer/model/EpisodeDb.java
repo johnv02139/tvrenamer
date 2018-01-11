@@ -156,19 +156,6 @@ public class EpisodeDb implements Observer {
         }
     }
 
-    private void addFileToQueue(final Queue<FileEpisode> contents,
-                                final Path realpath)
-    {
-        final String key = realpath.toString();
-        if (episodes.containsKey(key)) {
-            logger.info("already in table: " + key);
-        } else {
-            FileEpisode ep = createFileEpisode(realpath);
-            put(key, ep);
-            contents.add(ep);
-        }
-    }
-
     private void addFileIfVisible(final Queue<FileEpisode> contents,
                                   final Folder root,
                                   final Path subpath)
