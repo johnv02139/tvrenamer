@@ -410,6 +410,41 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
+    public static void setTableItemStatus(Display display, final TableItem item, final FileMoveIcon fmi) {
+        if (display.isDisposed()) {
+            return;
+        }
+        display.asyncExec(new Runnable() {
+            @Override
+            public void run() {
+                if (item.isDisposed()) {
+                    return;
+                }
+                setCellImage(item, STATUS_COLUMN, fmi.icon);
+            }
+        });
+    }
+
+    TableColumn makeTableColumn(String label, int width, int style) {
+        TableColumn col = new TableColumn(swtTable, style);
+        col.setText(label);
+        col.setWidth(width);
+
+        return col;
+    }
+
+    public TableItem findItem(final FileEpisode ep) {
+        String filename = ep.getFilepath();
+        Column filenameColumn = Columns.getColumnWrapper(CURRENT_FILE_COLUMN);
+        for (final TableItem item : swtTable.getItems()) {
+            if (filename.equals(getCellText(item, filenameColumn))) {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
     private TableItem createTableItem(final Table tblResults, final String fileName,
                                       final FileEpisode episode)
     {
