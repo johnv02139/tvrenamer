@@ -134,6 +134,14 @@ class UIUtils {
         return readImageFromPath(resourcePath, ICON_PARENT_DIRECTORY + "/" + resourcePath);
     }
 
+    @SuppressWarnings("unused")
+    public static void handleNoConnection(Exception exception) {
+        String message = "Unable connect to the TV listing website, please check your internet connection.  "
+            + "\nNote that proxies are not currently supported.";
+        logger.log(Level.WARNING, message, exception);
+        showMessageBox(SWTMessageBoxType.ERROR, "Error", message);
+    }
+
     public static void checkDestinationDirectory() {
         boolean success = prefs.ensureDestDir();
         if (!success) {

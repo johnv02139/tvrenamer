@@ -87,10 +87,12 @@ public class EpisodeDb implements Observer {
         return episodes.remove(key);
     }
 
+    @SuppressWarnings("unused")
     public boolean remove(String key, FileEpisode value) {
         return episodes.remove(key, value);
     }
 
+    @SuppressWarnings("unused")
     public boolean replaceKey(String oldKey, FileEpisode ep, String newKey) {
         if (ep == null) {
             throw new IllegalStateException("cannot have null value in EpisodeDb!!!");
