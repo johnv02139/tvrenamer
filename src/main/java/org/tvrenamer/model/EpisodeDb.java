@@ -55,6 +55,8 @@ public class EpisodeDb implements Observer {
         final FileEpisode episode = new FileEpisode(path);
         episode.setIgnoreReason(ignorableReason(path.toString()));
         if (!episode.wasParsed()) {
+            // We're putting the episode in the table anyway, but it's
+            // not much use.  TODO: make better use of it.
             logger.warning("Couldn't parse file: " + path);
         }
         return episode;
@@ -65,7 +67,7 @@ public class EpisodeDb implements Observer {
     {
         Path path = parent.resolve(fileName);
         final FileEpisode episode = new FileEpisode(path);
-        episode.setIgnoreReason(ignorableReason(fileName.toString()));
+        episode.setIgnoreReason(ignorableReason(path.toString()));
         if (!episode.wasParsed()) {
             // We're putting the episode in the table anyway, but it's
             // not much use.  TODO: make better use of it.
@@ -166,13 +168,21 @@ public class EpisodeDb implements Observer {
     }
 
     private void addFileIfVisible(final Queue<FileEpisode> contents,
-                                  final Path path)
+                                  final Folder root,
+                                  final Path subpath)
     {
-        if (fileIsVisible(path) && Files.isRegularFile(path)) {
-            final Folder root = Folder.getFolder(path.getRoot());
-            final Path subpath = root.relativize(path);
-            logger.finer("for " + path + " adding as " + root + ", " + subpath);
-            addFileToQueue(contents, root, subpath, path);
+        final Path resolved = root.resolve(subpath);
+        if (fileIsVisible(resolved) && Files.isRegularFile(resolved)) {
+            addFileToQueue(contents, root, subpath, resolved);
+        }
+    }
+
+    private void addFileIfVisible(final Queue<FileEpisode> contents, final Path resolved) {
+        if (fileIsVisible(resolved) && Files.isRegularFile(resolved)) {
+            final Folder root = Folder.getFolder(resolved.getRoot());
+            final Path subpath = root.relativize(resolved);
+            logger.info("for " + resolved + " adding as " + root + ", " + subpath);
+            addFileToQueue(contents, root, subpath, resolved);
         }
     }
 
