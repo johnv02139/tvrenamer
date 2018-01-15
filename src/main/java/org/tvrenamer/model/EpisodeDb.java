@@ -7,18 +7,26 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
 
-public class EpisodeDb {
+public class EpisodeDb implements Observer {
 
     private static final Logger logger = Logger.getLogger(EpisodeDb.class.getName());
+    private static final UserPreferences prefs = UserPreferences.getInstance();
 
     private final Map<String, FileEpisode> episodes = new ConcurrentHashMap<>(1000);
-    private final UserPreferences prefs = UserPreferences.getInstance();
+    private List<String> ignoreKeywords = prefs.getIgnoreKeywords();
+
+    public EpisodeDb() {
+        prefs.addObserver(this);
+    }
 
     public void put(String key, FileEpisode value) {
         if (value == null) {
@@ -34,15 +42,23 @@ public class EpisodeDb {
         episodes.put(key, value);
     }
 
+    private String ignorableReason(String fileName) {
+        for (String ignoreKeyword : ignoreKeywords) {
+            if (fileName.contains(ignoreKeyword)) {
+                return ignoreKeyword;
+            }
+        }
+        return null;
+    }
+
     private FileEpisode add(final String pathname) {
         Path path = Paths.get(pathname);
         final FileEpisode episode = new FileEpisode(path);
+        episode.setIgnoreReason(ignorableReason(pathname));
         if (!episode.wasParsed()) {
-            // TODO: we can add these episodes to the table anyway,
-            // to provide information to the user, and in the future,
-            // to let them help us parse the filenames.
-            logger.severe("Couldn't parse file: " + pathname);
-            return null;
+            // We're putting the episode in the table anyway, but it's
+            // not much use.  TODO: make better use of it.
+            logger.warning("Couldn't parse file: " + pathname);
         }
         put(pathname, episode);
         return episode;
@@ -88,9 +104,7 @@ public class EpisodeDb {
             logger.info("already in table: " + key);
         } else {
             FileEpisode ep = add(key);
-            if (ep != null) {
-                contents.add(ep);
-            }
+            contents.add(ep);
         }
     }
 
@@ -210,6 +224,23 @@ public class EpisodeDb {
             if (preload != null) {
                 // TODO: do in separate thread
                 addFolderToQueue(preload);
+            }
+        }
+    }
+
+    @Override
+    public void update(Observable observable, Object value) {
+        if (value instanceof UserPreference) {
+            UserPreference userPref = (UserPreference) value;
+            if ((userPref == UserPreference.IGNORE_REGEX) && (observable instanceof UserPreferences)) {
+                UserPreferences observed = (UserPreferences) observable;
+                ignoreKeywords = observed.getIgnoreKeywords();
+                for (FileEpisode ep : episodes.values()) {
+                    ep.setIgnoreReason(ignorableReason(ep.getFilepath()));
+                }
+                for (AddEpisodeListener listener : listeners) {
+                    listener.refreshAll();
+                }
             }
         }
     }

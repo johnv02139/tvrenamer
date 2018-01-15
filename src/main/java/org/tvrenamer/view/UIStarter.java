@@ -11,7 +11,6 @@ import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 
 import org.tvrenamer.model.SWTMessageBoxType;
-import org.tvrenamer.model.UserPreferences;
 
 import java.io.InputStream;
 import java.util.logging.Level;
@@ -24,28 +23,6 @@ public final class UIStarter {
     Display display;
 
     private ResultsTable resultsTable;
-
-    private void init() {
-        // Setup display and shell
-        GridLayout shellGridLayout = new GridLayout(3, false);
-        Display.setAppName(APPLICATION_NAME);
-        display = new Display();
-
-        shell = new Shell(display);
-        shell.setText(APPLICATION_NAME);
-        shell.setLayout(shellGridLayout);
-
-        // Setup the util class
-        UIUtils.setShell(shell);
-        UIUtils.checkDestinationDirectory(UserPreferences.getInstance());
-
-        // Create the main window
-        resultsTable = new ResultsTable(this);
-
-        setupIcons();
-
-        shell.pack(true);
-    }
 
     void uiCleanup() {
         shell.dispose();
@@ -64,6 +41,28 @@ public final class UIStarter {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void init() {
+        // Setup display and shell
+        GridLayout shellGridLayout = new GridLayout(3, false);
+        Display.setAppName(APPLICATION_NAME);
+        display = new Display();
+
+        shell = new Shell(display);
+        shell.setText(APPLICATION_NAME);
+        shell.setLayout(shellGridLayout);
+
+        // Setup the util class
+        UIUtils.setShell(shell);
+        UIUtils.checkDestinationDirectory();
+
+        // Create the main window
+        resultsTable = new ResultsTable(this);
+
+        setupIcons();
+
+        shell.pack(true);
     }
 
     private int launch() {

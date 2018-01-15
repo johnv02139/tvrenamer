@@ -94,6 +94,9 @@ public class Constants {
     public static final String RECURSE_FOLDERS_TEXT = "Recursively add shows in subdirectories [?]";
     public static final String RECURSE_FOLDERS_TOOLTIP = "If unchecked, do not look into subfolders "
         + "for shows to add";
+    public static final String REMOVE_EMPTIED_TEXT = "Remove emptied directories [?]";
+    public static final String REMOVE_EMPTIED_TOOLTIP = "When selected, directories which become empty "
+        + "due to file movement will be deleted.";
     public static final String CHECK_UPDATES_TEXT = "Check for Updates at startup [?]";
     public static final String CHECK_UPDATES_TOOLTIP = "If checked, will automatically check "
         + APPLICATION_NAME + " website for new versions at startup, and offer to update if found";
@@ -165,7 +168,7 @@ public class Constants {
     public static final String EPISODE_NOT_FOUND = "Could not get episode for show";
     public static final String BROKEN_PLACEHOLDER_FILENAME = "Unable to find show information";
     public static final String DOWNLOADING_FAILED = "Downloading show listings failed";
-    public static final String BAD_PARSE_MESSAGE = "Could not find show name in filename";
+    public static final String BAD_PARSE_MESSAGE = "Did not extract show name from filename";
     public static final String DOWNLOADING_FAILED_MESSAGE = DOWNLOADING_FAILED
         + ".  Check internet connection";
     public static final String FILE_EPISODE_NEEDS_PATH = "cannot create FileEpisode with no path";
