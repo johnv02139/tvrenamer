@@ -654,16 +654,6 @@ class PreferencesDialog extends Dialog {
      */
     private void applyPreferences() {
         // Update the preferences object from the UI control values
-        prefs.setSeasonPrefix(seasonPrefixString);
-        prefs.setSeasonPrefixLeadingZero(seasonPrefixLeadingZeroCheckbox.getSelection());
-        prefs.setRenameReplacementString(replacementStringText.getText());
-        prefs.setIgnoreKeywords(ignoreWordsText.getText());
-        prefs.setCheckForUpdates(checkForUpdatesCheckbox.getSelection());
-        prefs.setRecursivelyAddFolders(recurseFoldersCheckbox.getSelection());
-        prefs.setRemoveEmptiedDirectories(rmdirEmptyCheckbox.getSelection());
-        prefs.setDeleteRowAfterMove(deleteRowsCheckbox.getSelection());
-        prefs.setDestinationDirectory(destDirText.getText());
-
         boolean isRenameSelected = renameSelectedCheckbox.getSelection();
         // Note, it is important to do the "enable" (true) before the "disable" (false),
         // because we cannot disable both even momentarily.
@@ -682,6 +672,19 @@ class PreferencesDialog extends Dialog {
             prefs.setRenameSelected(true);
             prefs.setMoveSelected(false);
         }
+
+        prefs.slam(new UserPreferences.Builder()
+                   .destinationDirectory(destDirText.getText())
+                   .seasonPrefix(seasonPrefixString)
+                   .seasonPrefixLeadingZero(seasonPrefixLeadingZeroCheckbox.getSelection())
+                   .moveEnabled(moveSelectedCheckbox.getSelection())
+                   .renameEnabled(renameSelectedCheckbox.getSelection())
+                   .removeEmptiedDirectories(rmdirEmptyCheckbox.getSelection())
+                   .deleteRowAfterMove(deleteRowsCheckbox.getSelection())
+                   .renameReplacementMask(replacementStringText.getText())
+                   .checkForUpdates(checkForUpdatesCheckbox.getSelection())
+                   .recursivelyAddFolders(recurseFoldersCheckbox.getSelection())
+                   .ignoreKeywordsString(ignoreWordsText.getText()));
     }
 
     /**

@@ -605,4 +605,232 @@ public class UserPreferences extends Observable {
             + ",\n  deleteRowAfterMove=" + deleteRowAfterMove
             + ",\n  setRecursivelyAddFolders=" + recursivelyAddFolders + "]";
     }
+
+    public static class Builder {
+        String destinationDirectory = null;
+        String seasonPrefix = null;
+        Boolean seasonPrefixLeadingZero = null;
+        Boolean moveEnabled = null;
+        Boolean renameEnabled = null;
+        Boolean removeEmptiedDirectories = null;
+        Boolean deleteRowAfterMove = null;
+        String renameReplacementMask = null;
+        Boolean checkForUpdates = null;
+        Boolean recursivelyAddFolders = null;
+        String ignoreKeywordsString = null;
+
+        public Builder() {
+        }
+
+        public Builder destinationDirectory(String val) {
+            if (destinationDirectory == null) {
+                destinationDirectory = val;
+            } else {
+                throw new IllegalStateException("cannot re-set destinationDirectory");
+            }
+            return this;
+        }
+
+        public String getDestinationDirectory() {
+            if (destinationDirectory == null) {
+                return DEFAULT_DESTINATION_DIRECTORY.toString();
+            } else {
+                return destinationDirectory;
+            }
+        }
+
+        public Builder seasonPrefix(String val) {
+            if (seasonPrefix == null) {
+                seasonPrefix = val;
+            } else {
+                throw new IllegalStateException("cannot re-set seasonPrefix");
+            }
+            return this;
+        }
+
+        public String getSeasonPrefix() {
+            if (seasonPrefix == null) {
+                return DEFAULT_SEASON_PREFIX;
+            } else {
+                return seasonPrefix;
+            }
+        }
+
+        public Builder seasonPrefixLeadingZero(boolean val) {
+            if (seasonPrefixLeadingZero == null) {
+                seasonPrefixLeadingZero = val;
+            } else {
+                throw new IllegalStateException("cannot re-set seasonPrefixLeadingZero");
+            }
+            return this;
+        }
+
+        public boolean getSeasonPrefixLeadingZero() {
+            if (seasonPrefixLeadingZero == null) {
+                return false;
+            } else {
+                return seasonPrefixLeadingZero;
+            }
+        }
+
+        public Builder moveEnabled(boolean val) {
+            if (moveEnabled == null) {
+                moveEnabled = val;
+            } else {
+                throw new IllegalStateException("cannot re-set moveEnabled");
+            }
+            return this;
+        }
+
+        public boolean getMoveEnabled() {
+            if (moveEnabled == null) {
+                return false;
+            } else {
+                return moveEnabled;
+            }
+        }
+
+        public Builder renameEnabled(boolean val) {
+            if (renameEnabled == null) {
+                renameEnabled = val;
+            } else {
+                throw new IllegalStateException("cannot re-set renameEnabled");
+            }
+            return this;
+        }
+
+        public boolean getRenameEnabled() {
+            if (renameEnabled == null) {
+                return true;
+            } else {
+                return renameEnabled;
+            }
+        }
+
+        public Builder removeEmptiedDirectories(boolean val) {
+            if (removeEmptiedDirectories == null) {
+                removeEmptiedDirectories = val;
+            } else {
+                throw new IllegalStateException("cannot re-set removeEmptiedDirectories");
+            }
+            return this;
+        }
+
+        public boolean getRemoveEmptiedDirectories() {
+            if (removeEmptiedDirectories == null) {
+                return true;
+            } else {
+                return removeEmptiedDirectories;
+            }
+        }
+
+        public Builder deleteRowAfterMove(boolean val) {
+            if (deleteRowAfterMove == null) {
+                deleteRowAfterMove = val;
+            } else {
+                throw new IllegalStateException("cannot re-set deleteRowAfterMove");
+            }
+            return this;
+        }
+
+        public boolean getDeleteRowAfterMove() {
+            if (deleteRowAfterMove == null) {
+                return false;
+            } else {
+                return deleteRowAfterMove;
+            }
+        }
+
+        public Builder renameReplacementMask(String val) {
+            if (renameReplacementMask == null) {
+                renameReplacementMask = val;
+            } else {
+                throw new IllegalStateException("cannot re-set renameReplacementMask");
+            }
+            return this;
+        }
+
+        public String getRenameReplacementMask() {
+            if (renameReplacementMask == null) {
+                return DEFAULT_REPLACEMENT_MASK;
+            } else {
+                return renameReplacementMask;
+            }
+        }
+
+        public Builder checkForUpdates(boolean val) {
+            if (checkForUpdates == null) {
+                checkForUpdates = val;
+            } else {
+                throw new IllegalStateException("cannot re-set checkForUpdates");
+            }
+            return this;
+        }
+
+        public boolean getCheckForUpdates() {
+            if (checkForUpdates == null) {
+                return true;
+            } else {
+                return checkForUpdates;
+            }
+        }
+
+        public Builder recursivelyAddFolders(boolean val) {
+            if (recursivelyAddFolders == null) {
+                recursivelyAddFolders = val;
+            } else {
+                throw new IllegalStateException("cannot re-set recursivelyAddFolders");
+            }
+            return this;
+        }
+
+        public boolean getRecursivelyAddFolders() {
+            if (recursivelyAddFolders == null) {
+                return true;
+            } else {
+                return recursivelyAddFolders;
+            }
+        }
+
+        public Builder ignoreKeywordsString(String val) {
+            if (ignoreKeywordsString == null) {
+                ignoreKeywordsString = val;
+            } else {
+                throw new IllegalStateException("cannot re-set ignoreKeywordsString");
+            }
+            return this;
+        }
+
+        public String getIgnoreKeywordsString() {
+            if (ignoreKeywordsString == null) {
+                return DEFAULT_IGNORED_KEYWORD;
+            } else {
+                return ignoreKeywordsString;
+            }
+        }
+    }
+
+    /**
+     * Use the Builder to set all the values of INSTANCE at once
+     *
+     * @param builder
+     *   the Builder holding the values to slam in
+     */
+    public synchronized void slam(Builder builder) {
+        // Update the preferences object from the UI control values
+        setMoveSelected(builder.getMoveEnabled());
+        setSeasonPrefix(builder.getSeasonPrefix());
+        setSeasonPrefixLeadingZero(builder.getSeasonPrefixLeadingZero());
+        setRenameReplacementString(builder.getRenameReplacementMask());
+        setIgnoreKeywords(builder.getIgnoreKeywordsString());
+        setRenameSelected(builder.getRenameEnabled());
+
+        setCheckForUpdates(builder.getCheckForUpdates());
+        setRecursivelyAddFolders(builder.getRecursivelyAddFolders());
+        setRemoveEmptiedDirectories(builder.getRemoveEmptiedDirectories());
+        setDeleteRowAfterMove(builder.getDeleteRowAfterMove());
+        setDestinationDirectory(builder.getDestinationDirectory());
+
+        UserPreferences.store(this);
+    }
 }
