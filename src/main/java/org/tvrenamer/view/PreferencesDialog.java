@@ -474,7 +474,7 @@ class PreferencesDialog extends Dialog {
             prefs.setMoveEnabled(false);
         }
 
-        UIStarter.checkDestinationDirectory(prefs);
+        UIUtils.checkDestinationDirectory(prefs);
 
         UserPreferences.store(prefs);
     }

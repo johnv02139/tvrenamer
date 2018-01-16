@@ -1,7 +1,7 @@
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
-import static org.tvrenamer.view.UIStarter.showMessageBox;
+import static org.tvrenamer.view.UIUtils.showMessageBox;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -16,8 +16,6 @@ import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
@@ -32,7 +30,6 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.ProgressBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
@@ -60,7 +57,6 @@ import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.model.util.Environment;
 
-import java.io.InputStream;
 import java.text.Collator;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,7 +64,6 @@ import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Queue;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class ResultsTable implements Observer, AddEpisodeListener {
@@ -81,6 +76,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private static final int STATUS_COLUMN = 3;
     private static final int ITEM_NOT_IN_TABLE = -1;
 
+    private final UIStarter ui;
     private Shell shell;
     private Display display;
     private List<String> ignoreKeywords;
@@ -98,34 +94,14 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
 
     private final EpisodeDb episodeMap = new EpisodeDb();
 
-    private void init() {
-        // load preferences
-        prefs = UserPreferences.getInstance();
+    void ready() {
         prefs.addObserver(this);
+        resultsTable.setFocus();
 
-        // Setup display and shell
-        GridLayout shellGridLayout = new GridLayout(3, false);
-        Display.setAppName(APPLICATION_NAME);
-        display = new Display();
-
-        shell = new Shell(display);
-
-        shell.setText(APPLICATION_NAME);
-        shell.setLayout(shellGridLayout);
-
-        // Setup the util class
-        UIStarter.setShell(shell);
-        UIStarter.checkDestinationDirectory(prefs);
-
-        // Add controls to main shell
-        setupMainWindow();
-        setupAddFilesDialog();
-        setupClearFilesButton();
-        setupMenuBar();
-
-        setupIcons();
-
-        shell.pack(true);
+        // Load the preload folder into the episode map, which will call
+        // us back with the list of files once they've been loaded.
+        episodeMap.subscribe(this);
+        episodeMap.preload();
     }
 
     private void setupUpdateStuff(final Composite parentComposite) {
@@ -141,6 +117,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                 display.asyncExec(() -> updatesAvailableLink.setVisible(true));
             }
         });
+    }
+
+    private void quit() {
+        ui.uiCleanup();
     }
 
     private void setupMainWindow() {
@@ -199,14 +179,9 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         quitButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                uiCleanup();
+                quit();
             }
         });
-    }
-
-    private void uiCleanup() {
-        shell.dispose();
-        display.dispose();
     }
 
     private void makeMenuItem(Menu parent, String text, Listener listener, char shortcut) {
@@ -222,7 +197,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
 
         Listener preferencesListener = e -> showPreferencesPane();
         Listener aboutListener = e -> showAboutPane();
-        Listener quitListener = e -> uiCleanup();
+        Listener quitListener = e -> quit();
 
         if (Environment.IS_MAC_OSX) {
             // Add the special Mac OSX Preferences, About and Quit menus.
@@ -433,20 +408,6 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         });
     }
 
-    private void setupIcons() {
-        try {
-            InputStream icon = getClass().getResourceAsStream(TVRENAMER_ICON_PATH);
-            if (icon != null) {
-                shell.setImage(new Image(display, icon));
-            } else {
-                shell.setImage(new Image(display, TVRENAMER_ICON_DIRECT_PATH));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     Display getDisplay() {
         return display;
     }
@@ -457,46 +418,6 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
 
     TaskItem getTaskItem() {
         return taskItem;
-    }
-
-    private int launch() {
-        try {
-            // place the window in the centre of the primary monitor
-            Monitor primary = display.getPrimaryMonitor();
-            Rectangle bounds = primary.getBounds();
-            Rectangle rect = shell.getBounds();
-            int x = bounds.x + (bounds.width - rect.width) - 5;
-            int y = bounds.y + (bounds.height - rect.height) - 35;
-            shell.setLocation(x, y);
-
-            // Start the shell
-            shell.pack();
-            shell.open();
-            resultsTable.setFocus();
-
-            // Load the preload folder into the episode map, which will call
-            // us back with the list of files once they've been loaded.
-            episodeMap.subscribe(this);
-            episodeMap.preload();
-
-            while (!shell.isDisposed()) {
-                if (!display.readAndDispatch()) {
-                    display.sleep();
-                }
-            }
-            return 0;
-        } catch (Exception exception) {
-            showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL, UNKNOWN_EXCEPTION, exception);
-            logger.log(Level.SEVERE, UNKNOWN_EXCEPTION, exception);
-            return 1;
-        }
-    }
-
-    public int run() {
-        init();
-        int rval = launch();
-        uiCleanup();
-        return rval;
     }
 
     /**
@@ -855,7 +776,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
 
         if (userPref == UserPreference.DEST_DIR) {
-            UIStarter.checkDestinationDirectory(observed);
+            UIUtils.checkDestinationDirectory(observed);
         }
     }
 
@@ -881,5 +802,17 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private void showAboutPane() {
         AboutDialog aboutDialog = new AboutDialog(shell);
         aboutDialog.open();
+    }
+
+    ResultsTable(UIStarter ui) {
+        this.ui = ui;
+        this.shell = ui.shell;
+        this.display = ui.display;
+        prefs = UserPreferences.getInstance();
+
+        setupMainWindow();
+        setupAddFilesDialog();
+        setupClearFilesButton();
+        setupMenuBar();
     }
 }

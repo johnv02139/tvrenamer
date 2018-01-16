@@ -3,7 +3,7 @@ package org.tvrenamer.controller;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.model.ShowStore;
-import org.tvrenamer.view.ResultsTable;
+import org.tvrenamer.view.UIStarter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +46,7 @@ class Launcher {
      */
     public static void main(String[] args) {
         initializeLogger();
-        ResultsTable ui = new ResultsTable();
+        UIStarter ui = new UIStarter();
         int status = ui.run();
         tvRenamerThreadShutdown();
         System.exit(status);

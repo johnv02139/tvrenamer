@@ -1,7 +1,7 @@
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
-import static org.tvrenamer.view.UIStarter.getDefaultSystemFont;
+import static org.tvrenamer.view.UIUtils.getDefaultSystemFont;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -45,10 +45,10 @@ final class AboutDialog extends Dialog {
             UpdateChecker.notifyOfUpdate(updateIsAvailable -> {
                 if (updateIsAvailable) {
                     logger.fine(NEW_VERSION_AVAILABLE);
-                    UIStarter.showMessageBox(SWTMessageBoxType.OK, NEW_VERSION_TITLE,
+                    UIUtils.showMessageBox(SWTMessageBoxType.OK, NEW_VERSION_TITLE,
                                            NEW_VERSION_AVAILABLE);
                 } else {
-                    UIStarter.showMessageBox(SWTMessageBoxType.WARNING, NO_NEW_VERSION_TITLE,
+                    UIUtils.showMessageBox(SWTMessageBoxType.WARNING, NO_NEW_VERSION_TITLE,
                                            NO_NEW_VERSION_AVAILABLE);
                 }
             });
@@ -109,7 +109,7 @@ final class AboutDialog extends Dialog {
         iconGridData.grabExcessVerticalSpace = false;
         iconGridData.grabExcessHorizontalSpace = false;
         iconLabel.setLayoutData(iconGridData);
-        iconLabel.setImage(UIStarter.readImageFromPath(TVRENAMER_ICON_PATH, TVRENAMER_ICON_DIRECT_PATH));
+        iconLabel.setImage(UIUtils.readImageFromPath(TVRENAMER_ICON_PATH, TVRENAMER_ICON_DIRECT_PATH));
 
         Label applicationLabel = new Label(aboutShell, SWT.NONE);
         applicationLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(),

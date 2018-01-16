@@ -14,6 +14,6 @@ public enum FileMoveIcon {
     public final Image icon;
 
     FileMoveIcon(String path) {
-        icon = UIStarter.readImageFromPath(path, Constants.ICON_PARENT_DIRECTORY + "/" + path);
+        icon = UIUtils.readImageFromPath(path, Constants.ICON_PARENT_DIRECTORY + "/" + path);
     }
 }

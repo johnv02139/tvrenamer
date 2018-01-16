@@ -1,133 +1,103 @@
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
+import static org.tvrenamer.view.UIUtils.showMessageBox;
 
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 
 import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.UserPreferences;
 
-import java.awt.HeadlessException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.swing.JOptionPane;
-
-class UIStarter {
+public final class UIStarter {
     private static final Logger logger = Logger.getLogger(UIStarter.class.getName());
 
-    private static Shell shell = null;
+    Shell shell;
+    Display display;
 
-    private UIStarter() {
-        // utility class; prevent instantiation
+    private ResultsTable resultsTable;
+
+    private void init() {
+        // Setup display and shell
+        GridLayout shellGridLayout = new GridLayout(3, false);
+        Display.setAppName(APPLICATION_NAME);
+        display = new Display();
+
+        shell = new Shell(display);
+        shell.setText(APPLICATION_NAME);
+        shell.setLayout(shellGridLayout);
+
+        // Setup the util class
+        UIUtils.setShell(shell);
+        UIUtils.checkDestinationDirectory(UserPreferences.getInstance());
+
+        // Create the main window
+        resultsTable = new ResultsTable(this);
+
+        setupIcons();
+
+        shell.pack(true);
     }
 
-    /**
-     * Give this class a pointer to the UI's shell.
-     *
-     * @param shell
-     *            the shell to use.
-     */
-    public static void setShell(Shell shell) {
-        UIStarter.shell = shell;
+    void uiCleanup() {
+        shell.dispose();
+        display.dispose();
     }
 
-    /**
-     * Determine the system default font
-     *
-     * @return the system default font
-     */
-    public static FontData getDefaultSystemFont() {
-        FontData defaultFont = null;
+    private void setupIcons() {
         try {
-            defaultFont = shell.getDisplay().getSystemFont().getFontData()[0];
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Error attempting to determine system default font", e);
-        }
-
-        return defaultFont;
-    }
-
-    public static void showMessageBox(final SWTMessageBoxType type, final String title,
-                                      final String message, final Exception exception)
-    {
-        if (shell == null) {
-            // Shell not established yet, try using JOptionPane instead
-            try {
-                JOptionPane.showMessageDialog(null, message);
-                return;
-            } catch (HeadlessException he) {
-                logger.warning("Could not show message graphically: " + message);
-                return;
-            }
-        }
-
-        Display.getDefault().syncExec(() -> {
-            MessageBox msgBox = new MessageBox(shell, type.getSwtIconValue());
-            msgBox.setText(title);
-
-            if (exception == null) {
-                msgBox.setMessage(message);
+            InputStream icon = getClass().getResourceAsStream(TVRENAMER_ICON_PATH);
+            if (icon != null) {
+                shell.setImage(new Image(display, icon));
             } else {
-                msgBox.setMessage(message + "\n" + exception.getLocalizedMessage());
+                shell.setImage(new Image(display, TVRENAMER_ICON_DIRECT_PATH));
             }
 
-            msgBox.open();
-        });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    /**
-     * Show a message box of the given type with the given message content and window title.
-     *
-     * @param type the {@link SWTMessageBoxType} to create
-     * @param title the window title
-     * @param message the message content
-     */
-    public static void showMessageBox(final SWTMessageBoxType type,
-                                      final String title, final String message)
-    {
-        showMessageBox(type, title, message, null);
-    }
+    private int launch() {
+        try {
+            // place the window in the centre of the primary monitor
+            Monitor primary = display.getPrimaryMonitor();
+            Rectangle bounds = primary.getBounds();
+            Rectangle rect = shell.getBounds();
+            int x = bounds.x + (bounds.width - rect.width) - 5;
+            int y = bounds.y + (bounds.height - rect.height) - 35;
+            shell.setLocation(x, y);
 
-    /**
-     * Read an image.
-     *
-     * @param resourcePath
-     *     the relative path to try to locate the file as a resource
-     * @param filePath
-     *     the path to try to locate the file directly in the file system
-     * @return an Image read from the given path
-     */
-    public static Image readImageFromPath(final String resourcePath,
-                                          final String filePath)
-    {
-        Display display = Display.getCurrent();
-        Image rval = null;
-        try (InputStream in = UIStarter.class.getResourceAsStream(resourcePath)) {
-            if (in != null) {
-                rval = new Image(display, in);
+            // Start the shell
+            shell.pack();
+            shell.open();
+            resultsTable.ready();
+
+            while (!shell.isDisposed()) {
+                if (!display.readAndDispatch()) {
+                    display.sleep();
+                }
             }
-        } catch (IOException ioe) {
-            logger.warning("exception trying to read image from stream " + resourcePath);
+            return 0;
+        } catch (Exception exception) {
+            showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL, UNKNOWN_EXCEPTION, exception);
+            logger.log(Level.SEVERE, UNKNOWN_EXCEPTION, exception);
+            return 1;
         }
-        if (rval == null) {
-            rval = new Image(display, filePath);
-        }
+    }
+
+    public int run() {
+        init();
+        int rval = launch();
+        uiCleanup();
         return rval;
-    }
-
-    public static void checkDestinationDirectory(UserPreferences prefs) {
-        boolean success = prefs.ensureDestDir();
-        if (!success) {
-            logger.warning(CANT_CREATE_DEST);
-            showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL, CANT_CREATE_DEST + ": '"
-                           + prefs.getDestinationDirectoryName() + "'. " + MOVE_NOW_DISABLED);
-        }
     }
 }
