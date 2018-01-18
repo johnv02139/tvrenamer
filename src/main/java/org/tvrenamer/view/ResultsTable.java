@@ -820,8 +820,17 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                 } else {
                     swtTable.deselectAll();
                 }
+            } else {
+                TableItem eventItem = (TableItem) event.item;
+                final Object data = eventItem.getData();
+                if (data == null) {
+                    logger.info("selected row with no combo box");
+                } else {
+                    final Combo combo = (Combo) data;
+                    combo.setBackground(display.getSystemColor(SWT.COLOR_RED));
+                    logger.info("selected " + combo);
+                }
             }
-            // else, it's a SELECTED event, which we just don't care about
         });
     }
 
