@@ -554,6 +554,23 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
+    private void redoSort() {
+        int sortDirection = swtTable.getSortDirection();
+        TableColumn column = swtTable.getSortColumn();
+        int nColumns = swtTable.getColumnCount();
+        int columnNum = 0;
+        while (!swtTable.getColumn(columnNum).equals(column)) {
+            logger.info("checked index " + columnNum);
+            columnNum++;
+            if (columnNum >= nColumns) {
+                logger.warning("could not redoSort");
+                return;
+            }
+        }
+
+        sortTable(column, columnNum, sortDirection);
+    }
+
     @Override
     public void addEpisodes(final Queue<FileEpisode> episodes) {
         for (final FileEpisode episode : episodes) {
@@ -604,6 +621,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                     }
                 });
         }
+        redoSort();
     }
 
     public Label getProgressLabel(final TableItem item) {
