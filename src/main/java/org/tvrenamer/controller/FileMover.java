@@ -166,8 +166,14 @@ public class FileMover implements Callable<Boolean> {
         if (tryRename) {
             try {
                 actualDest = Files.move(srcPath, destPath);
+                if (observer != null) {
+                    observer.finishProgress(true);
+                }
             } catch (IOException ioe) {
                 logger.log(Level.SEVERE, "Unable to move " + srcPath, ioe);
+                if (observer != null) {
+                    observer.finishProgress(false);
+                }
                 return false;
             }
         } else {
@@ -177,7 +183,7 @@ public class FileMover implements Callable<Boolean> {
             }
             boolean success = copyAndDelete(srcPath, destPath);
             if (observer != null) {
-                observer.cleanUp();
+                observer.finishProgress(success);
             }
             // TODO: what about file attributes?  In the case of owner, it might be
             // desirable to change it, or not.  What about writability?  And the
