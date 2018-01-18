@@ -190,6 +190,8 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
 
         newViews.forEach(EpisodeView::lookupShow);
+
+        redoSort();
     }
 
     /**
@@ -311,6 +313,18 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
 
         swtTable.setSortDirection(sortDirection);
         swtTable.setSortColumn(column.swtColumn);
+    }
+
+    private void redoSort() {
+        TableColumn swtColumn = swtTable.getSortColumn();
+        Object columnObj = swtColumn.getData();
+        if (columnObj instanceof Column) {
+            logger.info("redoing sort");
+            sortTable((Column) columnObj,
+                      swtTable.getSortDirection());
+        } else {
+            logger.warning("could not redo sort");
+        }
     }
 
     /**
