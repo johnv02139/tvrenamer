@@ -5,6 +5,7 @@ import static org.tvrenamer.view.ItemState.*;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.TableEditor;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Display;
@@ -352,6 +353,30 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
         });
 
         refreshTableItem();
+    }
+
+    public void rowDeselected() {
+        if (comboBox != null) {
+            logger.info("selected " + comboBox);
+            // Unfortunately it does not seem to be supported to set the background
+            // color of a combo box
+            display.syncExec(() -> {
+                    Color black = display.getSystemColor(SWT.COLOR_BLACK);
+                    comboBox.setForeground(black);
+            });
+        }
+    }
+
+    public void rowSelected() {
+        if (comboBox != null) {
+            logger.info("selected " + comboBox);
+            // Unfortunately it does not seem to be supported to set the background
+            // color of a combo box
+            display.syncExec(() -> {
+                    Color red = display.getSystemColor(SWT.COLOR_RED);
+                    comboBox.setForeground(red);
+            });
+        }
     }
 
     /**

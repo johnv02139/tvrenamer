@@ -48,11 +48,13 @@ import org.tvrenamer.model.UserPreferences;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Queue;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -67,6 +69,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private final Display display;
     private final Table swtTable;
     private final List<EpisodeView> views = new ArrayList<>(1000);
+    private final Set<TableItem> lastKnownSelection = new HashSet<>();
     final EpisodeDb episodeMap = new EpisodeDb();
 
     private Button actionButton;
@@ -638,6 +641,38 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         });
     }
 
+    private void handleSelectionEvent() {
+        final Set<TableItem> newlySelected = new HashSet<>();
+        final Set<TableItem> newlyDeselected = new HashSet<>(lastKnownSelection);
+        lastKnownSelection.clear();
+        for (final TableItem item : swtTable.getSelection()) {
+            lastKnownSelection.add(item);
+            if (newlyDeselected.contains(item)) {
+                newlyDeselected.remove(item);
+            } else {
+                newlySelected.add(item);
+            }
+        }
+        for (TableItem item : newlyDeselected) {
+            logger.info("now deselected " + itemText(item));
+            final EpisodeView epview = getEpisodeView(item);
+            if (epview == null) {
+                logger.info("selected row with no episode view!");
+            } else {
+                epview.rowDeselected();
+            }
+        }
+        for (TableItem item : newlySelected) {
+            logger.info("now selected " + itemText(item));
+            final EpisodeView epview = getEpisodeView(item);
+            if (epview == null) {
+                logger.info("selected row with no episode view!");
+            } else {
+                epview.rowSelected();
+            }
+        }
+    }
+
     private void handleCheckEvent(final TableItem eventItem) {
         // This assumes that the current status of the TableItem
         // already reflects its toggled state, which appears to
@@ -670,8 +705,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         swtTable.addListener(SWT.Selection, event -> {
             if (event.detail == SWT.CHECK) {
                 handleCheckEvent((TableItem) event.item);
+            } else {
+                // else, it's a generic SELECTED event
+                handleSelectionEvent();
             }
-            // else, it's a SELECTED event, which we just don't care about
         });
     }
 
