@@ -412,7 +412,7 @@ public class FileEpisode {
             return 0;
         }
 
-        actualEpisodes = actualShow.getEpisodes(placement);
+        actualEpisodes = actualShow.getAllEpisodes();
         if ((actualEpisodes != null) && (actualEpisodes.size() == 0)) {
             actualEpisodes = null;
         }
@@ -516,20 +516,30 @@ public class FileEpisode {
                                             final String resolution)
     {
         String episodeTitle = actualEpisode.getTitle();
-        int len = episodeTitle.length();
-        if (len > MAX_TITLE_LENGTH) {
-            logger.fine("truncating episode title to " + episodeTitle);
-            episodeTitle = episodeTitle.substring(0, MAX_TITLE_LENGTH);
+        if (episodeTitle == null) {
+            episodeTitle = "(no title)";
+        } else {
+            int len = episodeTitle.length();
+            if (len > MAX_TITLE_LENGTH) {
+                logger.fine("truncating episode title to " + episodeTitle);
+                episodeTitle = episodeTitle.substring(0, MAX_TITLE_LENGTH);
+            }
+        }
+        int season = 0;
+        int episode = 0;
+        if (placement != null) {
+            season = placement.season;
+            episode = placement.episode;
         }
         String newFilename = replacementTemplate
             .replaceAll(ReplacementToken.SEASON_NUM.getToken(),
-                        String.valueOf(placement.season))
+                        String.valueOf(season))
             .replaceAll(ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken(),
-                        StringUtils.zeroPadTwoDigits(placement.season))
+                        StringUtils.zeroPadTwoDigits(season))
             .replaceAll(ReplacementToken.EPISODE_NUM.getToken(),
-                        StringUtils.formatDigits(placement.episode))
+                        StringUtils.formatDigits(episode))
             .replaceAll(ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken(),
-                        StringUtils.zeroPadThreeDigits(placement.episode))
+                        StringUtils.zeroPadThreeDigits(episode))
             .replaceAll(ReplacementToken.SHOW_NAME.getToken(),
                         Matcher.quoteReplacement(showName))
             .replaceAll(ReplacementToken.EPISODE_TITLE.getToken(),
@@ -584,8 +594,10 @@ public class FileEpisode {
             return fileNameString;
         }
 
+        Episode actualEpisode = actualEpisodes.get(n);
         return plugInInformation(userPrefs.getRenameReplacementString(), actualShow.getName(),
-                                 placement, actualEpisodes.get(n), filenameResolution);
+                                 actualEpisode.getEpisodePlacement(true),
+                                 actualEpisode, filenameResolution);
     }
 
     /**
