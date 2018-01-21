@@ -3,6 +3,7 @@ package org.tvrenamer.model;
 import org.tvrenamer.controller.ShowListingsListener;
 import org.tvrenamer.controller.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,8 @@ public class Show extends ShowOption {
     final Map<String, Episode> episodes;
     private final Map<Integer, Season> seasons;
     final Queue<ShowListingsListener> registrations;
+
+    List<Episode> episodesByTitle = null;
 
     private boolean preferDvd = true;
 
@@ -262,6 +265,8 @@ public class Show extends ShowOption {
                 problems.add(info);
             }
         }
+        episodesByTitle = new ArrayList<>(episodes.values());
+        episodesByTitle.sort((l, r) -> l.compareTitles(r));
         indexEpisodesBySeason();
         logEpisodeProblems(problems);
     }
@@ -342,6 +347,16 @@ public class Show extends ShowOption {
             rval = season.getAll(preferDvd, placement.episode);
         }
         return rval;
+    }
+
+    /**
+     * Get all episodes for the given show, sorted by episode title.
+     * This may include episodes that are not indexed by season.
+     *
+     * @return the episodes, sorted by episode title
+     */
+    public List<Episode> getAllEpisodes() {
+        return episodesByTitle;
     }
 
     /**
