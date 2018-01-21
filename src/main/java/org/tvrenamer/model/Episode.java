@@ -76,6 +76,16 @@ public class Episode {
         return title;
     }
 
+    public int compareTitles(final Episode other) {
+        if (title == null) {
+            return -1;
+        }
+        if (other.title == null) {
+            return 1;
+        }
+        return title.compareTo(other.title);
+    }
+
     public String getEpisodeId() {
         return episodeId;
     }
