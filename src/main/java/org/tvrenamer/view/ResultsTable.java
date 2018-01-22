@@ -225,6 +225,51 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
+    private void updateTableItem(final TableItem item, final FileEpisode ep) {
+        if (ep == null) {
+            logger.severe("cannot updateTableItem with null episode");
+            return;
+        }
+        int nOptions = ep.optionCount();
+
+        Collection<Column> columns = Columns.getActiveColumns();
+        for (Column column : columns) {
+            switch (column.id) {
+                case CHECKBOX_COLUMN:
+                    if (nOptions == 0) {
+                        // If we have no options, the row should never be checked.
+                        item.setChecked(false);
+                    }
+                    // But if we have options, we DON'T necessarily check the box.
+                    // We leave it as is.
+                    break;
+                case STATUS_COLUMN:
+                    if (nOptions > 1) {
+                        setCellImage(item, column, OPTIONS);
+                    } else if (nOptions == 1) {
+                        setCellImage(item, column, SUCCESS);
+                    } else {
+                        ItemState.Status oldStatus = getCellStatus(item, column);
+                        if ((oldStatus == OPTIONS) || (oldStatus == SUCCESS)) {
+                            setCellImage(item, column, FAIL);
+                        }
+                    }
+                    break;
+                case NEW_FILENAME_COLUMN:
+                    if (nOptions > 1) {
+                        setComboBoxProposedDest(item, column, ep);
+                    } else if (nOptions == 1) {
+                        setCellText(item, column, ep.getReplacementText());
+                    } else {
+                        setCellText(item, column, ep.getReplacementText());
+                    }
+                    break;
+                default:
+                    setCellText(item, column, ep.getFilepath());
+            }
+        }
+    }
+
     public void refreshAll() {
         logger.info("Refreshing table");
 
