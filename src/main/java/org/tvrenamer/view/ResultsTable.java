@@ -1,6 +1,7 @@
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
+import static org.tvrenamer.view.FileMoveIcon.*;
 import static org.tvrenamer.view.UIUtils.showMessageBox;
 
 import org.eclipse.swt.SWT;
@@ -264,7 +265,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         item.setChecked(false);
         item.setText(CURRENT_FILE_COLUMN, fileName);
         setProposedDestColumn(item, episode);
-        item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
+        item.setImage(STATUS_COLUMN, DOWNLOADING.icon);
         return item;
     }
 
@@ -282,7 +283,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void failTableItem(TableItem item) {
-        item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
+        item.setImage(STATUS_COLUMN, FAIL.icon);
         item.setChecked(false);
     }
 
@@ -292,7 +293,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
             if (tableContainsTableItem(item)) {
                 setProposedDestColumn(item, episode);
                 if (epFound) {
-                    item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
+                    item.setImage(STATUS_COLUMN, ADDED.icon);
                 } else {
                     failTableItem(item);
                 }
@@ -323,7 +324,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         display.asyncExec(() -> {
             if (tableContainsTableItem(item)) {
                 setProposedDestColumn(item, episode);
-                item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
+                item.setImage(STATUS_COLUMN, ADDED.icon);
             }
         });
     }
@@ -451,7 +452,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private static String getItemTextValue(final TableItem item, final int column) {
         switch (column) {
             case SELECTED_COLUMN:
-                return (item.getChecked()) ? "1" : "0";
+                return (item.getChecked()) ? "0" : "1";
             case STATUS_COLUMN:
                 return getCellStatusString(item, column);
             case NEW_FILENAME_COLUMN:
@@ -495,9 +496,14 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void sortTable(TableColumn column, int columnNum) {
-        int sortDirection = swtTable.getSortDirection() == SWT.DOWN ? SWT.UP : SWT.DOWN;
         // Get the items
         TableItem[] items = swtTable.getItems();
+
+        int sortDirection = SWT.UP;
+        TableColumn previousSort = swtTable.getSortColumn();
+        if (column.equals(previousSort)) {
+            sortDirection = swtTable.getSortDirection() == SWT.DOWN ? SWT.UP : SWT.DOWN;
+        }
 
         // Go through the item list and bubble rows up to the top as appropriate
         for (int i = 1; i < items.length; i++) {
@@ -506,8 +512,8 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                 String value2 = getItemTextValue(items[j], columnNum);
                 // Compare the two values and order accordingly
                 int comparison = COLLATOR.compare(value1, value2);
-                if (((comparison < 0) && (sortDirection == SWT.DOWN))
-                    || (comparison > 0) && (sortDirection == SWT.UP))
+                if (((comparison < 0) && (sortDirection == SWT.UP))
+                    || (comparison > 0) && (sortDirection == SWT.DOWN))
                 {
                     // Insert a copy of row i at position j, and then delete
                     // row i.  Then fetch the list of items anew, since we
