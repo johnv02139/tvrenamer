@@ -1,7 +1,7 @@
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
-import static org.tvrenamer.view.FileMoveIcon.*;
+import static org.tvrenamer.view.ItemState.Status.*;
 import static org.tvrenamer.view.UIUtils.showMessageBox;
 
 import org.eclipse.swt.SWT;
@@ -114,11 +114,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private static String getCellStatusString(final TableItem item, final int columnId) {
-        // Sorting alphabetically by the status icon's filename is pretty random.
-        // I don't think there is any real ordering for a status; sorting based
-        // on this column makes sense simply to group together items of the
-        // same status.  I don't think it matters what order they're in.
-        return item.getImage(columnId).toString();
+        return ItemState.getImagePriority(item.getImage(columnId));
     }
 
     private void deleteItemCombo(final TableItem item) {
@@ -268,7 +264,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         item.setChecked(false);
         item.setText(CURRENT_FILE_COLUMN, fileName);
         setProposedDestColumn(item, episode);
-        item.setImage(STATUS_COLUMN, DOWNLOADING.icon);
+        item.setImage(STATUS_COLUMN, ItemState.getIcon(DOWNLOADING));
         return item;
     }
 
@@ -286,7 +282,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void failTableItem(final TableItem item) {
-        item.setImage(STATUS_COLUMN, FAIL.icon);
+        item.setImage(STATUS_COLUMN, ItemState.getIcon(FAIL));
         item.setChecked(false);
     }
 
@@ -296,10 +292,10 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
             if (tableContainsTableItem(item)) {
                 setProposedDestColumn(item, episode);
                 if (epsFound > 1) {
-                    item.setImage(STATUS_COLUMN, OPTIONS.icon);
+                    item.setImage(STATUS_COLUMN, ItemState.getIcon(OPTIONS));
                     item.setChecked(true);
                 } else if (epsFound == 1) {
-                    item.setImage(STATUS_COLUMN, SUCCESS.icon);
+                    item.setImage(STATUS_COLUMN, ItemState.getIcon(SUCCESS));
                     item.setChecked(true);
                 } else {
                     failTableItem(item);
@@ -381,7 +377,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                         display.asyncExec(() -> {
                             if (tableContainsTableItem(item)) {
                                 setProposedDestColumn(item, episode);
-                                item.setImage(STATUS_COLUMN, ADDED.icon);
+                                item.setImage(STATUS_COLUMN, ItemState.getIcon(ADDED));
                             }
                         });
                         if (show.isValidSeries()) {
