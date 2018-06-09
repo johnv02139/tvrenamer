@@ -550,9 +550,9 @@ class PreferencesDialog extends Dialog {
 
     private void createActionButtonGroup() {
         Composite bottomButtonsComposite = new Composite(preferencesShell, SWT.FILL);
-        bottomButtonsComposite.setLayout(new GridLayout(2, false));
+        bottomButtonsComposite.setLayout(new GridLayout(3, true));
         bottomButtonsComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
-                                                          true, true, 2, 1));
+                                                          true, true, 3, 1));
 
         Button closeButton = new Button(bottomButtonsComposite, SWT.PUSH);
         GridData closeButtonGridData = new GridData(GridData.BEGINNING, GridData.CENTER,
@@ -569,7 +569,7 @@ class PreferencesDialog extends Dialog {
         });
 
         Button applyButton = new Button(bottomButtonsComposite, SWT.PUSH);
-        GridData applyButtonGridData = new GridData(GridData.END, GridData.CENTER, true, true);
+        GridData applyButtonGridData = new GridData(GridData.CENTER, GridData.CENTER, true, true);
         applyButtonGridData.minimumWidth = 150;
         applyButtonGridData.widthHint = 150;
         applyButton.setLayoutData(applyButtonGridData);
@@ -579,6 +579,19 @@ class PreferencesDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent event) {
                 applyPreferences();
+            }
+        });
+
+        Button saveButton = new Button(bottomButtonsComposite, SWT.PUSH);
+        GridData saveButtonGridData = new GridData(GridData.END, GridData.CENTER, true, true);
+        saveButtonGridData.minimumWidth = 150;
+        saveButtonGridData.widthHint = 150;
+        saveButton.setLayoutData(saveButtonGridData);
+        saveButton.setText(SAVE_LABEL);
+        saveButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                savePreferencesAndClose();
             }
         });
 
@@ -607,6 +620,17 @@ class PreferencesDialog extends Dialog {
 
         prefs.setMoveSelected(moveSelectedCheckbox.getSelection());
         prefs.setRenameSelected(renameSelectedCheckbox.getSelection());
+    }
+
+    /**
+     * Apply the preferences, save them to the xml file, and close the dialog box
+     */
+    private void savePreferencesAndClose() {
+        // Update the preferences object from the UI control values
+        applyPreferences();
+
+        UserPreferences.store(prefs);
+        preferencesShell.close();
     }
 
     /**
