@@ -659,4 +659,15 @@ class PreferencesDialog extends Dialog {
         UserPreferences.store(prefs);
         preferencesShell.close();
     }
+
+    /**
+     * Apply the preferences, save them to the xml file, and close the dialog box
+     */
+    private void savePreferencesAndClose() {
+        // Update the preferences object from the UI control values
+        applyPreferences();
+
+        UserPreferences.store(prefs);
+        preferencesShell.close();
+    }
 }
