@@ -172,6 +172,10 @@ public class Constants {
         + "to take some action.";
     public static final String UNKNOWN_EXCEPTION = "An error occurred, please check "
         + "the console output to see any errors:";
+    public static final String MOVE_DISABLED_STATUS = "When move is disabled, "
+        + "directory configuration is disabled, and rename must remain enabled.";
+    public static final String RENAME_DISABLED_STATUS = "When rename is disabled, "
+        + "move must remain enabled.";
     public static final String ILLEGAL_CHARS_INTRO = "The following characters cannot be "
         + "used in file paths:";
     public static final String ILLEGAL_CHARACTERS_WARNING = ILLEGAL_CHARS_INTRO
