@@ -230,6 +230,41 @@ class PreferencesDialog extends Dialog {
         preferencesShell.redraw();
     }
 
+    private void handleMoveCheckbox(final boolean moveSelected) {
+        // Because it does not make sense to have "move" and "rename" both de-selected,
+        // when one functionality is de-selected, we disable the other check box,
+        // so that the user cannot de-select the other functionality.
+        if (moveSelected) {
+            renameSelectedCheckbox.setEnabled(true);
+            statusLabel.clear(MOVE_DISABLED_STATUS);
+        } else {
+            // If we are here, the user has de-selected move functionality, by unchecking the
+            // "move" checkbox.  Therefore, we need to make sure "rename' stays selected,
+            // unless or until "move" is re-selected.  The very fact that we got here means,
+            // if things are working properly, that rename is *already* selected.  If it
+            // weren't, the user shouldn't have been able to uncheck "move".  So, the first
+            // line here should be redundant.  But, do it anyway, just in case somehow
+            // there's a bug.
+            renameSelectedCheckbox.setSelection(true);
+            renameSelectedCheckbox.setEnabled(false);
+            statusLabel.add(MOVE_DISABLED_STATUS);
+        }
+        toggleEnableControls(moveSelected, destDirText, destDirButton,
+                             seasonPrefixText, seasonPrefixLeadingZeroCheckbox);
+    }
+
+    private void handleRenameCheckbox(final boolean renameSelected) {
+        // See comments in handleMoveCheckbox; all the same logic applies here, as well.
+        if (renameSelected) {
+            moveSelectedCheckbox.setEnabled(true);
+            statusLabel.clear(RENAME_DISABLED_STATUS);
+        } else {
+            moveSelectedCheckbox.setSelection(true);
+            moveSelectedCheckbox.setEnabled(false);
+            statusLabel.add(RENAME_DISABLED_STATUS);
+        }
+    }
+
     private void createLabel(final String label, final String tooltip, final Composite group) {
         final Label labelObj = new Label(group, SWT.NONE);
         labelObj.setText(label);
@@ -500,18 +535,28 @@ class PreferencesDialog extends Dialog {
     private void initializeGeneralControls(final Composite generalGroup) {
         final boolean moveIsSelected = prefs.isMoveSelected();
         moveSelectedCheckbox.setSelection(moveIsSelected);
-        toggleEnableControls(moveIsSelected, destDirText, destDirButton,
-                             seasonPrefixText, seasonPrefixLeadingZeroCheckbox);
+        handleMoveCheckbox(moveIsSelected);
         moveSelectedCheckbox.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                toggleEnableControls(moveSelectedCheckbox.getSelection(), destDirText, destDirButton,
-                                     seasonPrefixText, seasonPrefixLeadingZeroCheckbox);
+                handleMoveCheckbox(moveSelectedCheckbox.getSelection());
             }
         });
 
         boolean renameIsSelected = prefs.isRenameSelected();
+        if (!moveIsSelected && !renameIsSelected) {
+            renameIsSelected = true;
+            prefs.setRenameEnabled(true);
+            UserPreferences.store(prefs);
+        }
         renameSelectedCheckbox.setSelection(renameIsSelected);
+        handleRenameCheckbox(renameIsSelected);
+        renameSelectedCheckbox.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                handleRenameCheckbox(renameSelectedCheckbox.getSelection());
+            }
+        });
     }
 
     private void createGeneralTab(final TabFolder tabFolder) {
@@ -655,19 +700,24 @@ class PreferencesDialog extends Dialog {
         prefs.setDeleteRowAfterMove(deleteRowsCheckbox.getSelection());
         prefs.setDestinationDirectory(destDirText.getText());
 
-        prefs.setMoveSelected(moveSelectedCheckbox.getSelection());
-        prefs.setRenameSelected(renameSelectedCheckbox.getSelection());
-    }
-
-    /**
-     * Apply the preferences, save them to the xml file, and close the dialog box
-     */
-    private void savePreferencesAndClose() {
-        // Update the preferences object from the UI control values
-        applyPreferences();
-
-        UserPreferences.store(prefs);
-        preferencesShell.close();
+        boolean isRenameSelected = renameSelectedCheckbox.getSelection();
+        // Note, it is important to do the "enable" (true) before the "disable" (false),
+        // because we cannot disable both even momentarily.
+        if (moveSelectedCheckbox.getSelection()) {
+            prefs.setMoveEnabled(true);
+            prefs.setRenameEnabled(isRenameSelected);
+        } else {
+            // Since move is disabled, rename needs to be enabled.  We're going to
+            // enable rename no matter what.  If that's not what the UI says to do,
+            // that's an error.
+            if (!isRenameSelected) {
+                // The UI is supposed to prevent this situation from happening.
+                logger.severe("internal error! should not be able to disable "
+                              + "both move and rename! enabling rename");
+            }
+            prefs.setRenameEnabled(true);
+            prefs.setMoveEnabled(false);
+        }
     }
 
     /**
