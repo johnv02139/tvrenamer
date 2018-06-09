@@ -89,6 +89,7 @@ public class Constants {
 
     public static final String QUIT_LABEL = "Quit";
     public static final String CLOSE_LABEL = "Close";
+    public static final String APPLY_LABEL = "Apply";
     public static final String SAVE_LABEL = "Save";
     public static final String ERROR_LABEL = "Error";
     public static final String EXIT_LABEL = "Exit";
