@@ -568,30 +568,32 @@ class PreferencesDialog extends Dialog {
             }
         });
 
-        Button saveButton = new Button(bottomButtonsComposite, SWT.PUSH);
-        GridData saveButtonGridData = new GridData(GridData.END, GridData.CENTER, true, true);
-        saveButtonGridData.minimumWidth = 150;
-        saveButtonGridData.widthHint = 150;
-        saveButton.setLayoutData(saveButtonGridData);
-        saveButton.setText(SAVE_LABEL);
-        saveButton.setFocus();
-        saveButton.addSelectionListener(new SelectionAdapter() {
+        Button applyButton = new Button(bottomButtonsComposite, SWT.PUSH);
+        GridData applyButtonGridData = new GridData(GridData.END, GridData.CENTER, true, true);
+        applyButtonGridData.minimumWidth = 150;
+        applyButtonGridData.widthHint = 150;
+        applyButton.setLayoutData(applyButtonGridData);
+        applyButton.setText(APPLY_LABEL);
+        applyButton.setFocus();
+        applyButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
-                savePreferences();
-                preferencesShell.close();
+                applyPreferences();
             }
         });
 
-        // Set the OK button as the default, so
-        // user can press Enter to save
-        preferencesShell.setDefaultButton(saveButton);
+        // Set the Apply button as the default, so user can press Enter to see the updates
+        preferencesShell.setDefaultButton(applyButton);
     }
 
     /**
-     * Save the preferences to the xml file
+     * Apply the preferences to the running TVRenamer application
+     *
+     * This simply attempts to set every possible preference, whether the user has edited those
+     * settings or not.  However, inside the UserPreferences class, if we "set" an attribute to
+     * the value it has already, it doesn't update its listeners.
      */
-    private void savePreferences() {
+    private void applyPreferences() {
         // Update the preferences object from the UI control values
         prefs.setSeasonPrefix(seasonPrefixString);
         prefs.setSeasonPrefixLeadingZero(seasonPrefixLeadingZeroCheckbox.getSelection());
@@ -605,8 +607,6 @@ class PreferencesDialog extends Dialog {
 
         prefs.setMoveSelected(moveSelectedCheckbox.getSelection());
         prefs.setRenameSelected(renameSelectedCheckbox.getSelection());
-
-        UserPreferences.store(prefs);
     }
 
     /**
