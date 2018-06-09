@@ -554,14 +554,14 @@ class PreferencesDialog extends Dialog {
         bottomButtonsComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
                                                           true, true, 2, 1));
 
-        Button cancelButton = new Button(bottomButtonsComposite, SWT.PUSH);
-        GridData cancelButtonGridData = new GridData(GridData.BEGINNING, GridData.CENTER,
+        Button closeButton = new Button(bottomButtonsComposite, SWT.PUSH);
+        GridData closeButtonGridData = new GridData(GridData.BEGINNING, GridData.CENTER,
                                                      false, false);
-        cancelButtonGridData.minimumWidth = 150;
-        cancelButtonGridData.widthHint = 150;
-        cancelButton.setLayoutData(cancelButtonGridData);
-        cancelButton.setText(CANCEL_LABEL);
-        cancelButton.addSelectionListener(new SelectionAdapter() {
+        closeButtonGridData.minimumWidth = 150;
+        closeButtonGridData.widthHint = 150;
+        closeButton.setLayoutData(closeButtonGridData);
+        closeButton.setText(CLOSE_LABEL);
+        closeButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
                 preferencesShell.close();
