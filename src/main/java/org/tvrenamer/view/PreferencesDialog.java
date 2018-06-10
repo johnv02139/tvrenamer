@@ -18,6 +18,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.events.VerifyListener;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -156,16 +157,25 @@ class PreferencesDialog extends Dialog {
     }
 
     public void open() {
+        Shell parent = getParent();
+        Display display = parent.getDisplay();
+
         // Create the dialog window
-        preferencesShell = new Shell(getParent(), getStyle());
+        preferencesShell = new Shell(parent, getStyle());
         preferencesShell.setText(PREFERENCES_LABEL);
 
         // Add the contents of the dialog window
         createContents();
-
         preferencesShell.pack();
+
+        // place the dialog box near the top right of the screen
+        Rectangle monitorBounds = display.getPrimaryMonitor().getBounds();
+        Rectangle dialogBounds = preferencesShell.getBounds();
+        preferencesShell.setLocation(monitorBounds.x + monitorBounds.width - dialogBounds.width - 20,
+                                     monitorBounds.y);
+
+
         preferencesShell.open();
-        Display display = getParent().getDisplay();
         while (!preferencesShell.isDisposed()) {
             if (!display.readAndDispatch()) {
                 display.sleep();
