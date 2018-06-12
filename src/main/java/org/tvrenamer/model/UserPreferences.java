@@ -174,6 +174,11 @@ public class UserPreferences extends Observable {
      */
     private void sanitise() {
         buildIgnoredKeywordsString();
+        if (!moveSelected && !renameSelected) {
+            logger.warning("if move is not selected, then rename must be selected.");
+            renameSelected = true;
+            store(this);
+        }
     }
 
     /**
