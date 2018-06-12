@@ -57,7 +57,6 @@ public class UserPreferences extends Observable {
         recursivelyAddFolders = true;
         ignoreKeywords = new ArrayList<>();
         ignoreKeywords.add(DEFAULT_IGNORED_KEYWORD);
-        buildIgnoredKeywordsString();
         destDirProblem = false;
     }
 
@@ -170,6 +169,13 @@ public class UserPreferences extends Observable {
         FileUtilities.ensureWritableDirectory(LEGACY_TVDB_DIR);
     }
 
+    /*
+     * Clean and sanity-check a newly created instance.
+     */
+    private void sanitise() {
+        buildIgnoredKeywordsString();
+    }
+
     /**
      * Load preferences from xml file
      *
@@ -183,12 +189,12 @@ public class UserPreferences extends Observable {
         UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE);
 
         if (prefs != null) {
-            prefs.buildIgnoredKeywordsString();
             logger.finer("Successfully read preferences from: " + PREFERENCES_FILE.toAbsolutePath());
             logger.fine("Successfully read preferences: " + prefs.toString());
         } else {
             prefs = new UserPreferences();
         }
+        prefs.sanitise();
 
         return prefs;
     }
