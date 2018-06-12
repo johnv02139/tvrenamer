@@ -150,6 +150,7 @@ public class Constants {
         + " - You can drag and drop tokens to the 'Rename Format' text box below";
     public static final String RENAME_FORMAT_TOOLTIP = "The result of the rename, with the "
         + "tokens being replaced by the meaning above";
+    public static final String DEST_NOT_DIR = "Destination path exists but is not a directory";
     public static final String CANT_CREATE_DEST = "Unable to create the destination directory";
     public static final String MOVE_NOT_POSSIBLE = "You will not be able to actually move files "
         + "until this is corrected.  Open the Preferences dialog to correct it.";

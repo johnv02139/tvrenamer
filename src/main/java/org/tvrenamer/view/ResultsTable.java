@@ -78,10 +78,14 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private synchronized void checkDestinationDirectory() {
         boolean success = prefs.ensureDestDir();
         if (!success) {
-            logger.warning(CANT_CREATE_DEST);
-            ui.showMessageBox(SWTMessageBoxType.DLG_ERR, ERROR_LABEL, CANT_CREATE_DEST + ": '"
-                              + prefs.getDestinationDirectoryName() + "'. "
-                              + MOVE_NOT_POSSIBLE);
+            String errMsg = prefs.getLastError();
+            if (errMsg == null) {
+                errMsg = CANT_CREATE_DEST;
+            } else {
+                prefs.clearLastError();
+            }
+            logger.warning(errMsg);
+            ui.showMessageBox(SWTMessageBoxType.DLG_ERR, ERROR_LABEL, errMsg);
         }
     }
 

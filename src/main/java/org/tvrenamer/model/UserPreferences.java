@@ -37,6 +37,7 @@ public class UserPreferences extends Observable {
     private final List<String> ignoreKeywords;
 
     private transient boolean destDirProblem = false;
+    private transient String lastError = null;
 
     /**
      * UserPreferences constructor which uses the defaults from {@link org.tvrenamer.model.util.Constants}
@@ -139,6 +140,8 @@ public class UserPreferences extends Observable {
             logger.warning("if move is not selected, then rename must be selected.");
             renameSelected = true;
             store(this);
+        } else if (moveSelected) {
+            ensureDestDir();
         }
     }
 
@@ -165,6 +168,23 @@ public class UserPreferences extends Observable {
         prefs.sanitise();
 
         return prefs;
+    }
+
+    /**
+     * Get the text of the last error.
+     *
+     * @return the text of the last error; null if there is no last error
+     */
+    public String getLastError() {
+        return lastError;
+    }
+
+    /**
+     * Clear the last error.
+     *
+     */
+    public void clearLastError() {
+        lastError = null;
     }
 
     /**
@@ -219,7 +239,18 @@ public class UserPreferences extends Observable {
         destDirProblem = !canCreate;
 
         if (destDirProblem) {
-            logger.warning(CANT_CREATE_DEST + destDir);
+            Path destPath = Paths.get(destDir);
+
+            if (Files.exists(destPath)) {
+                // destDir exists but is not a directory.
+                lastError = DEST_NOT_DIR + ": '"
+                    + destDir + "'. " + MOVE_NOT_POSSIBLE;
+            } else {
+                lastError = CANT_CREATE_DEST + ": '"
+                    + destDir + "'. " + MOVE_NOT_POSSIBLE;
+            }
+
+            logger.warning(lastError);
         }
 
         return canCreate;
