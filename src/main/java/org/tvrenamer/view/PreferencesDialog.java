@@ -26,16 +26,20 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
+import org.tvrenamer.controller.util.FileUtilities;
 import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.ReplacementToken;
 import org.tvrenamer.model.UserPreferences;
 
 import java.util.logging.Logger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -213,8 +217,35 @@ class PreferencesDialog extends Dialog {
         return box;
     }
 
+    private void showMessageBox(final SWTMessageBoxType type, final String title, final String message) {
+        if (preferencesShell != null) {
+            Display display = preferencesShell.getDisplay();
+            display.syncExec(() -> {
+                MessageBox msgBox = new MessageBox(preferencesShell, type.getSwtIconValue());
+                msgBox.setText(title);
+                msgBox.setMessage(message);
+                msgBox.open();
+            });
+        }
+    }
+
     private void createDestDirControls(Composite group) {
         destDirText = createText(prefs.getDestinationDirectoryName(), group, false);
+        destDirText.addListener(SWT.FocusOut, event -> {
+            String destDirName = destDirText.getText();
+            Path destDir = Paths.get(destDirName);
+            logger.info("trying to validate " + destDir);
+            boolean exists = FileUtilities.checkForCreatableDirectory(destDir);
+            if (!exists) {
+                logger.severe("cannot create " + destDirName);
+                showMessageBox(SWTMessageBoxType.DLG_WARN,
+                               // DEST_DIR_TEXT
+                               "Can't create TV Directory",
+                               "Cannot create " + destDirName);
+            } else {
+                logger.info("could create: " + destDirName);
+            }
+        });
 
         destDirButton = new Button(group, SWT.PUSH);
         destDirButton.setText(DEST_DIR_BUTTON_TEXT);
