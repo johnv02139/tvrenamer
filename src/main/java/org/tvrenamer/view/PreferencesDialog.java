@@ -242,10 +242,12 @@ class PreferencesDialog extends Dialog {
         return box;
     }
 
-    private Button createDestDirButton(Composite group) {
-        final Button button = new Button(group, SWT.PUSH);
-        button.setText(DEST_DIR_BUTTON_TEXT);
-        button.addListener(SWT.Selection, event -> {
+    private void createDestDirControls(Composite group) {
+        destDirText = createText(prefs.getDestinationDirectoryName(), group, false);
+
+        destDirButton = new Button(group, SWT.PUSH);
+        destDirButton.setText(DEST_DIR_BUTTON_TEXT);
+        destDirButton.addListener(SWT.Selection, event -> {
             DirectoryDialog directoryDialog = new DirectoryDialog(preferencesShell);
 
             directoryDialog.setFilterPath(prefs.getDestinationDirectoryName());
@@ -256,8 +258,6 @@ class PreferencesDialog extends Dialog {
                 destDirText.setText(dir);
             }
         });
-
-        return button;
     }
 
     /*
@@ -438,8 +438,7 @@ class PreferencesDialog extends Dialog {
                                                 true, generalGroup, GridData.END, 1);
 
         createLabel(DEST_DIR_TEXT, DEST_DIR_TOOLTIP, generalGroup);
-        destDirText = createText(prefs.getDestinationDirectoryName(), generalGroup, false);
-        destDirButton = createDestDirButton(generalGroup);
+        createDestDirControls(generalGroup);
 
         createSeasonPrefixControls(generalGroup);
 
