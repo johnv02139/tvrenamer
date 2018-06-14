@@ -2,6 +2,7 @@ package org.tvrenamer.controller;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
+
 import org.tvrenamer.model.UserPreferences;
 
 import java.io.BufferedWriter;
@@ -60,16 +61,14 @@ public class UserPreferencesPersistence {
      */
     public static UserPreferences retrieve(File file) {
         // Instantiate the object so the Observable superclass is called corrected
-        UserPreferences preferences = null;
 
         try {
-            preferences = (UserPreferences) xstream.fromXML(new FileInputStream(file));
+            return (UserPreferences) xstream.fromXML(new FileInputStream(file));
         } catch (FileNotFoundException e) {
             // If file doesn't exist, assume defaults
             logger.log(Level.FINER, "Preferences file '" + file.getAbsolutePath() + "' does not exist - assuming defaults");
-            preferences = UserPreferences.getInstance();
         }
 
-        return preferences;
+        return null;
     }
 }
