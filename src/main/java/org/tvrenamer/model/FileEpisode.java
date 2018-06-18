@@ -14,18 +14,15 @@ import org.tvrenamer.controller.EpisodeInformationListener;
 import org.tvrenamer.controller.EpisodeListListener;
 import org.tvrenamer.controller.FilenameParser;
 import org.tvrenamer.controller.ListingsLookup;
-import org.tvrenamer.controller.NameFormatter;
+import org.tvrenamer.controller.Renamer;
 import org.tvrenamer.controller.SeriesLookup;
 import org.tvrenamer.controller.SeriesLookupListener;
-import org.tvrenamer.controller.util.FileUtilities;
+import org.tvrenamer.controller.util.StringUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
@@ -68,7 +65,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     // even after the file is moved, this value remains the same.  Note also this could
     // be a non-normalized, relative pathstring, for example.
     private final String originalFilepath;
-    private String currentLocation;
 
     // "filename" instance vars -- these are the results of parsing the filename.
     // The "filenameSeries" is the precise string from the filename, that we think
@@ -77,12 +73,12 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     // what the filename actually represents.
     private final String filenameSuffix;
     private String filenameSeries;
+    private String queryString;
     private String filenameSeason;
     private String filenameEpisode;
     private String filenameResolution = "";
 
     private String seriesName = null;
-    private String fileBasename = null;
 
     private int seasonNum = 0;
     private int episodeNum = 0;
@@ -100,8 +96,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     // old FileEpisode in the EpisodeDb and in the TableItem, and then drop the old
     // FileEpisode.  TODO?
     private Path pathObj;
-    private long fileSize;
-    private static final long NO_FILE_SIZE = -1L;
 
     // The state of this object, not the state of the actual TV episode.  This is
     // about how far we've processed the filename.
@@ -120,11 +114,7 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
 
     private Deque<EpisodeInformationListener> listeners = new ArrayDeque<>();
 
-    // This class actually figures out the proposed new name for the file, so we need
-    // a link to the user preferences to know how the user wants the file renamed.
-    private UserPreferences userPrefs = UserPreferences.getInstance();
-
-    private NameFormatter formatter = null;
+    private Renamer renamer = null;
 
     public static String getExtension(Path path) {
         Path basename = path.getFileName();
@@ -149,8 +139,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     {
         viewItem = item;
         originalFilepath = path.toString();
-        currentLocation = originalFilepath;
-
         filenameSuffix = getExtension(path);
 
         if (item == null) {
@@ -203,10 +191,10 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
                     // logger.fine("looking up based on match " + seriesName);
                     seriesStatus = SeriesStatus.QUERYING;
                     SeriesLookup.mapStringToShow(seriesName, this);
-                } else if (filenameSeries != null) {
-                    // logger.warning("looking up based on query string " + filenameSeries);
+                } else if (queryString != null) {
+                    // logger.warning("looking up based on query string " + queryString);
                     seriesStatus = SeriesStatus.QUERYING;
-                    SeriesLookup.mapStringToShow(filenameSeries, this);
+                    SeriesLookup.mapStringToShow(queryString, this);
                 } else {
                     seriesStatus = SeriesStatus.NOT_STARTED;
                     logger.info("cannot lookup series; did not extract a series name: "
@@ -236,10 +224,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (parseStatus == ParseStatus.BAD_PARSE);
     }
 
-    public boolean isFailToMove() {
-        return (fileStatus == FileStatus.FAIL_TO_MOVE);
-    }
-
     public boolean isFailed() {
         return ((parseStatus == ParseStatus.BAD_PARSE)
                 || (seriesStatus == SeriesStatus.UNFOUND)
@@ -260,18 +244,13 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (seriesStatus == SeriesStatus.PARSED_ALL);
     }
 
-    public boolean isRenamed() {
-        return (fileStatus == FileStatus.RENAMED);
-    }
-
     public boolean isReady() {
         if ((seasonNum == 0) || (episodeNum == 0)) {
             return false;
         }
         return ((parseStatus == ParseStatus.PARSED)
                 && (seriesStatus == SeriesStatus.PARSED_ALL)
-                && ((fileStatus == FileStatus.UNCHECKED)
-                    || (fileStatus == FileStatus.RENAMED)));
+                && (fileStatus != FileStatus.MOVING));
     }
 
     public boolean isSeriesReady() {
@@ -280,19 +259,11 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     }
 
     public String getFilepath() {
-        return currentLocation;
+        return originalFilepath;
     }
 
     public String getFilenameSuffix() {
         return filenameSuffix;
-    }
-
-    public String getFilenameSeries() {
-        return filenameSeries;
-    }
-
-    public void setRawSeries(String filenameSeries) {
-        this.filenameSeries = filenameSeries;
     }
 
     public void setSeriesName(String seriesName) {
@@ -305,34 +276,47 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return seriesName;
     }
 
-    public String getSeriesInformationString() {
-        String display = "";
-        if (series == null) {
-            display += "(not found)";
-        } else {
-            display += series.getName() + " [" + series.getIdString() + "]; ";
+    public String getBestSeriesName() {
+        if (seriesName != null) {
+            return seriesName;
         }
-        if (seriesName == null) {
-            display += "parse: " + filenameSeries;
-        } else {
-            display += "show: " + seriesName;
+        if (filenameSeries != null) {
+            return filenameSeries;
         }
+        return queryString;
+    }
 
-        return display;
+    public String getQueryString() {
+        return queryString;
+    }
+
+    public void setRawSeries(String filenameSeries) {
+        this.filenameSeries = filenameSeries;
+        queryString = StringUtils.replacePunctuation(filenameSeries).toLowerCase();
+        if (queryString.startsWith("the golden girls")) {
+            this.filenameSeries = "the golden girls";
+            queryString = "the golden girls";
+        } else if (queryString.startsWith("god the devil")) {
+            this.filenameSeries = "god, the devil, and bob";
+            queryString = "god, the devil, and bob";
+        } else if (queryString.startsWith("bbc")) {
+            this.filenameSeries = "The Hitchhiker's Guide to the Galaxy";
+            queryString = "The Hitchhiker's Guide to the Galaxy";
+        }
     }
 
     public String getFilenameSeason() {
         return filenameSeason;
     }
 
-    public int getSeasonNum() {
-        return seasonNum;
-    }
-
     public void setFilenameSeason(String filenameSeason) {
-        this.filenameSeason = filenameSeason;
+        if (filenameSeason.startsWith("Part")) {
+            this.filenameSeason = "01";
+        } else {
+            this.filenameSeason = filenameSeason;
+        }
         try {
-            seasonNum = Integer.parseInt(filenameSeason);
+            seasonNum = Integer.parseInt(this.filenameSeason);
         } catch (Exception e) {
             seasonNum = 0;
         }
@@ -342,24 +326,15 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return filenameEpisode;
     }
 
-    public int getEpisodeNum() {
-        return episodeNum;
-    }
-
     public void setFilenameEpisode(String filenameEpisode) {
         this.filenameEpisode = filenameEpisode;
         try {
             episodeNum = Integer.parseInt(filenameEpisode);
         } catch (Exception e) {
+            logger.info("could not handle episode \"" + filenameEpisode + "\" in "
+                        + originalFilepath);
             episodeNum = 0;
         }
-    }
-
-    public String makeEpisodeId() {
-        // TODO: use getRenameReplacementString() from Renamer
-
-        return "S" + NameFormatter.TWO_DIGITS.get().format(seasonNum)
-            + "E" + NameFormatter.TWO_DIGITS.get().format(episodeNum);
     }
 
     public String getFilenameResolution() {
@@ -379,32 +354,18 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
     }
 
     public void setPath(Path pathObj) {
-        Path oldPath = this.pathObj;
         this.pathObj = pathObj;
-        try {
-            fileSize = Files.size(pathObj);
-        } catch (IOException ioe) {
-            logger.log(Level.WARNING, "couldn't get size of " + pathObj);
-            fileSize = NO_FILE_SIZE;
-        }
-        currentLocation = pathObj.toAbsolutePath().toString();
         boolean isParsed = FilenameParser.parseFilename(this);
         if (isParsed) {
             parseStatus = ParseStatus.PARSED;
         } else {
             parseStatus = ParseStatus.BAD_PARSE;
         }
-        if ((oldPath != null) && FileUtilities.differentFiles(oldPath, pathObj)) {
-            fileStatus = FileStatus.RENAMED;
-        }
-        update();
-    }
 
-    public long getFileSize() {
-        return fileSize;
     }
 
     private void update() {
+        // logger.info("running update: show name = " + getBestSeriesName());
         for (EpisodeInformationListener l : listeners) {
             l.onEpisodeUpdate(this);
         }
@@ -477,11 +438,6 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         if (series != null) {
             season = series.getSeason(filenameSeason);
         }
-        if (season == null) {
-            seriesStatus = SeriesStatus.NO_LISTINGS;
-        } else {
-            seriesStatus = SeriesStatus.PARSED_ALL;
-        }
     }
 
     @Override
@@ -489,7 +445,10 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         // TODO: we already have the series.  We don't need to return it.
         setSeason();
         // Only thing we could do would be to verify it.
-        update();
+        if (seriesStatus != SeriesStatus.PARSED_ALL) {
+            seriesStatus = SeriesStatus.PARSED_ALL;
+            update();
+        }
     }
 
     @Override
@@ -530,61 +489,20 @@ public class FileEpisode implements SeriesLookupListener, EpisodeListListener {
         return (uiStatus != EpisodeUIStatus.ERROR);
     }
 
-    public long getAirDate() {
-        if (series == null) {
-            return 0L;
-        }
-        if (season == null) {
-            return 0L;
-        }
-
-        Episode episode = season.getEpisode(episodeNum);
-        if (episode == null) {
-            return 0L;
-        }
-
-        long epochDay = 1 + episode.getAirDate().toEpochDay();
-        return epochDay * 24L * 60L * 60L * 1000L;
-    }
-
-    public Path getDestinationDirectory() {
-        return formatter.getDestinationDirectory();
-    }
-
-    public String getFileBasename() {
-        // Note, this is an instance variable, not a local variable.
-        fileBasename = formatter.getNewBasename();
-        return fileBasename;
-    }
-
-    public String getProposedFilename() {
-        if (series == null) {
+    public String getNewFilename() {
+        if ((series == null) || (season == null)) {
             return ADDED_PLACEHOLDER_FILENAME;
         }
-        if (season == null) {
-            return PROCESSING_EPISODES;
+        if (renamer == null) {
+            renamer = new Renamer(this);
         }
-        if (0L == getAirDate()) {
-            seriesStatus = SeriesStatus.UNFOUND;
-            update();
-            return NO_SUCH_SHOW_MESSAGE;
-        }
-        if (formatter == null) {
-            formatter = new NameFormatter(this);
-        }
-        if (userPrefs.isRenameEnabled()) {
-            // Note, this is an instance variable, not a local variable.
-            fileBasename = formatter.getNewBasename();
-            return formatter.getProposedFilename(fileBasename + filenameSuffix);
-        } else {
-            return formatter.getProposedFilename(pathObj.getFileName().toString());
-        }
+        return renamer.getNewFilename();
     }
 
     @Override
     public String toString() {
         return "FileEpisode { series:"
-                + filenameSeries
+                + queryString
                 + ", season:"
                 + filenameSeason
                 + ", episode:"

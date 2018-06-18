@@ -2,7 +2,6 @@ package org.tvrenamer.controller;
 
 import org.tvrenamer.model.UserPreferences;
 import org.tvrenamer.view.UIStarter;
-import org.tvrenamer.view.UIUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,8 +29,6 @@ public class Launcher {
     }
 
     public static void main(String[] args) {
-        UIUtils.setDisableMessageBoxes(false);
-
         UserPreferences prefs = UserPreferences.getInstance();
 
         // It doesn't make much sense for the launcher to look up the preload

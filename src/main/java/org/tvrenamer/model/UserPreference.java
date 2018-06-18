@@ -4,7 +4,6 @@ public enum UserPreference {
     PROXY,
     REPLACEMENT_MASK,
     MOVE_ENABLED,
-    RENAME_ENABLED,
     DEST_DIR,
     SEASON_PREFIX,
     LEADING_ZERO,

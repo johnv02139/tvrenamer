@@ -20,14 +20,13 @@ public class Episode {
     private final LocalDate firstAired;
     private final String overview;
     private final String productionCode;
+    private final String language;
     private final String id;
+    private final String seriesid;
     private final String seasonid;
     private final Integer lastupdated;
     private final String dvdSeason;
     private final String dvdEpisodeNumber;
-
-    private final String seriesid;
-    private final String language;
 
     public static class Builder {
         private String seasonNumber;
@@ -36,13 +35,13 @@ public class Episode {
         private LocalDate firstAired = null;
         private String overview = null;
         private String productionCode = null;
+        private String language = null;
         private String id = null;
+        private String seriesid = null;
         private String seasonid = null;
         private Integer lastupdated = null;
         private String dvdSeason;
         private String dvdEpisodeNumber;
-        private String seriesid = null;
-        private String language = null;
 
         public Builder() {
         }

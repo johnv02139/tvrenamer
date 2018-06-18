@@ -19,6 +19,7 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Shell;
 
 import org.tvrenamer.controller.UpdateChecker;
+import org.tvrenamer.model.SWTMessageBoxType;
 
 import java.io.InputStream;
 import java.util.logging.Logger;
@@ -29,6 +30,11 @@ import java.util.logging.Logger;
 public class AboutDialog extends Dialog {
     private static Logger logger = Logger.getLogger(AboutDialog.class.getName());
 
+    private static final String TVRENAMER_REPOSITORY_URL = "http://tvrenamer.org/source";
+    private static final String TVRENAMER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
+    private static final String TVRENAMER_SUPPORT_EMAIL = "support@tvrenamer.org";
+    public static final String TVRENAMER_PROJECT_URL = "http://tvrenamer.org";
+    private static final String TVRENAMER_PROJECT_ISSUES_URL = TVRENAMER_PROJECT_URL + "/issues";
     private static Shell aboutShell;
 
     /**
@@ -41,7 +47,29 @@ public class AboutDialog extends Dialog {
         super(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
     }
 
-    private void createContents1() {
+    public void open() {
+        // Create the dialog window
+        aboutShell = new Shell(getParent(), getStyle());
+        aboutShell.setText("About TVRenamer");
+
+        // Add the contents of the dialog window
+        createContents();
+
+        aboutShell.pack();
+        aboutShell.open();
+        Display display = getParent().getDisplay();
+        while (!aboutShell.isDisposed()) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
+    }
+
+    /**
+     * Creates the dialog's contents.
+     *
+     */
+    private void createContents() {
         GridLayout shellGridLayout = new GridLayout();
         shellGridLayout.numColumns = 2;
         shellGridLayout.marginRight = 15;
@@ -58,12 +86,11 @@ public class AboutDialog extends Dialog {
         iconGridData.grabExcessHorizontalSpace = false;
         iconLabel.setLayoutData(iconGridData);
 
-        InputStream icon = getClass().getResourceAsStream(TVRENAMER_ICON_PATH);
+        InputStream icon = getClass().getResourceAsStream("/icons/tvrenamer.png");
         if (icon != null) {
             iconLabel.setImage(new Image(Display.getCurrent(), icon));
         } else {
-            iconLabel.setImage(new Image(Display.getCurrent(),
-                                         ICON_PARENT_DIRECTORY + TVRENAMER_ICON_PATH));
+            iconLabel.setImage(new Image(Display.getCurrent(), "res/icons/tvrenamer.png"));
         }
 
         Label applicationLabel = new Label(aboutShell, SWT.NONE);
@@ -75,17 +102,16 @@ public class AboutDialog extends Dialog {
         Label versionLabel = new Label(aboutShell, SWT.NONE);
         versionLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(), getDefaultSystemFont()
             .getHeight() + 2, SWT.BOLD));
-        versionLabel.setText(VERSION_LABEL);
+        versionLabel.setText("Version: " + VERSION_NUMBER);
         versionLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         Label descriptionLabel = new Label(aboutShell, SWT.NONE);
         descriptionLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
-        descriptionLabel.setText(TVRENAMER_DESCRIPTION);
-    }
+        descriptionLabel.setText("TVRenamer is a Java GUI utility to rename TV episodes from TV listings");
 
-    private void createContents2() {
         final Link licenseLink = new Link(aboutShell, SWT.NONE);
-        licenseLink.setText(LICENSE_TEXT);
+        licenseLink.setText("Licensed under the <a href=\"" + TVRENAMER_LICENSE_URL
+            + "\">GNU General Public License v2</a>");
         licenseLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         licenseLink.addSelectionListener(new SelectionAdapter() {
@@ -96,7 +122,7 @@ public class AboutDialog extends Dialog {
         });
 
         final Link projectPageLink = new Link(aboutShell, SWT.NONE);
-        projectPageLink.setText(PROJECT_TEXT);
+        projectPageLink.setText("<a href=\"" + TVRENAMER_PROJECT_URL + "\">Project Page</a>");
         projectPageLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         projectPageLink.addSelectionListener(new SelectionAdapter() {
@@ -107,30 +133,28 @@ public class AboutDialog extends Dialog {
         });
 
         final Link issuesLink = new Link(aboutShell, SWT.NONE);
-        issuesLink.setText(ISSUE_TRACKER);
+        issuesLink.setText("<a href=\"" + TVRENAMER_PROJECT_ISSUES_URL + "\">Issue Tracker</a>");
         issuesLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         issuesLink.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent arg0) {
-                Program.launch(TVRENAMER_ISSUES_URL);
+                Program.launch(TVRENAMER_PROJECT_ISSUES_URL);
             }
         });
 
         final Link supportEmailLink = new Link(aboutShell, SWT.NONE);
-        supportEmailLink.setText(EMAIL_TEXT);
+        supportEmailLink.setText("<a href=\"mailto:" + TVRENAMER_SUPPORT_EMAIL + "\">Send support email</a>");
         supportEmailLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
         supportEmailLink.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent arg0) {
-                    Program.launch(EMAIL_LINK);
+                    Program.launch("mailto:" + TVRENAMER_SUPPORT_EMAIL);
                 }
             });
-    }
 
-    private void createContents3() {
         final Link sourceCodeLink = new Link(aboutShell, SWT.NONE);
-        sourceCodeLink.setText(REPOSITORY_TEXT);
+        sourceCodeLink.setText("<a href=\"" + TVRENAMER_REPOSITORY_URL + "\">Source Code</a>");
         sourceCodeLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         sourceCodeLink.addSelectionListener(new SelectionAdapter() {
@@ -141,7 +165,7 @@ public class AboutDialog extends Dialog {
         });
 
         Button updateCheckButton = new Button(aboutShell, SWT.PUSH);
-        updateCheckButton.setText(UPDATE_TEXT);
+        updateCheckButton.setText("Check for Updates...");
         GridData gridDataUpdateCheck = new GridData();
         gridDataUpdateCheck.widthHint = 160;
         gridDataUpdateCheck.horizontalAlignment = GridData.END;
@@ -155,18 +179,31 @@ public class AboutDialog extends Dialog {
                 if (updateAvailable == null) {
                     // Don't need to do anything here as the error message has been displayed already
                 } else if (updateAvailable) {
-                    logger.fine(NEW_VERSION_AVAILABLE);
-                    UIUtils.showOkMessageBox(NEW_VERSION_TITLE, NEW_VERSION_AVAILABLE);
+                    StringBuilder messageBuilder = new StringBuilder();
+                    messageBuilder.append("There is a new version available!\n\n");
+                    messageBuilder.append("You are currently running ");
+                    messageBuilder.append(VERSION_NUMBER);
+                    messageBuilder.append(", but there is an update available\n\n");
+                    messageBuilder.append("Please visit ");
+                    messageBuilder.append(TVRENAMER_PROJECT_URL);
+                    messageBuilder.append(" to download the new version.");
+
+                    logger.fine(messageBuilder.toString());
+                    UIUtils.showMessageBox(SWTMessageBoxType.OK, "New Version Available!", messageBuilder.toString());
                 } else {
-                    UIUtils.showWarningMessageBox(NO_NEW_VERSION_TITLE, NO_NEW_VERSION_AVAILABLE);
+                    StringBuilder messageBuilder = new StringBuilder();
+                    messageBuilder.append("There is a no new version available\n\n");
+                    messageBuilder.append("Please check the website (");
+                    messageBuilder.append(TVRENAMER_PROJECT_URL);
+                    messageBuilder.append(") for any news or check back later.");
+                    UIUtils.showMessageBox(SWTMessageBoxType.WARNING, "No New Version Available",
+                                           messageBuilder.toString());
                 }
             }
         });
-    }
 
-    private void createContents4() {
         Button okButton = new Button(aboutShell, SWT.PUSH);
-        okButton.setText(OK_LABEL);
+        okButton.setText("OK");
         GridData gridDataOK = new GridData();
         gridDataOK.widthHint = 160;
         gridDataOK.horizontalAlignment = GridData.END;
@@ -183,34 +220,5 @@ public class AboutDialog extends Dialog {
         // Set the OK button as the default, so
         // user can press Enter to dismiss
         aboutShell.setDefaultButton(okButton);
-    }
-
-    /**
-     * Creates the dialog's contents.
-     *
-     */
-    private void createContents() {
-        createContents1();
-        createContents2();
-        createContents3();
-        createContents4();
-    }
-
-    public void open() {
-        // Create the dialog window
-        aboutShell = new Shell(getParent(), getStyle());
-        aboutShell.setText(ABOUT_TEXT);
-
-        // Add the contents of the dialog window
-        createContents();
-
-        aboutShell.pack();
-        aboutShell.open();
-        Display display = getParent().getDisplay();
-        while (!aboutShell.isDisposed()) {
-            if (!display.readAndDispatch()) {
-                display.sleep();
-            }
-        }
     }
 }

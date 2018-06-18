@@ -22,17 +22,15 @@ import java.lang.reflect.Method;
  * </p>
  * <p>
  * This code was influenced by the <a
- * href="http://www.simidude.com/blog/2008/macify-a-swt-application-in-a-cross-platform-way/">
- * CarbonUIEnhancer from Agynami</a> with the implementation being modified from the
- * <a href="http://dev.eclipse.org/viewcvs/index.cgi/org.eclipse.ui.cocoa/src/org/eclipse/ui/internal/cocoa/CocoaUIEnhancer.java">
- * org.eclipse.ui.internal.cocoa.CocoaUIEnhancer</a>.
+ * href="http://www.simidude.com/blog/2008/macify-a-swt-application-in-a-cross-platform-way/"
+ * >CarbonUIEnhancer from Agynami</a> with the implementation being modified from the <a href="http://dev.eclipse.org/viewcvs/index.cgi/org.eclipse.ui.cocoa/src/org/eclipse/ui/internal/cocoa/CocoaUIEnhancer.java"
+ * >org.eclipse.ui.internal.cocoa.CocoaUIEnhancer</a>.
  * </p>
  * <p>
  * This class works with both the 32-bit and 64-bit versions of the SWT Cocoa bindings.
  * <p>
  * <p>
- * This class is released under the Eclipse Public License
- * (<a href="http://www.eclipse.org/legal/epl-v10.html">EPL</a>).
+ * This class is released under the Eclipse Public License (<a href="http://www.eclipse.org/legal/epl-v10.html">EPL</a>).
  */
 public class CocoaUIEnhancer {
 

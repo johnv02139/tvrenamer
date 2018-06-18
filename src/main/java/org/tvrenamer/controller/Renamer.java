@@ -9,16 +9,16 @@ import org.tvrenamer.model.Season;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.UserPreferences;
 
-import java.nio.file.Path;
+import java.io.File;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-public class NameFormatter {
+public class Renamer {
 
-    private static Logger logger = Logger.getLogger(NameFormatter.class.getName());
+    private static Logger logger = Logger.getLogger(Renamer.class.getName());
 
     private static final String DATEDAY_NUM = ReplacementToken.DATE_DAY_NUM.getToken();
     private static final String DATEDAY_NLZ = ReplacementToken.DATE_DAY_NUMLZ.getToken();
@@ -26,7 +26,6 @@ public class NameFormatter {
     private static final String DATEMON_NLZ = ReplacementToken.DATE_MONTH_NUMLZ.getToken();
     private static final String DATE_YR_FUL = ReplacementToken.DATE_YEAR_FULL.getToken();
     private static final String DATE_YR_MIN = ReplacementToken.DATE_YEAR_MIN.getToken();
-    private static final String ERESOLUTION = ReplacementToken.EPISODE_RESOLUTION.getToken();
     private static final String EPISODE_NUM = ReplacementToken.EPISODE_NUM.getToken();
     private static final String ENUM_LEADZR = ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken();
     private static final String EPISD_TITLE = ReplacementToken.EPISODE_TITLE.getToken();
@@ -35,42 +34,37 @@ public class NameFormatter {
     private static final String SNUM_LEADZR = ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken();
     private static final String SERIES_NAME = ReplacementToken.SERIES_NAME.getToken();
 
-    public static final ThreadLocal<DecimalFormat> TWO_DIGITS =
-        new ThreadLocal<DecimalFormat>() {
-            @Override
-            protected DecimalFormat initialValue() {
-                return new DecimalFormat("00");
-            }
-        };
-
-    public static final ThreadLocal<DecimalFormat> DIGITS =
-        new ThreadLocal<DecimalFormat>() {
-            @Override
-            protected DecimalFormat initialValue() {
-                return new DecimalFormat("##0");
-            }
-        };
-
-    public static final ThreadLocal<DecimalFormat> TWO_OR_THREE =
-        new ThreadLocal<DecimalFormat>() {
-            @Override
-            protected DecimalFormat initialValue() {
-                return new DecimalFormat("#00");
-            }
-        };
-
     private final Series series;
     private final Season season;
     private final Episode episode;
-    private final int seasonNum;
-    private final int episodeNum;
-    private final String episodeResolution;
+    private final String seasonNum;
+    private final String episodeNum;
     private final String fileSuffix;
 
     // This class actually figures out the proposed new name for the file, so we need
     // a link to the user preferences to know how the user wants the file renamed.
     private final UserPreferences userPrefs = UserPreferences.getInstance();
     private final GlobalOverrides overrides = GlobalOverrides.getInstance();
+
+    private String seasonSubdir() {
+        Integer seasonNumInt = StringUtils.stringToInt(seasonNum);
+        return userPrefs.getSeasonPrefix()
+            + String.format((userPrefs.isSeasonPrefixLeadingZero() ? "%02d" : "%d"),
+                            seasonNumInt);
+    }
+
+    private String addDestinationDirectory(String basename) {
+        String seriesName = (series == null) ? "" : series.getName();
+        String dirname = StringUtils.sanitiseTitle(seriesName);
+        File destPath = new File(userPrefs.getDestinationDirectory(), dirname);
+
+        // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
+        if (StringUtils.isNotBlank(userPrefs.getSeasonPrefix())) {
+            destPath = new File(destPath, seasonSubdir());
+        }
+        File destFile = new File(destPath, basename);
+        return destFile.getAbsolutePath();
+    }
 
     private String replaceDate(String orig, String match, LocalDate date, String format) {
         if (date == null) {
@@ -88,15 +82,17 @@ public class NameFormatter {
     {
         String nf = userPrefs.getRenameReplacementString();
 
+        Integer seasonNumInt = StringUtils.stringToInt(seasonNum);
+        Integer episodeNumInt = StringUtils.stringToInt(episodeNum);
+
         // Make whatever modifications are required
         nf = nf.replaceAll(SERIES_NAME, officialSeriesName);
-        nf = nf.replaceAll(SEAS_NUMBER, String.valueOf(seasonNum));
-        nf = nf.replaceAll(SNUM_LEADZR, TWO_DIGITS.get().format(seasonNum));
-        nf = nf.replaceAll(EPISODE_NUM, DIGITS.get().format(episodeNum));
-        nf = nf.replaceAll(ENUM_LEADZR, TWO_OR_THREE.get().format(episodeNum));
-        nf = nf.replaceAll(EPISD_TITLE, Matcher.quoteReplacement(titleString));
-        nf = nf.replaceAll(EP_TIT_NOSP, Matcher.quoteReplacement(StringUtils.makeDotTitle(titleString)));
-        nf = nf.replaceAll(ERESOLUTION, episodeResolution);
+        nf = nf.replaceAll(SEAS_NUMBER, seasonNum);
+        nf = nf.replaceAll(SNUM_LEADZR, new DecimalFormat("00").format(seasonNumInt));
+        nf = nf.replaceAll(EPISODE_NUM, new DecimalFormat("##0").format(episodeNumInt));
+        nf = nf.replaceAll(ENUM_LEADZR, new DecimalFormat("#00").format(episodeNumInt));
+        nf = nf.replaceAll(EPISD_TITLE, titleString);
+        nf = nf.replaceAll(EP_TIT_NOSP, titleString.replaceAll(" ", "."));
 
         // Date and times
         nf = replaceDate(nf, DATEDAY_NUM, airDate, "d");
@@ -106,13 +102,14 @@ public class NameFormatter {
         nf = replaceDate(nf, DATE_YR_FUL, airDate, "yyyy");
         nf = replaceDate(nf, DATE_YR_MIN, airDate, "yy");
 
+        nf = nf.concat(fileSuffix);
         nf = StringUtils.sanitiseTitle(nf);
 
         return nf;
     }
 
     private String getOfficialSeriesName() {
-        String officialSeriesName = series.getDirName();
+        String officialSeriesName = series.getName();
         // Ensure that all special characters in the replacement are quoted
         officialSeriesName = Matcher.quoteReplacement(officialSeriesName);
         officialSeriesName = overrides.applyTitleOverride(officialSeriesName);
@@ -124,7 +121,7 @@ public class NameFormatter {
         if (episode == null) {
             return "";
         }
-        return episode.getTitle();
+        return Matcher.quoteReplacement(episode.getTitle());
     }
 
     private LocalDate getAirDate() {
@@ -139,65 +136,18 @@ public class NameFormatter {
         return airDate;
     }
 
-    public String getNewBasename() {
-        return transformedFilename(getOfficialSeriesName(),
-                                   getTitleString(),
-                                   getAirDate());
-    }
-
-    private String seasonSubdir() {
-        String seasonPrefix = userPrefs.getSeasonPrefix();
-        // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
-        if (StringUtils.isBlank(seasonPrefix)) {
-            return null;
-        }
-
-        String formatted;
-        if ((seasonNum < 10) && userPrefs.isSeasonPrefixLeadingZero()) {
-            formatted = "0" + seasonNum;
-        } else {
-            formatted = String.valueOf(seasonNum);
-        }
-
-        return seasonPrefix + formatted;
-    }
-
-    public Path getDestinationDirectory() {
-        Path destDir = userPrefs.getDestinationPath();
-        if (destDir == null) {
-            return null;
-        }
-
-        String dirname = series.getDirName();
-        Path destPath = destDir.resolve(dirname);
-
-        String subdirName = seasonSubdir();
-        if (subdirName != null) {
-            destPath = destPath.resolve(subdirName);
-        }
-
-        return destPath;
-    }
-
-    public String getProposedFilename(String newFilename) {
+    public String getNewFilename() {
+        String newBasename = transformedFilename(getOfficialSeriesName(),
+                                                 getTitleString(),
+                                                 getAirDate());
         if (userPrefs.isMoveEnabled()) {
-            Path destPath = getDestinationDirectory();
-            if (destPath == null) {
-                logger.warning("although move enabled, couldn't get destination directory");
-                return newFilename;
-            }
-            Path destFile = destPath.resolve(newFilename);
-            return destFile.toAbsolutePath().toString();
+            return addDestinationDirectory(newBasename);
         } else {
-            return newFilename;
+            return newBasename;
         }
     }
 
-    public String getProposedFilename() {
-        return getProposedFilename(getNewBasename() + fileSuffix);
-    }
-
-    public NameFormatter(FileEpisode ep) {
+    public Renamer(FileEpisode ep) {
         series = ep.getSeries();
         if (series == null) {
             throw new IllegalArgumentException("series must not be null");
@@ -207,19 +157,8 @@ public class NameFormatter {
             throw new IllegalArgumentException("season must not be null");
         }
 
-        seasonNum = ep.getSeasonNum();
-        if (seasonNum < 0) {
-            throw new IllegalArgumentException("season number must not be negative");
-        }
-
-        episodeNum = ep.getEpisodeNum();
-        if (episodeNum < 0) {
-            throw new IllegalArgumentException("episode number must not be negative");
-        }
-
-        // The resolution comes directly from the original filename, and therefore
-        // cannot require "sanitising".
-        episodeResolution = Matcher.quoteReplacement(ep.getFilenameResolution());
+        seasonNum = ep.getFilenameSeason();
+        episodeNum = ep.getFilenameEpisode();
 
         episode = season.getEpisode(episodeNum);
         if (episode == null) {
@@ -232,7 +171,7 @@ public class NameFormatter {
 
     @Override
     public String toString() {
-        return "NameFormatter { series:"
+        return "Renamer { series:"
             + series.getName()
             + ", season:"
             + seasonNum

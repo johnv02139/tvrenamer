@@ -27,7 +27,6 @@ public class UserPreferences extends Observable {
     private String seasonPrefix;
     private boolean seasonPrefixLeadingZero;
     private boolean moveEnabled;
-    private boolean renameEnabled;
     private String renameReplacementMask;
     private ProxySettings proxy;
     private boolean checkForUpdates;
@@ -35,40 +34,6 @@ public class UserPreferences extends Observable {
     private List<String> ignoreKeywords;
 
     private static final UserPreferences INSTANCE = load();
-
-    /**
-     * Create the directory if it doesn't exist and we need it.
-     */
-    public void ensureDestDir() {
-        if (!moveEnabled) {
-            // It doesn't matter if the directory exists or not if move is not enabled.
-            return;
-        }
-
-        String errorMessage;
-        if (destDir.exists()) {
-            if (destDir.isDirectory()) {
-                // destDir already exists; we're all set.
-                return;
-            }
-
-            // destDir exists but is not a directory.
-            errorMessage = "Destination path exists but is not a directory: '"
-                + destDir.getAbsolutePath() + "'. Move is now disabled";
-            // fall through to failure at bottom
-        } else if (destDir.mkdirs()) {
-            // we have successfully created the destination directory
-            return;
-        } else {
-            errorMessage = "Couldn't create path: '"
-                + destDir.getAbsolutePath() + "'. Move is now disabled";
-            // fall through to failure
-        }
-
-        moveEnabled = false;
-        logger.warning(errorMessage);
-        UIUtils.showErrorMessageBox(ERROR_LABEL, errorMessage, null);
-    }
 
     /**
      * UserPreferences constructor which uses the defaults from {@link Constants}
@@ -81,7 +46,6 @@ public class UserPreferences extends Observable {
         seasonPrefix = DEFAULT_SEASON_PREFIX;
         seasonPrefixLeadingZero = false;
         moveEnabled = false;
-        renameEnabled = true;
         renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
         proxy = new ProxySettings();
         checkForUpdates = true;
@@ -89,7 +53,7 @@ public class UserPreferences extends Observable {
         ignoreKeywords = new ArrayList<>();
         ignoreKeywords.add("sample");
 
-        ensureDestDir();
+        ensurePath();
     }
 
     public static UserPreferences getInstance() {
@@ -101,7 +65,7 @@ public class UserPreferences extends Observable {
      */
     public static void initialize() {
         Path temp = null;
-        logger.fine("configuration directory = "
+        logger.warning("configuration directory = "
                     + CONFIGURATION_DIRECTORY.toAbsolutePath().toString());
         if (Files.exists(CONFIGURATION_DIRECTORY)) {
             // Older versions used the same name as a preferences file
@@ -171,9 +135,9 @@ public class UserPreferences extends Observable {
                 }
             }
         }
-        if (Files.notExists(THETVDB_DIR)) {
+        if (Files.notExists(THETVDB_CACHE)) {
             try {
-                Files.createDirectories(THETVDB_DIR);
+                Files.createDirectories(THETVDB_CACHE);
             } catch (Exception e) {
                 logger.log(Level.WARNING, e.getMessage(), e);
             }
@@ -201,7 +165,7 @@ public class UserPreferences extends Observable {
             prefs.getProxy().apply();
         }
 
-        prefs.ensureDestDir();
+        prefs.ensurePath();
 
         // add observer
         // TODO: why do we do this?
@@ -242,7 +206,7 @@ public class UserPreferences extends Observable {
     public void setDestinationDirectory(File dir) throws TVRenamerIOException {
         if (valuesAreDifferent(destDir, dir)) {
             destDir = dir;
-            ensureDestDir();
+            ensurePath();
 
             preferenceChanged(UserPreference.DEST_DIR, dir);
         }
@@ -257,7 +221,7 @@ public class UserPreferences extends Observable {
     public void setDestinationDirectory(String dir) throws TVRenamerIOException {
         if (valuesAreDifferent(destDir.getAbsolutePath(), dir)) {
             destDir = new File(dir);
-            ensureDestDir();
+            ensurePath();
 
             preferenceChanged(UserPreference.DEST_DIR, dir);
         }
@@ -270,8 +234,10 @@ public class UserPreferences extends Observable {
      */
     public Path getPreloadPath() {
         if (preloadFolder == null) {
+            logger.info("preload folder is null");
             return null;
         }
+        logger.info("preload folder is " + preloadFolder);
         return preloadFolder.toPath();
     }
 
@@ -282,18 +248,6 @@ public class UserPreferences extends Observable {
      */
     public File getDestinationDirectory() {
         return destDir;
-    }
-
-    /**
-     * Gets the directory set to move renamed files to.
-     *
-     * @return Path object representing the directory.
-     */
-    public Path getDestinationPath() {
-        if (destDir == null) {
-            return null;
-        }
-        return destDir.toPath();
     }
 
     public void setMoveEnabled(boolean moveEnabled) {
@@ -311,23 +265,6 @@ public class UserPreferences extends Observable {
      */
     public boolean isMoveEnabled() {
         return moveEnabled;
-    }
-
-    public void setRenameEnabled(boolean renameEnabled) {
-        if (valuesAreDifferent(this.renameEnabled, renameEnabled)) {
-            this.renameEnabled = renameEnabled;
-
-            preferenceChanged(UserPreference.RENAME_ENABLED, renameEnabled);
-        }
-    }
-
-    /**
-     * Get the status of of rename support
-     *
-     * @return true if selected destination exists, false otherwise
-     */
-    public boolean isRenameEnabled() {
-        return this.renameEnabled;
     }
 
     public void setRecursivelyAddFolders(boolean recursivelyAddFolders) {
@@ -374,8 +311,6 @@ public class UserPreferences extends Observable {
         prefix = prefix.replaceAll("\"", "");
 
         if (valuesAreDifferent(seasonPrefix, prefix)) {
-            // TODO: rather than silently sanitising, we should probably
-            // reject any text that has an illegal character in it.
             seasonPrefix = StringUtils.sanitiseTitle(prefix);
 
             preferenceChanged(UserPreference.SEASON_PREFIX, prefix);
@@ -446,11 +381,24 @@ public class UserPreferences extends Observable {
         }
     }
 
+    /**
+     * Create the directory if it doesn't exist.
+     */
+    public void ensurePath() {
+        if (moveEnabled && !destDir.mkdirs()) {
+            if (!destDir.exists()) {
+                moveEnabled = false;
+                String message = "Couldn't create path: '" + destDir.getAbsolutePath() + "'. Move is now disabled";
+                logger.warning(message);
+                UIUtils.showMessageBox(SWTMessageBoxType.ERROR, "Error", message);
+            }
+        }
+    }
+
     @Override
     public String toString() {
-        return "UserPreferences [destDir=" + destDir + ", seasonPrefix=" + seasonPrefix
-            + ", moveEnabled=" + moveEnabled + ", renameEnabled=" + renameEnabled
-            + ", renameReplacementMask=" + renameReplacementMask + ", proxy=" + proxy
+        return "UserPreferences [destDir=" + destDir + ", seasonPrefix=" + seasonPrefix + ", moveEnabled="
+            + moveEnabled + ", renameReplacementMask=" + renameReplacementMask + ", proxy=" + proxy
             + ", checkForUpdates=" + checkForUpdates + ", setRecursivelyAddFolders=" + recursivelyAddFolders + "]";
     }
 }

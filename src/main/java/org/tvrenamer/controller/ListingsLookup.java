@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ListingsLookup {
@@ -82,8 +81,8 @@ public class ListingsLookup {
                         // exception does not get caught by the main thread, and
                         // prevents this thread from dying.  Try to make sure that the
                         // thread dies, one way or another.
-                        logger.log(Level.WARNING, "generic exception doing getListings for "
-                                   + series, e);
+                        logger.info("generic exception doing getListings for " + series);
+                        logger.info(e.toString());
                         return false;
                     }
                 }
@@ -96,10 +95,9 @@ public class ListingsLookup {
      * Download the series details if required, otherwise notify listener.
      * </p>
      * <ul>
-     * <li>if we already have the series listings (the Series has season info)
-     *     then just  call the method on the listener</li>
-     * <li>if we don't have the listings, but are in the process of processing them
-     *      (exists in listenersMap) then add the listener to the registration</li>
+     * <li>if we already have the series listings (the Series has season info) then just  call the method on the listener</li>
+     * <li>if we don't have the listings, but are in the process of processing them (exists in listenersMap) then
+     * add the listener to the registration</li>
      * <li>if we don't have the listings and aren't processing, then create the
      registration, add the listener and kick off
      * the download</li>

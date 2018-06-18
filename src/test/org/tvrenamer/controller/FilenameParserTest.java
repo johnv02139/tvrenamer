@@ -22,39 +22,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * There are three major steps to turning a filename into real show information.
- *
- * First is we parse the filename, and attempt to identify the parts of the
- * filename that represents the show name, the season number, the episode
- * number, and possibly the screen resolution.  For the substring that we think
- * identifies the show name, we normalize it somewhat.  We replace punctuation
- * and lower-case the name.
- *
- * From there, we use information from the provider to compose an actual filename;
- * the file TVRenamerTest is used to test that functionality.
- *
- * This file attempts to test the first step.  The static data provided
- * in "values" has all the information we need to verify the filename parsing.
- *
- * For each filename, we provide the proper, formatted name of the actual
- * show; this is the string we expect to find after the show name has been
- * resolved based on information from the provider.
- *
- * That's the second step.  To test the first step, we might provide the
- * string that we expect to get after we've parsed the filename and normalized
- * the substring.  In this file, we refer to that as the "query string",
- * because it's the string we send to the provider for the query.  But
- * the static data does not necessarily give the query string explicitly.
- * If the query string is just the lower-cased version of the actual show
- * name, we don't make it explicit.
- *
- * That's why some of the values use the six-arg constructor, and some use
- * the seven-arg.  Basically if there's punctuation in the show name, we
- * need to provide the query string explicitly, but if the query string is
- * identical to the show name, apart from case, we can infer it.
- *
- */
 public class FilenameParserTest {
 
     private static class TestInput {
@@ -81,7 +48,8 @@ public class FilenameParserTest {
 
     public static final List<TestInput> values = new LinkedList<>();
 
-    private static void setupValuesSection0() {
+    @BeforeClass
+    public static void setupValues() {
         // In this section, we have, in order:
         // (1) actual filename to test
         // (2) the query string; that is, what we expect to pull out of the filename, to use as a basis to
@@ -120,9 +88,9 @@ public class FilenameParserTest {
                                  "channel zero", "1", "1", "480p"));
         values.add(new TestInput("NCIS.S14E04.720p.HDTV.X264-DIMENSION[ettv].mkv",
                                  "ncis", "14", "4", "720p"));
-    }
 
-    private static void setupValuesSection1() {
+
+
         // In this section, we do not supply an explicit query string.  The query string is simply
         //  the show name, lower-cased. So, we have:
         // (1) actual filename to test
@@ -145,6 +113,7 @@ public class FilenameParserTest {
                                  "law and order svu", "17", "05"));
         values.add(new TestInput("House.Of.Cards.2013.S01E06.HDTV.x264-EVOLVE.mp4",
                                  "house of cards 2013", "1", "6"));
+
 
         values.add(new TestInput("game.of.thrones.5x01.mp4", "game of thrones", "5", "1"));
         values.add(new TestInput("JAG.S10E01.DVDRip.XviD-P0W4DVD.avi", "jag", "10", "1"));
@@ -178,9 +147,6 @@ public class FilenameParserTest {
         values.add(new TestInput("Witches.of.East.End.S01E01.PROPER.HDTV.x264-2HD.mp4",
                                  "witches of east end", "1", "1"));
         values.add(new TestInput("Warehouse.13.S05E04.HDTV.x264-2HD.mp4", "warehouse 13", "5", "4"));
-    }
-
-    private static void setupValuesSection2() {
         values.add(new TestInput("the.100.208.hdtv-lol.mp4", "the 100", "2", "8")); // issue #79
         values.add(new TestInput("firefly.1x01.hdtv-lol.mp4", "firefly", "1", "1"));
         values.add(new TestInput("firefly.1x02.hdtv-lol.mp4", "firefly", "1", "2"));
@@ -209,77 +175,20 @@ public class FilenameParserTest {
                                  "frasier", "11", "12"));
     }
 
-    @BeforeClass
-    public static void setupValues() {
-        setupValuesSection0();
-        setupValuesSection1();
-        setupValuesSection2();
-    }
-
     @Test
-    public void testRemoveLast() {
-        // Straighforward removal; note does not remove punctuation/separators
-        assertEquals("foo..baz", removeLast("foo.bar.baz", "bar"));
-
-        // Implementation detail, but the match is required to be all lower-case,
-        // while the input doesn't
-        assertEquals("Foo..Baz", removeLast("Foo.Bar.Baz", "bar"));
-
-        // Like the name says, the method only removes the last instance
-        assertEquals("bar.foo..baz", removeLast("bar.foo.bar.baz", "bar"));
-
-        // Doesn't have to be delimited
-        assertEquals("emassment", removeLast("embarassment", "bar"));
-
-        // Doesn't necessarily replace anything
-        assertEquals("Foo.Schmar.baz", removeLast("Foo.Schmar.baz", "bar"));
-
-        // This frankly is probably a bug, but this is currently the expected behavior.
-        // If the match is not all lower-case to begin with, nothing will be matched.
-        assertEquals("Foo.Bar.Baz", removeLast("Foo.Bar.Baz", "Bar"));
-    }
-
-    @Test
-    public void testStripJunk() {
-        // Straighforward removal; note does not remove punctuation/separators
-        assertEquals("foo..baz", stripJunk("foo.dvdrip.baz"));
-
-        // Implementation detail, but the match is required to be all lower-case,
-        // while the input doesn't
-        assertEquals("Foo..Baz", stripJunk("Foo.Dvdrip.Baz"));
-
-        // Like the name says, the method only removes the last instance
-        assertEquals("dvdrip.foo..baz", stripJunk("dvdrip.foo.dvdrip.baz"));
-
-        // Doesn't have to be delimited
-        assertEquals("emassment", stripJunk("emdvdripassment"));
-
-        // Doesn't necessarily replace anything
-        assertEquals("Foo.Schmar.baz", stripJunk("Foo.Schmar.baz"));
-    }
-
-    private void testInsertingShowName(String filepath, String expected) {
-        Path path = Paths.get(filepath);
-        String actual = FilenameParser.insertShowNameIfNeeded(path);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testInsertShowNameIfNeeded() {
-        testInsertingShowName("Nip.Tuck.S06E01.720p.HDTV.X264-DIMENSION.mkv",
-                              "Nip.Tuck.S06E01.720p.HDTV.X264-DIMENSION.mkv");
-        testInsertingShowName("/TV/Dexter/S05E05 First Blood.mkv",
-                              "Dexter S05E05 First Blood.mkv");
-        testInsertingShowName("/TV/Lost/Lost [2x07].mkv",
-                              "Lost [2x07].mkv");
-        testInsertingShowName("/Sitcoms/Veep/S04/S4E3 Data.api",
-                              "Veep S4E3 Data.api");
-        testInsertingShowName("/Sitcoms/Veep/Season 4/S04E03 Data.api",
-                              "Veep S04E03 Data.api");
-        testInsertingShowName("/Drama/24/S02/S02E18 Day 2 - 1 -00 A.M. - 2 -00 A.M..api",
-                              "24 S02E18 Day 2 - 1 -00 A.M. - 2 -00 A.M..api");
-        testInsertingShowName("/Animation/AmericanDad/S11/S11E1 Roger Passes the Bar.mp4",
-                              "AmericanDad S11E1 Roger Passes the Bar.mp4");
+    public void testParseFileName() {
+        for (TestInput testInput : values) {
+            FileEpisode retval = new FileEpisode(testInput.input);
+            assertTrue(testInput.input + " could not be parsed", retval.wasParsed());
+            assertEquals(testInput.input, testInput.queryString, retval.getQueryString());
+            assertEquals(testInput.input,
+                         Integer.parseInt(testInput.season),
+                         Integer.parseInt(retval.getFilenameSeason()));
+            assertEquals(testInput.input,
+                         Integer.parseInt(testInput.episode),
+                         Integer.parseInt(retval.getFilenameEpisode()));
+            assertEquals(testInput.input, testInput.episodeResolution, retval.getFilenameResolution());
+        }
     }
 
     private void testRegexParse(Pattern regex, String input, String show,
@@ -370,27 +279,76 @@ public class FilenameParserTest {
     }
 
     @Test
-    public void testParseFileName() {
-        for (TestInput testInput : values) {
-            FileEpisode retval = new FileEpisode(testInput.input);
-            assertTrue(testInput.input + " could not be parsed", retval.wasParsed());
-            assertEquals(testInput.input, testInput.queryString,
-                         SeriesLookup.makeQueryString(retval.getFilenameSeries()));
-            assertEquals(testInput.input,
-                         Integer.parseInt(testInput.season),
-                         Integer.parseInt(retval.getFilenameSeason()));
-            assertEquals(testInput.input,
-                         Integer.parseInt(testInput.episode),
-                         Integer.parseInt(retval.getFilenameEpisode()));
-            assertEquals(testInput.input, testInput.episodeResolution, retval.getFilenameResolution());
-        }
+    public void testRemoveLast() {
+        // Straighforward removal; note does not remove punctuation/separators
+        assertEquals("foo..baz", removeLast("foo.bar.baz", "bar"));
+
+        // Implementation detail, but the match is required to be all lower-case,
+        // while the input doesn't
+        assertEquals("Foo..Baz", removeLast("Foo.Bar.Baz", "bar"));
+
+        // Like the name says, the method only removes the last instance
+        assertEquals("bar.foo..baz", removeLast("bar.foo.bar.baz", "bar"));
+
+        // Doesn't have to be delimited
+        assertEquals("emassment", removeLast("embarassment", "bar"));
+
+        // Doesn't necessarily replace anything
+        assertEquals("Foo.Schmar.baz", removeLast("Foo.Schmar.baz", "bar"));
+
+        // This frankly is probably a bug, but this is currently the expected behavior.
+        // If the match is not all lower-case to begin with, nothing will be matched.
+        assertEquals("Foo.Bar.Baz", removeLast("Foo.Bar.Baz", "Bar"));
+    }
+
+    @Test
+    public void testStripJunk() {
+        // Straighforward removal; note does not remove punctuation/separators
+        assertEquals("foo..baz", stripJunk("foo.dvdrip.baz"));
+
+        // Implementation detail, but the match is required to be all lower-case,
+        // while the input doesn't
+        assertEquals("Foo..Baz", stripJunk("Foo.Dvdrip.Baz"));
+
+        // Like the name says, the method only removes the last instance
+        assertEquals("dvdrip.foo..baz", stripJunk("dvdrip.foo.dvdrip.baz"));
+
+        // Doesn't have to be delimited
+        assertEquals("emassment", stripJunk("emdvdripassment"));
+
+        // Doesn't necessarily replace anything
+        assertEquals("Foo.Schmar.baz", stripJunk("Foo.Schmar.baz"));
+    }
+
+    private void testInsertingShowName(String filepath, String expected) {
+        Path path = Paths.get(filepath);
+        String actual = FilenameParser.insertShowNameIfNeeded(path);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testInsertShowNameIfNeeded() {
+        testInsertingShowName("Nip.Tuck.S06E01.720p.HDTV.X264-DIMENSION.mkv",
+                              "Nip.Tuck.S06E01.720p.HDTV.X264-DIMENSION.mkv");
+        testInsertingShowName("/TV/Dexter/S05E05 First Blood.mkv",
+                              "Dexter S05E05 First Blood.mkv");
+        testInsertingShowName("/TV/Lost/Lost [2x07].mkv",
+                              "Lost [2x07].mkv");
+        testInsertingShowName("/Sitcoms/Veep/S04/S4E3 Data.api",
+                              "Veep S4E3 Data.api");
+        testInsertingShowName("/Sitcoms/Veep/Season 4/S04E03 Data.api",
+                              "Veep S04E03 Data.api");
+        testInsertingShowName("/Drama/24/S02/S02E18 Day 2 - 1 -00 A.M. - 2 -00 A.M..api",
+                              "24 S02E18 Day 2 - 1 -00 A.M. - 2 -00 A.M..api");
+        testInsertingShowName("/Animation/AmericanDad/S11/S11E1 Roger Passes the Bar.mp4",
+                              "AmericanDad S11E1 Roger Passes the Bar.mp4");
     }
 
     @Test
     public void testWarehouse13() {
         FileEpisode episode = new FileEpisode("Warehouse.13.S05E04.HDTV.x264-2HD.mp4");
         assertTrue(episode.wasParsed());
-        assertEquals("Warehouse.13.", episode.getFilenameSeries());
+        assertEquals("warehouse 13", episode.getQueryString());
         assertEquals("05", episode.getFilenameSeason());
         assertEquals("04", episode.getFilenameEpisode());
     }

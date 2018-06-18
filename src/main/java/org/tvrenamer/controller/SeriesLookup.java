@@ -1,6 +1,5 @@
 package org.tvrenamer.controller;
 
-import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.UnresolvedShow;
 import org.tvrenamer.model.except.TVRenamerIOException;
@@ -38,6 +37,8 @@ public class SeriesLookup {
 
     private static final Map<String, ShowRegistrations> SHOW_LISTENERS = new ConcurrentHashMap<>();
 
+    private static final Map<String, Series> SERIES_MAP = new ConcurrentHashMap<>(100);
+
     private static final ExecutorService THREAD_POOL
         = Executors.newCachedThreadPool(new ThreadFactory() {
                 // We want the lookup thread to run at the minimum priority, to try to
@@ -51,39 +52,8 @@ public class SeriesLookup {
                 }
             });
 
-    private static final Map<String, Series> SERIES_MAP = new ConcurrentHashMap<>(100);
-
-
-    /**
-     * Transform a string which we believe represents a show name, to the string we will
-     * use for the query.
-     *
-     * For the internal data structures used by this class, the keys should always be
-     * the result of this method.  It's not up to callers to worry about; they can pass
-     * in show names however they have them, and the methods here will be sure to
-     * normalize them in preparation for querying.
-     *
-     * @param showName
-     *            the substring of the file path that we think represents the show name
-     * @return a version of the show name that is more suitable for a query; this may
-     *         include case normalization, removal of superfluous whitepsace and
-     *         punctuation, etc.
-     */
-    public static String makeQueryString(String showName) {
-        return StringUtils.replacePunctuation(showName).toLowerCase();
-    }
-
-    /**
-     * Add a series to the store, registered by the show name.<br />
-     * Added this distinct method to enable unit testing
-     *
-     * @param showName
-     *            the show name
-     * @param series
-     *            the {@link Series}
-     */
-    private static void notifyListeners(String queryString, Series series) {
-        ShowRegistrations registrations = SHOW_LISTENERS.get(queryString);
+    private static void notifyListeners(Series series) {
+        ShowRegistrations registrations = SHOW_LISTENERS.get(series.getNameKey());
 
         if (registrations != null) {
             for (SeriesLookupListener informationListener : registrations.getListeners()) {
@@ -96,94 +66,65 @@ public class SeriesLookup {
         }
     }
 
-    /**
-     * Stop all activity in preparation for exiting.
-     *
-     */
     public static void cleanUp() {
         THREAD_POOL.shutdownNow();
     }
 
-    /**
-     * Clear all the mapping and registrations for all shows.
-     *
-     */
     public static void clear() {
         SERIES_MAP.clear();
         SHOW_LISTENERS.clear();
     }
 
     /**
-     * Add a series to the store, registered by the query string.
-     *
-     * @param queryString
-     *            the string to use to query for the series
-     * @param series
-     *            the {@link Series}
-     */
-    private static void storeShowQueryResult(String queryString, Series series) {
-        if (series instanceof UnresolvedShow) {
-            logger.info("Failed to get options or episodes for '" + series.getName());
-        } else {
-            logger.fine("Options and episodes for '" + series.getName() + "' acquired");
-        }
-        SERIES_MAP.put(queryString, series);
-        notifyListeners(queryString, series);
-    }
-
-    /**
-     * Add a series to the store, registered by the show name.<br />
+     * Add a series to the store, registered by the lower-cased series name.<br />
      * Added this distinct method to enable unit testing
      *
-     * @param showName
-     *            the show name
      * @param series
      *            the {@link Series}
      */
-    public static void addSeriesToStore(String showName, Series series) {
-        storeShowQueryResult(makeQueryString(showName), series);
+    public static void addSeriesToStore(Series series) {
+        String key = series.getNameKey();
+        if (series instanceof UnresolvedShow) {
+            logger.info("Failed to get options or episodes for '" + key);
+        } else {
+            logger.fine("Options and episodes for '" + key + "' acquired");
+        }
+        SERIES_MAP.put(key, series);
+        notifyListeners(series);
     }
 
     // Given a list of two or more options for which show we're dealing with,
     // choose the best one and return it.
-    private static Series selectShowOption(List<Series> options, String showName) {
-        // for (Series s : options) {
-        //     logger.info("option: " + s.getName() + " for " + showName);
-        // }
+    private static Series selectShowOption(String showName, List<Series> options) {
+        for (Series s : options) {
+            logger.info("option: " + s.getName() + " for " + showName);
+        }
         // TODO: might not always be option zero...
         return options.get(0);
     }
 
-    /**
-     * Fetch the best option for a given series name, and return a Series object that
-     * represents it.
-     *
-     * @queryString series the name of the TV series (presumably from a filename) that we are
-     *           going to query for and try to figure out which show it refers to
-     * @return returns immediately, and later passes its true result via callback
-     */
-    private static void downloadShow(final String queryString, final String showName) {
+    private static void downloadShow(final String showName) {
         Callable<Boolean> showFetcher = new Callable<Boolean>() {
             @Override
             public Boolean call() throws InterruptedException {
                 List<Series> options;
                 try {
-                    options = TheTVDBProvider.querySeriesName(queryString);
+                    options = TheTVDBProvider.querySeriesName(showName);
                 } catch (TVRenamerIOException e) {
                     logger.info("exception getting options for " + showName);
-                    storeShowQueryResult(queryString, new UnresolvedShow(showName, e));
+                    addSeriesToStore(new UnresolvedShow(showName, e));
                     return true;
                 }
                 int nOptions = (options == null) ? 0 : options.size();
                 if (nOptions == 0) {
-                    logger.info("did not find any options for " + queryString);
-                    storeShowQueryResult(queryString, new UnresolvedShow(showName));
+                    logger.info("did not find any options for " + showName);
+                    addSeriesToStore(new UnresolvedShow(showName));
                     return true;
                 } else if (nOptions == 1) {
-                    storeShowQueryResult(queryString, options.get(0));
+                    addSeriesToStore(options.get(0));
                 } else {
-                    // logger.info("got " + nOptions + " options for " + showName);
-                    storeShowQueryResult(queryString, selectShowOption(options, showName));
+                    logger.info("got " + nOptions + " options for " + showName);
+                    addSeriesToStore(selectShowOption(showName, options));
                 }
 
                 return true;
@@ -191,6 +132,7 @@ public class SeriesLookup {
         };
         THREAD_POOL.submit(showFetcher);
     }
+
 
     /**
      * Does what downloadShow does, but in a single thread.
@@ -217,10 +159,9 @@ public class SeriesLookup {
      */
     @Deprecated
     public static Series getSeries(final String showName) {
-        String queryString = makeQueryString(showName);
         List<Series> options;
         try {
-            options = TheTVDBProvider.querySeriesName(queryString);
+            options = TheTVDBProvider.querySeriesName(showName);
         } catch (TVRenamerIOException e) {
             logger.info("exception getting options for " + showName);
             return new UnresolvedShow(showName, e);
@@ -233,7 +174,7 @@ public class SeriesLookup {
         if (nOptions == 1) {
             return options.get(0);
         }
-        return selectShowOption(options, showName);
+        return selectShowOption(showName, options);
     }
 
     /**
@@ -254,17 +195,17 @@ public class SeriesLookup {
      *            the listener to notify or register
      */
     public static void mapStringToShow(String showName, SeriesLookupListener listener) {
-        String queryString = makeQueryString(showName);
-        Series show = SERIES_MAP.get(queryString);
+        String showKey = showName.toLowerCase();
+        Series show = SERIES_MAP.get(showKey);
         if (show != null) {
             listener.downloadComplete(show);
         } else {
             boolean needToDownload = true;
             synchronized (SHOW_LISTENERS) {
-                ShowRegistrations registrations = SHOW_LISTENERS.get(queryString);
+                ShowRegistrations registrations = SHOW_LISTENERS.get(showKey);
                 if (registrations == null) {
                     registrations = new ShowRegistrations();
-                    SHOW_LISTENERS.put(queryString, registrations);
+                    SHOW_LISTENERS.put(showKey, registrations);
                 } else {
                     // If we already have listeners for the show key, that means we're
                     // already looking up the show, so all we need to do is add another
@@ -274,7 +215,7 @@ public class SeriesLookup {
                 registrations.addListener(listener);
             }
             if (needToDownload) {
-                downloadShow(queryString, showName);
+                downloadShow(showName);
             }
         }
     }

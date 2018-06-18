@@ -55,6 +55,7 @@ public class KnownShow {
 
     private final String showName;
     private final List<String> aliases;
+    private String nameKey;
     private String idString;
     private int idNum;
 
@@ -85,6 +86,10 @@ public class KnownShow {
         return showName;
     }
 
+    public String getNameKey() {
+        return nameKey;
+    }
+
     @Override
     public String toString() {
         return "KnownShow [" + showName + ", id=" + idString + "]";
@@ -113,6 +118,7 @@ public class KnownShow {
     }
 
     private static boolean collectShowPatterns(NodeList shows) {
+        logger.info("collectShowPatterns");
 
         try {
             for (int i = 0; i < shows.getLength(); i++) {
@@ -135,6 +141,7 @@ public class KnownShow {
     }
 
     public static boolean readMyShows() {
+        logger.info("readMyShows");
         File myShows = KNOWN_SHOWS_FILE.toFile();
         if (!myShows.exists()) {
             logger.info("no list of known shows found");
@@ -156,35 +163,19 @@ public class KnownShow {
     }
 
     public static String mapFilenameToShow(String filename) {
-        List<String> allMatches = new ArrayList<>();
         Set<String> shows = patterns.keySet();
         for (String show : shows) {
             Pattern patt = patterns.get(show);
             Matcher matcher = patt.matcher(filename);
             if (matcher.matches()) {
-                allMatches.add(show);
+                return show;
             }
         }
-
-        int count = allMatches.size();
-        if (count == 0) {
-            return null;
-        }
-
-        if (count == 1) {
-            return allMatches.get(0);
-        }
-
-        logger.warning("matched multiple: " + filename);
-        for (String showName : allMatches) {
-            logger.warning("    " + showName);
-        }
-        // TODO: if we had more than one match, we could choose, somehow.
-        // But for now, just give up, and rely on FilenameParser to do better.
         return null;
     }
 
     public static void writeSeries(Writer writer, String showName) {
+        // logger.info("show name: " + showName);
         try {
             writer.write("  <Series>\n");
             writer.write("    <Name>");
@@ -197,11 +188,27 @@ public class KnownShow {
     }
 
     public static void writeShows() {
+        // String showsFileName = "c:/Users/jv/Documents/VC/tvrenamer/etc/shows.txt";
         String outFileName = "c:/Users/jv/Documents/VC/tvrenamer/etc/myshows.xml";
+        // Path showsPath = Paths.get(showsFileName);
+        // if (showsPath == null) {
+        //     logger.warning("unable to resolve path for " + showsFileName);
+        //     return;
+        // }
+        // if (Files.notExists(showsPath)) {
+        //     logger.warning("did not find file at " + showsFileName);
+        //     return;
+        // }
         Path outPath = Paths.get(outFileName);
         try (Writer writer = Files.newBufferedWriter(outPath)) {
             writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
             writer.write("<Data>\n");
+
+            // try (Stream<String> stream = Files.lines(showsPath)) {
+            //     stream.forEach((line) -> shows.add(line));
+            // } catch (IOException ioe) {
+            //     logger.log(Level.WARNING, "error reading list of shows", ioe);
+            // }
 
             for (KnownShow show : knownShows) {
                 writeSeries(writer, show.getName());

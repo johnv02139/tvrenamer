@@ -33,6 +33,7 @@ public class FileEpisodeTest {
     public void setUp() throws Exception {
         testFiles = new ArrayList<>();
         prefs = UserPreferences.getInstance();
+        prefs.setRenameReplacementString("%S [%sx%e] %t");
         prefs.setMoveEnabled(false);
         mockListener = mock(SeriesLookupListener.class);
     }
@@ -61,26 +62,22 @@ public class FileEpisodeTest {
      */
     @Test
     public void testGetNewFilenameSpecialRegexChars() throws Exception {
-        final String testReplacementPattern = "%S [%sx%e] %t %r";
-        prefs.setRenameReplacementString(testReplacementPattern);
-
-        String filename = "the.simpsons.5.10.720p.avi";
+        String filename = "the.simpsons.5.10.avi";
         Path path = TEMP_DIR.resolve(filename);
         Files.createFile(path);
         testFiles.add(path);
 
         FileEpisode episode = new FileEpisode(filename);
+
         String showName = "The Simpsons";
         String seasonNum = "5";
         String episodeNum = "10";
-        String resolution = "720p";
         episode.setRawSeries(showName);
         episode.setFilenameSeason(seasonNum);
         episode.setFilenameEpisode(episodeNum);
-        episode.setFilenameResolution(resolution);
 
         Series series = new Series(showName, "1");
-        SeriesLookup.addSeriesToStore(showName, series);
+        SeriesLookup.addSeriesToStore(series);
         episode.setSeries(series);
 
         Season season5 = new Season(series, seasonNum);
@@ -97,8 +94,8 @@ public class FileEpisodeTest {
 
         season5.addEpisode(ep);
 
-        String newFilename = episode.getProposedFilename();
-        assertEquals("The Simpsons [5x10] $pringfield 720p.avi", newFilename);
+        String newFilename = episode.getNewFilename();
+        assertEquals("The Simpsons [5x10] $pringfield.avi", newFilename);
     }
 
     /**
@@ -107,9 +104,6 @@ public class FileEpisodeTest {
      */
     @Test
     public void testColon() throws Exception {
-        final String testReplacementPattern = "%S [%sx%e] %t";
-        prefs.setRenameReplacementString(testReplacementPattern);
-
         String filename = "steven.segal.lawman.1.01.avi";
         Path path = TEMP_DIR.resolve(filename);
         Files.createFile(path);
@@ -125,7 +119,7 @@ public class FileEpisodeTest {
         fileEpisode.setFilenameEpisode(episodeNum);
 
         Series series = new Series(showName, "1");
-        SeriesLookup.addSeriesToStore(showName, series);
+        SeriesLookup.addSeriesToStore(series);
         fileEpisode.setSeries(series);
 
         Season season1 = new Season(series, seasonNum);
@@ -141,7 +135,7 @@ public class FileEpisodeTest {
             .build();
         season1.addEpisode(ep);
 
-        String newFilename = fileEpisode.getProposedFilename();
+        String newFilename = fileEpisode.getNewFilename();
         assertFalse("Resulting filename must not contain a ':' as it breaks Windows", newFilename.contains(":"));
     }
 

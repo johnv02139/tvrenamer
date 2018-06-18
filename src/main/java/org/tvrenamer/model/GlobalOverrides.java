@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 public class GlobalOverrides {
-    private static Logger logger = Logger.getLogger(GlobalOverrides.class.getName());
+    private static Logger logger = Logger.getLogger(UserPreferences.class.getName());
 
     private static final GlobalOverrides INSTANCE = load();
 
@@ -24,7 +24,7 @@ public class GlobalOverrides {
     }
 
     private static GlobalOverrides load() {
-        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE);
+        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE.toFile());
 
         if (overrides != null) {
             logger.fine("Sucessfully read overrides from: " + OVERRIDES_FILE.toAbsolutePath());
@@ -38,7 +38,7 @@ public class GlobalOverrides {
     }
 
     public static void store(GlobalOverrides overrides) {
-        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE);
+        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE.toFile());
         logger.fine("Sucessfully saved/updated overrides");
     }
 

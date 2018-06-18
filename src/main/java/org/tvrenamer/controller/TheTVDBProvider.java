@@ -79,7 +79,7 @@ public class TheTVDBProvider {
     // Although, right now, it's emitted without formatting, which is hard on a human.
     // TODO: if it's easy, would be nice to emit formatted XML.
     // Also TODO: use a real file cache, with eviction, etc.
-    private static final Path TvDbCache = THETVDB_DIR;
+    private static final Path TvDbCache = THETVDB_CACHE;
 
     static {
         if (Files.notExists(TvDbCache)) {
@@ -103,11 +103,11 @@ public class TheTVDBProvider {
     }
 
     private static Path seriesOptionsCachePath(String showName) {
-        return TvDbCache.resolve(StringUtils.sanitiseTitle(showName) + XML_SUFFIX);
+        return TvDbCache.resolve(StringUtils.sanitiseTitle(showName) + ".xml");
     }
 
     private static Path episodeListingsCachePath(String seriesId) {
-        return TvDbCache.resolve(seriesId + XML_SUFFIX);
+        return TvDbCache.resolve(seriesId + ".xml");
     }
 
     private static File performShowQuery(String showName)

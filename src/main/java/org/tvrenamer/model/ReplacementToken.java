@@ -1,9 +1,7 @@
 package org.tvrenamer.model;
 
 public enum ReplacementToken {
-    // Note, the 'token' (ie. %s) format must match the
-    // PreferencesDialog.REPLACEMENT_OPTIONS_LIST_ENTRY_REGEX
-    // so the dnd works correctly
+    // Note, the 'token' (ie. %s) format must match the PreferencesDialog.REPLACEMENT_OPTIONS_LIST_ENTRY_REGEX so the dnd works correctly
 
     SERIES_NAME("%S", "Series Name"),
     SEASON_NUM("%s", "Season Number"),

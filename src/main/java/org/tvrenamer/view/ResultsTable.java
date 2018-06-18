@@ -24,6 +24,8 @@ package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import static org.tvrenamer.view.UIUtils.showMessageBox;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.TableEditor;
@@ -63,12 +65,14 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.TaskBar;
+import org.eclipse.swt.widgets.TaskItem;
 import org.eclipse.swt.widgets.Text;
 
 import org.tvrenamer.controller.EpisodeInformationListener;
-import org.tvrenamer.controller.SeriesLookup;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FileEpisode;
+import org.tvrenamer.model.SWTMessageBoxType;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.UnresolvedShow;
 import org.tvrenamer.model.UserPreference;
@@ -82,6 +86,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Collator;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -143,20 +148,21 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
     }
 
+    private static Image getFileMoveIcon(final FileEpisode episode) {
+        if (episode.isNewlyAdded()) {
+            return FileMoveIcon.ADDED.icon;
+        } else if (episode.wasParsed()) {
+            return FileMoveIcon.SUCCESS.icon;
+        } else {
+            return FileMoveIcon.NOPARSE.icon;
+        }
+    }
+
     private static String getFailMessage(final FileEpisode ep) {
-        if (ep.isFailToParse()) {
-            return CANT_PARSE_FILENAME;
-        }
-
-        if (ep.isFailToMove()) {
-            return FAIL_TO_MOVE_MESSAGE;
-        }
-
         if (ep.isFailed()) {
-            String failMsg = DOWNLOADING_FAILED_MESSAGE;
-            // BROKEN_PLACEHOLDER_FILENAME;
-
             final Series epSeries = ep.getSeries();
+            // BROKEN_PLACEHOLDER_FILENAME;
+            String failMsg = DOWNLOADING_FAILED_MESSAGE;
             if (epSeries instanceof UnresolvedShow) {
                 UnresolvedShow f = (UnresolvedShow) epSeries;
                 if (f.getException() == null) {
@@ -164,9 +170,9 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 }
             }
             return failMsg;
+        } else {
+            return FAIL_MSG_FOR_NONFAIL;
         }
-
-        return FAIL_MSG_FOR_NONFAIL;
     }
 
     private static String renameButtonText(boolean isMoveEnabled) {
@@ -187,6 +193,14 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
     }
 
+    private static String destColumnText(boolean isMoveEnabled) {
+        if (isMoveEnabled) {
+            return MOVE_HEADER;
+        } else {
+            return RENAME_HEADER;
+        }
+    }
+
     private TableItem[] getTableItems() {
         return resultsTable.getItems();
     }
@@ -195,149 +209,99 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return resultsTable.getItem(index);
     }
 
-    private FileEpisode getTableItemEpisode(final TableItem item) {
-        FileEpisode episode = null;
-        Object data = item.getData();
-        if ((data != null) && (data instanceof FileEpisode)) {
-            return (FileEpisode) data;
-        }
-        throw new IllegalStateException("TableItem does not contain FileEpisode: " + item);
+    private String transformedFilename(String officialSeriesName,
+                                       String titleString,
+                                       String titleSuffix,
+                                       LocalDate airDate)
+    {
+        String nf = prefs.getRenameReplacementString();
+
+        // Integer seasonNumInt = StringUtils.stringToInt(seasonNum);
+        // Integer episodeNumInt = StringUtils.stringToInt(episodeNum);
+
+        // // Make whatever modifications are required
+        // nf = nf.replaceAll(SERIES_NAME, officialSeriesName);
+        // nf = nf.replaceAll(SEAS_NUMBER, seasonNum);
+        // nf = nf.replaceAll(SNUM_LEADZR, new DecimalFormat("00").format(seasonNumInt));
+        // nf = nf.replaceAll(EPISODE_NUM, new DecimalFormat("##0").format(episodeNumInt));
+        // nf = nf.replaceAll(ENUM_LEADZR, new DecimalFormat("#00").format(episodeNumInt));
+        // nf = nf.replaceAll(EPISD_TITLE, titleString);
+        // nf = nf.replaceAll(EP_TIT_NOSP, titleString.replaceAll(" ", "."));
+
+        // // Date and times
+        // nf = replaceDate(nf, DATEDAY_NUM, airDate, "d");
+        // nf = replaceDate(nf, DATEDAY_NLZ, airDate, "dd");
+        // nf = replaceDate(nf, DATEMON_NUM, airDate, "M");
+        // nf = replaceDate(nf, DATEMON_NLZ, airDate, "MM");
+        // nf = replaceDate(nf, DATE_YR_FUL, airDate, "yyyy");
+        // nf = replaceDate(nf, DATE_YR_MIN, airDate, "yy");
+
+        // nf = nf.concat(fileSuffix);
+        // nf = StringUtils.sanitiseTitle(nf);
+
+        return nf;
     }
 
-    private String getFilenameRowText(TableItem item) {
-        return item.getText(CURRENT_FILE_COLUMN);
-    }
-
-    private boolean isNameIgnored(String fileName) {
-        for (int i = 0; i < ignoreKeywords.size(); i++) {
-            if (fileName.toLowerCase().contains(ignoreKeywords.get(i))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void setEpisodeSeriesText(final TableItem item, final FileEpisode episode) {
-        String bestName;
+    private static String filenameEpisode(FileEpisode episode) {
         if (episode.wasParsed()) {
-            bestName = episode.getSeriesInformationString();
+            return "S" + episode.getFilenameSeason() + "E" + episode.getFilenameEpisode();
         } else if (episode.isFailToParse()) {
-            item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
-            item.setFont(italicFont);
-            bestName = CANT_PARSE_FILENAME;
+            return CANT_PARSE_EPISODE_TEXT;
         } else {
-            bestName = ADDED_PLACEHOLDER_FILENAME;
+            return HAVENT_PARSED_EPISODE_TEXT;
         }
-
-        item.setText(FILENAME_SERIES_COLUMN, bestName);
     }
 
-    private void setEpisodeFilenameText(final TableItem item, final FileEpisode episode) {
-        item.setText(CURRENT_FILE_COLUMN, episode.getFilepath());
-    }
-
-    private void setEpisodeNumberText(final TableItem item, final FileEpisode episode) {
-        String episodeId;
+    private static String filenameSeriesValue(FileEpisode episode) {
         if (episode.wasParsed()) {
-            episodeId = episode.makeEpisodeId();
+            return episode.getBestSeriesName();
         } else if (episode.isFailToParse()) {
-            episodeId = CANT_PARSE_EPISODE_TEXT;
+            return CANT_PARSE_FILENAME;
         } else {
-            episodeId = HAVENT_PARSED_EPISODE_TEXT;
+            return ADDED_PLACEHOLDER_FILENAME;
         }
-
-        item.setText(FILENAME_EPISODE_COLUMN, episodeId);
     }
 
-    private void setEpisodeStatusImage(final TableItem item, final FileEpisode episode) {
-        if (episode.isNewlyAdded()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.ADDED.icon);
-        } else if (episode.isReady()) {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.SUCCESS.icon);
-        } else {
-            item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
-        }
+    private TableItem failToParseTableItem(TableItem item, String fileName) {
+        logger.severe("Couldn't parse file: " + fileName);
+        item.setImage(STATUS_COLUMN, FileMoveIcon.NOPARSE.icon);
+        item.setForeground(display.getSystemColor(SWT.COLOR_GRAY));
+        item.setFont(italicFont);
+        item.setText(FILENAME_SERIES_COLUMN, CANT_PARSE_FILENAME);
+        return item;
     }
 
     private void updateTableItemText(final TableItem item, final FileEpisode episode) {
-        setEpisodeFilenameText(item, episode);
-        setEpisodeSeriesText(item, episode);
-        setEpisodeStatusImage(item, episode);
-        setEpisodeNumberText(item, episode);
-    }
 
-    private TableItem addRowCopy(TableItem oldItem, FileEpisode oldEpisode, int index) {
-        boolean wasChecked = oldItem.getChecked();
-        int oldStyle = oldItem.getStyle();
+        String filenameSeriesText = ADDED_PLACEHOLDER_FILENAME;
+        String filenameEpisodeText = HAVENT_PARSED_EPISODE_TEXT;
 
-        TableItem newItem = new TableItem(resultsTable, oldStyle, index);
-        newItem.setText(CURRENT_FILE_COLUMN, getFilenameRowText(oldItem));
-        newItem.setText(FILENAME_SERIES_COLUMN, oldItem.getText(FILENAME_SERIES_COLUMN));
-        newItem.setText(FILENAME_EPISODE_COLUMN, oldItem.getText(FILENAME_EPISODE_COLUMN));
-        newItem.setImage(STATUS_COLUMN, oldItem.getImage(STATUS_COLUMN));
-        newItem.setForeground(oldItem.getForeground());
-        newItem.setFont(oldItem.getFont());
-        newItem.setData(oldEpisode);
-
-        return newItem;
-    }
-
-    private FileEpisode verifyEpisode(final TableItem item) {
-        FileEpisode data = (FileEpisode) item.getData();
-        String fileName;
-
-        if (data != null) {
-            fileName = data.getFilepath();
-        } else {
-            fileName = getFilenameRowText(item);
-        }
-        if (fileName == null) {
-            throw new IllegalStateException("unrecoverable table corruption");
+        if (episode.wasParsed()) {
+            filenameSeriesText = filenameSeriesValue(episode);
+            filenameEpisodeText = "S" + episode.getFilenameSeason() + "E" + episode.getFilenameEpisode();
+        } else if (episode.isFailToParse()) {
+            filenameSeriesText = CANT_PARSE_FILENAME;
+            filenameEpisodeText = CANT_PARSE_EPISODE_TEXT;
         }
 
-        FileEpisode mapped = episodeMap.get(fileName);
+        // if (episode.wasNotParsed()) {
+        //     failToParseTableItem(item, fileName);
+        //     return;
+        // }
+        // String filenameSeries = fileName;
+        // try {
+        //     filenameSeries = filenameSeriesValue(episode);
+        //     item.setImage(STATUS_COLUMN, FileMoveIcon.DOWNLOADING.icon);
+        // } catch (NotFoundException e) {
+        //     filenameSeries = e.getMessage();
+        //     item.setImage(STATUS_COLUMN, FileMoveIcon.FAIL.icon);
+        //     item.setForeground(display.getSystemColor(SWT.COLOR_RED));
+        // }
+        // item.setText(FILENAME_SERIES_COLUMN, filenameSeries);
 
-        // TODO: check that file still exists?
-
-        // This is the success case, and very much normal and expected.
-        if ((data != null) && (data == mapped)) {
-            return data;
-        }
-
-        // Everything below here is handling internal (programming) errors.
-        // There's nothing the user can do that should cause any of this.
-        if (mapped == null) {
-            if (data == null) {
-                logger.warning("table item without FileEpisode: " + fileName);
-            } else {
-                logger.warning("table item with no episodeMap mapping: " + fileName);
-            }
-        } else {
-            if (!episodeMap.remove(fileName, mapped)) {
-                throw new IllegalStateException("unrecoverable episode DB corruption");
-            }
-            if (data == null) {
-                logger.warning("table item with no FileEpisode data: " + fileName);
-            } else {
-                logger.warning("table item mapped to two different episodes: " + fileName);
-            }
-        }
-
-        // Again, we're in an internal error case, by this point.  Perhaps just throwing
-        // an exception and exiting would be better.  But to try to debug any internal
-        // errors that come up, it's better for now to whip up a new object and continue.
-        data = new FileEpisode(Paths.get(fileName), item, this);
-        episodeMap.put(fileName, data);
-
-        return data;
-    }
-
-    public void refreshTable() {
-        logger.info("Refreshing table");
-        for (TableItem item : getTableItems()) {
-            FileEpisode episode = verifyEpisode(item);
-            updateTableItemText(item, episode);
-        }
+        item.setText(FILENAME_SERIES_COLUMN, filenameSeriesText);
+        item.setText(FILENAME_EPISODE_COLUMN, filenameEpisodeText);
+        item.setImage(STATUS_COLUMN, getFileMoveIcon(episode));
     }
 
     public void onEpisodeUpdate(final FileEpisode ep) {
@@ -373,18 +337,64 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             });
     }
 
+    private void refreshTable() {
+        logger.info("Refreshing table");
+        for (TableItem item : getTableItems()) {
+            FileEpisode episode = (FileEpisode) item.getData();
+
+            String fileName = item.getText(CURRENT_FILE_COLUMN);
+            FileEpisode removed = episodeMap.remove(fileName);
+
+            if ((episode != null) && (episode == removed)) {
+                String newFileName = episode.getFilepath();
+                episodeMap.put(newFileName, episode);
+                item.setText(CURRENT_FILE_COLUMN, newFileName);
+                updateTableItemText(item, episode);
+            } else {
+                failToParseTableItem(item, fileName);
+                if (episode == null) {
+                    if (removed == null) {
+                        logger.warning("table item without FileEpisode: " + fileName);
+                    } else {
+                        logger.warning("table item with no FileEpisode data: " + fileName);
+                    }
+                } else {
+                    if (removed == null) {
+                        logger.warning("table item with no episodeMap mapping: " + fileName);
+                    } else {
+                        logger.warning("table item mapped to two different episodes: " + fileName);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean isNameIgnored(String fileName) {
+        for (int i = 0; i < ignoreKeywords.size(); i++) {
+            if (fileName.toLowerCase().contains(ignoreKeywords.get(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addItemToTable(TableItem item, FileEpisode episode) {
+        String fileName = episode.getFilepath();
+        item.setText(CURRENT_FILE_COLUMN, fileName);
+
+        updateTableItemText(item, episode);
+    }
+
     private void addFileToRenamer(final Path path) {
         final Path absPath = path.toAbsolutePath();
         final String key = absPath.toString();
         if (episodeMap.containsKey(key)) {
             logger.info("already in table: " + key);
-        } else if (isNameIgnored(key)) {
-            logger.fine("ignoring path " + key);
         } else {
             final TableItem item = new TableItem(resultsTable, SWT.NONE);
             final FileEpisode episode = new FileEpisode(absPath, item, this);
             // We add the file to the table even if we couldn't parse the filename
-            updateTableItemText(item, episode);
+            addItemToTable(item, episode);
             episodeMap.add(episode);
         }
     }
@@ -418,6 +428,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                     if (contents != null) {
                         // recursive call
                         contents.forEach(pth -> addFilesRecursively(pth));
+                        contents.close();
                     }
                 } catch (IOException ioe) {
                     logger.log(Level.WARNING, "IO Exception descending " + path, ioe);
@@ -448,11 +459,26 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
     }
 
+    private FileEpisode getTableItemEpisode(final TableItem item) {
+        FileEpisode episode = null;
+        Object data = item.getData();
+        if ((data != null) && (data instanceof FileEpisode)) {
+            return (FileEpisode) data;
+        }
+        throw new IllegalStateException("TableItem does not contain FileEpisode: " + item);
+    }
+
     private void setSortedItem(int i, int j) {
         TableItem oldItem = getTableItem(i);
         FileEpisode oldEpisode = getTableItemEpisode(oldItem);
 
-        TableItem item = addRowCopy(oldItem, oldEpisode, j);
+        int oldStyle = oldItem.getStyle();
+
+        TableItem item = new TableItem(resultsTable, oldStyle, j);
+        item.setText(CURRENT_FILE_COLUMN, oldItem.getText(CURRENT_FILE_COLUMN));
+        item.setText(FILENAME_SERIES_COLUMN, oldItem.getText(FILENAME_SERIES_COLUMN));
+        item.setImage(STATUS_COLUMN, oldItem.getImage(STATUS_COLUMN));
+        item.setData(oldEpisode);
 
         oldEpisode.setViewItem(item);
 
@@ -523,13 +549,25 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
             item.setData(null);
 
-            String filename = ep.getFilepath();
+            String filename = item.getText(CURRENT_FILE_COLUMN);
             episodeMap.remove(filename);
 
             resultsTable.remove(index);
             item.dispose();
         }
         resultsTable.deselectAll();
+    }
+
+    private TaskItem getTaskItem() {
+        TaskItem taskItem = null;
+        TaskBar taskBar = display.getSystemTaskBar();
+        if (taskBar != null) {
+            taskItem = taskBar.getItem(shell);
+            if (taskItem == null) {
+                taskItem = taskBar.getItem(null);
+            }
+        }
+        return taskItem;
     }
 
     private void setRenameButtonText() {
@@ -556,9 +594,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     private void updateUserPreferences(UserPreferences observed, UserPreference upref) {
         logger.info("Preference change event: " + upref);
 
-        if ((upref == UserPreference.MOVE_ENABLED)
-            || (upref == UserPreference.RENAME_ENABLED))
-        {
+        if (upref == UserPreference.MOVE_ENABLED) {
             boolean isMoveEnabled = observed.isMoveEnabled();
             renameSelectedButton.setText(renameButtonText(isMoveEnabled));
             shell.changed(new Control[] {renameSelectedButton});
@@ -566,7 +602,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         }
         if ((upref == UserPreference.REPLACEMENT_MASK)
             || (upref == UserPreference.MOVE_ENABLED)
-            || (upref == UserPreference.RENAME_ENABLED)
             || (upref == UserPreference.DEST_DIR)
             || (upref == UserPreference.SEASON_PREFIX)
             || (upref == UserPreference.LEADING_ZERO))
@@ -594,8 +629,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
     }
 
     private void doCleanup() {
-        // TODO: may not be necessary if they're daemon threads
-        SeriesLookup.cleanUp();
         shell.dispose();
         display.dispose();
     }
@@ -679,38 +712,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         resultsTable.addListener(SWT.MouseDown, tblEditListener);
     }
 
-    private void setupSelectionListener() {
-        resultsTable.addListener(
-                SWT.Selection,
-                new Listener() {
-                    public void handleEvent(Event event) {
-                        if (event.detail == SWT.CHECK) {
-                            TableItem eventItem = (TableItem) event.item;
-                            // This assumes that the current status of the TableItem
-                            // already reflects its toggled state, which appears to
-                            // be the case.
-                            boolean checked = eventItem.getChecked();
-                            boolean isSelected = false;
-
-                            for (final TableItem item : resultsTable.getSelection()) {
-                                if (item == eventItem) {
-                                    isSelected = true;
-                                    break;
-                                }
-                            }
-                            if (isSelected) {
-                                for (final TableItem item : resultsTable.getSelection()) {
-                                    item.setChecked(checked);
-                                }
-                            } else {
-                                resultsTable.deselectAll();
-                            }
-                        }
-                        // else, it's a SELECTED event, which we just don't care about
-                    }
-                });
-    }
-
     private TableColumn setupTableColumn(final int position,
                                          final int width,
                                          final String text)
@@ -737,10 +738,11 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         gridData.horizontalSpan = 3;
         resultsTable.setLayoutData(gridData);
 
-        setupTableColumn(STATUS_COLUMN, 100, CHECKBOX_LABEL);
+        boolean isMoveEnabled = prefs.isMoveEnabled();
+        setupTableColumn(STATUS_COLUMN, 60, CHECKBOX_LABEL);
         setupTableColumn(CURRENT_FILE_COLUMN, 550, FILENAME_LABEL);
         setupTableColumn(FILENAME_SERIES_COLUMN, 350, "Series");
-        setupTableColumn(FILENAME_EPISODE_COLUMN, 150, "Episode");
+        setupTableColumn(FILENAME_EPISODE_COLUMN, 120, "Episode");
 
         // Allow deleting of elements
         resultsTable.addKeyListener(
@@ -765,7 +767,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                 });
 
         // setupEditableTableListener();
-        setupSelectionListener();
     }
 
     private void setupTableDragDrop() {
@@ -784,18 +785,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
                         }
                     }
                 });
-    }
-
-    public Display getDisplay() {
-        return display;
-    }
-
-    public Shell getShell() {
-        return shell;
-    }
-
-    public ProgressBar getProgressBar() {
-        return totalProgressBar;
     }
 
     private void setupMainWindow() {
@@ -856,7 +845,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         quitButtonGridData.minimumWidth = 70;
         quitButtonGridData.widthHint = 70;
         quitButton.setLayoutData(quitButtonGridData);
-        quitButton.setText(QUIT_LABEL);
+        quitButton.setText("Quit");
         quitButton.addSelectionListener(
                 new SelectionAdapter() {
                     @Override
@@ -946,18 +935,6 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         return helpMenu;
     }
 
-    private MenuItem makeMenuItem(Menu parent, String text, Listener listener, char shortcut) {
-        MenuItem newItem = new MenuItem(parent, SWT.PUSH);
-        newItem.setText(text + "\tCtrl+" + shortcut);
-        newItem.addListener(SWT.Selection, listener);
-        newItem.setAccelerator(SWT.CONTROL | shortcut);
-
-        // We return the item so callers have the option, but by virtue of creating it
-        // with the proper parent in the first place, there's likely nothing else that
-        // needs to be done.
-        return newItem;
-    }
-
     private void setupMenuBar() {
         Menu menuBarMenu = new Menu(shell, SWT.BAR);
         Menu helpMenu;
@@ -997,8 +974,13 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             Menu fileMenu = new Menu(shell, SWT.DROP_DOWN);
             fileMenuItem.setMenu(fileMenu);
 
-            makeMenuItem(fileMenu, PREFERENCES_LABEL, preferencesListener, 'P');
-            makeMenuItem(fileMenu, EXIT_LABEL, quitListener, 'Q');
+            MenuItem filePreferencesItem = new MenuItem(fileMenu, SWT.PUSH);
+            filePreferencesItem.setText(PREFS_LABEL);
+            filePreferencesItem.addListener(SWT.Selection, preferencesListener);
+
+            MenuItem fileExitItem = new MenuItem(fileMenu, SWT.PUSH);
+            fileExitItem.setText(EXIT_LABEL);
+            fileExitItem.addListener(SWT.Selection, quitListener);
 
             helpMenu = setupHelpMenuBar(menuBarMenu);
 
@@ -1038,7 +1020,7 @@ public class UIStarter implements Observer, EpisodeInformationListener {
         shell.setLayout(shellGridLayout);
 
         // Setup the util class
-        UIUtils.setShell(shell);
+        new UIUtils(shell);
 
         // Add controls to main shell
         setupMainWindow();
@@ -1055,12 +1037,12 @@ public class UIStarter implements Observer, EpisodeInformationListener {
 
     private void launch() {
         try {
-            // place the window in the bottom right of the primary monitor
+            // place the window in the centre of the primary monitor
             Monitor primary = display.getPrimaryMonitor();
             Rectangle bounds = primary.getBounds();
             Rectangle rect = shell.getBounds();
-            int x = bounds.x + bounds.width - rect.width - 5;
-            int y = bounds.y + bounds.height - rect.height - 35;
+            int x = bounds.x + (bounds.width - rect.width) / 2;
+            int y = bounds.y + (bounds.height - rect.height) / 2;
             shell.setLocation(x, y);
 
             // Start the shell
@@ -1092,7 +1074,8 @@ public class UIStarter implements Observer, EpisodeInformationListener {
             JOptionPane.showMessageDialog(null, NO_DND);
             System.exit(1);
         } catch (Exception exception) {
-            UIUtils.showErrorMessageBox(ERROR_LABEL, UNKNOWN_EXCEPTION, exception);
+            showMessageBox(SWTMessageBoxType.ERROR, ERROR_LABEL,
+                           UNKNOWN_EXCEPTION, exception);
             logger.log(Level.SEVERE, UNKNOWN_EXCEPTION, exception);
             System.exit(2);
         }
