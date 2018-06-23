@@ -1,6 +1,6 @@
 <!--suppress ALL -->
 <ivy-module version="2.0">
-  <info organisation="org.tvrenamer" module="TVRenamer"/>
+  <info organisation="org.tvrenamer" module="ShowFinder"/>
   <configurations defaultconfmapping="findbugs->default">
     <conf name="findbugs"/>
   </configurations>
