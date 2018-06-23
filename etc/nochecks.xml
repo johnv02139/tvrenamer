@@ -40,7 +40,7 @@
 
     <suppress files="src/test/java/org/tvrenamer/controller/FilenameParserTest.java" checks="JavadocMethod"/>
     <suppress files="src/test/java/org/tvrenamer/controller/FilenameRegexTest.java" checks="JavadocMethod"/>
-    <suppress files="src/test/java/org/tvrenamer/controller/TheTVDBProviderTest.java" checks="JavadocMethod"/>
+    <suppress files="src/test/java/org/tvrenamer/controller/ShowFinderTest.java" checks="JavadocMethod"/>
     <suppress files="src/test/java/org/tvrenamer/controller/util/FileUtilsTest.java" checks="JavadocMethod"/>
     <suppress files="src/test/java/org/tvrenamer/controller/util/StringUtilsTest.java" checks="JavadocMethod"/>
     <suppress files="src/test/java/org/tvrenamer/model/FileEpisodeTest.java" checks="JavadocMethod"/>
