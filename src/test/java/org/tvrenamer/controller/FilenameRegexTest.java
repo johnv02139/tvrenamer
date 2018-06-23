@@ -7,7 +7,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 import org.junit.runners.Parameterized;
 
-import org.tvrenamer.controller.FilenameParser;
 import org.tvrenamer.model.FileEpisode;
 
 import java.util.ArrayList;
