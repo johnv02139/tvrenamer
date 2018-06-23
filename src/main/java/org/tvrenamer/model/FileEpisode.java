@@ -58,7 +58,7 @@ public class FileEpisode {
 
     public FileEpisode(File f) {
         fileObj = f;
-        status = EpisodeInfo.UNPARSED;
+        status = EpisodeInfo.NOPARSE;
     }
 
     public File getFile() {
@@ -209,7 +209,7 @@ public class FileEpisode {
                 String resultingFilename = newFilename.concat(getExtension(fileObj));
                 return StringUtils.sanitiseTitle(resultingFilename);
             }
-            case UNPARSED:
+            case NOPARSE:
             case BROKEN:
             default:
                 return BROKEN_PLACEHOLDER_FILENAME;

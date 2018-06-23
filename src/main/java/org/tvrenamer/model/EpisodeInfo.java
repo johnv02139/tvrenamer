@@ -1,5 +1,11 @@
 package org.tvrenamer.model;
 
 public enum EpisodeInfo {
-    UNPARSED, ADDED, DOWNLOADED, RENAMED, BROKEN;
+    ADDED,
+    DOWNLOADED,
+    RENAMED,
+    NOPARSE,
+    MOVING,
+    FAIL_TO_MOVE,
+    BROKEN
 }
