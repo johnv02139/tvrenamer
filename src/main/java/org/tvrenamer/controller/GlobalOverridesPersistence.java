@@ -2,6 +2,7 @@ package org.tvrenamer.controller;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
+
 import org.tvrenamer.model.GlobalOverrides;
 
 import java.io.BufferedWriter;
@@ -26,7 +27,7 @@ public class GlobalOverridesPersistence {
     /**
      * Save the overrides object to the file.
      *
-     * @param prefs
+     * @param overrides
      *            the overrides object to save
      * @param file
      *            the file to save it to
@@ -61,7 +62,7 @@ public class GlobalOverridesPersistence {
      */
     public static GlobalOverrides retrieve(File file) {
         // Instantiate the object so the Observable superclass is called corrected
-        GlobalOverrides overrides = null;
+        GlobalOverrides overrides;
 
         try {
             overrides = (GlobalOverrides) xstream.fromXML(new FileInputStream(file));
