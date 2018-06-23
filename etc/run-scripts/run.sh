@@ -7,15 +7,6 @@
 # logdir -- change this if you want the logfile written elsewhere
 logdir=~/Documents/Logs
 
-scriptsdir=`dirname $0`
-projdir=${scriptsdir}/../..
-
-cd ${projdir}
-ant clean
-
-# The program uses java.util.logging, which apparently writes to stderr
-# by default.  The program has a logging configuration, which makes the
-# output go to stdout, instead.  But it doesn't always find its logging
-# configuration.  To make sure to send all output to the logfile, redirect
-# stderr into stdout, and stdout to the logfile.
-${scriptsdir}/run-mingw.sh $* > ${logdir}/tvrenamer.log
+# The program doesn't appear to print to stdout; redirect stderr to log file.
+# I'm sure the logger is configurable to do this directly.  TODO: do that
+`dirname $0`/run-mingw.sh $* 2> ${logdir}/tvrenamer.log
