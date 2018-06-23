@@ -3,9 +3,6 @@ package org.tvrenamer.controller.util;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.tvrenamer.model.FileEpisode;
-
-import java.io.File;
 
 public class StringUtilsTest {
 
@@ -60,20 +57,31 @@ public class StringUtilsTest {
     }
 
     @Test
-    public void testGetExtension() {
-        assertEquals(".mkv", FileEpisode.getExtension(new File("dexter.407.720p.hdtv.x264-sys.mkv")));
-        assertEquals(".avi", FileEpisode.getExtension(new File("Marvels.Agents.of.S.H.I.E.L.D.S04E03.1080p.HDTV.x264-KILLERS[ettv].avi")));
-        assertEquals(".mp4", FileEpisode.getExtension(new File("/TV/Dexter/S05E05 First Blood.mp4")));
-        assertEquals("", FileEpisode.getExtension(new File("Supernatural")));
+    public void testSanitizeTitle() {
+        assertEquals("Microsoft - Windows", StringUtils.sanitiseTitle("Microsoft / Windows"));
+        assertEquals("Microsoft - Windows", StringUtils.sanitiseTitle("Microsoft | Windows"));
+        assertEquals("Microsoft - Windows", StringUtils.sanitiseTitle("Microsoft \\ Windows"));
+        assertEquals("Microsoft  - Windows", StringUtils.sanitiseTitle("Microsoft : Windows"));
+        assertEquals("Microsoft ' Windows", StringUtils.sanitiseTitle("Microsoft ` Windows"));
+        assertEquals("Microsoft ' Windows", StringUtils.sanitiseTitle("Microsoft \" Windows"));
+        assertEquals("Microsoft  Windows", StringUtils.sanitiseTitle("Microsoft * Windows"));
+        assertEquals("Microsoft  Windows", StringUtils.sanitiseTitle("Microsoft ? Windows"));
+        assertEquals("Microsoft  Windows", StringUtils.sanitiseTitle("Microsoft < Windows"));
+        assertEquals("Microsoft  Windows", StringUtils.sanitiseTitle("Microsoft > Windows"));
     }
 
     @Test
     public void testReplacePunctuation() {
-        assertEquals("Marvels Agents of SHIELD", StringUtils.replacePunctuation("Marvel's Agents of S.H.I.E.L.D."));
-        assertEquals("Star Trek The Next Generation", StringUtils.replacePunctuation("Star Trek: The Next Generation"));
-        assertEquals("Monty Pythons Flying Circus", StringUtils.replacePunctuation("Monty Python's Flying Circus"));
-        assertEquals("Married with Children", StringUtils.replacePunctuation("Married... with Children"));
-        assertEquals("God The Devil and Bob", StringUtils.replacePunctuation("God, The Devil and Bob"));
+        assertEquals("Marvels Agents of SHIELD",
+                     StringUtils.replacePunctuation("Marvel's Agents of S.H.I.E.L.D."));
+        assertEquals("Star Trek The Next Generation",
+                     StringUtils.replacePunctuation("Star Trek: The Next Generation"));
+        assertEquals("Monty Pythons Flying Circus",
+                     StringUtils.replacePunctuation("Monty Python's Flying Circus"));
+        assertEquals("Married with Children",
+                     StringUtils.replacePunctuation("Married... with Children"));
+        assertEquals("God The Devil and Bob",
+                     StringUtils.replacePunctuation("God, The Devil and Bob"));
         assertEquals("Whats Happening", StringUtils.replacePunctuation("What's Happening!!"));
         assertEquals("Brooklyn Nine Nine", StringUtils.replacePunctuation("Brooklyn Nine-Nine"));
         assertEquals("Murder She Wrote", StringUtils.replacePunctuation("Murder, She Wrote"));
