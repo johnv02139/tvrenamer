@@ -44,7 +44,11 @@ public class UIStarter {
         return defaultFont;
     }
 
-    public static void showMessageBox(final SWTMessageBoxType type, final String title, final String message, final Exception exception) {
+    public static void showMessageBox(final SWTMessageBoxType type,
+                                      final String title,
+                                      final String message,
+                                      final Exception exception)
+    {
         if (shell == null) {
             // Shell not established yet, try using JOPtionPane instead
             try {
@@ -56,21 +60,24 @@ public class UIStarter {
             }
         }
 
-        Display.getDefault().syncExec(new Runnable() {
-            @Override
-            public void run() {
-                MessageBox msgBox = new MessageBox(shell, type.swtIconValue);
-                msgBox.setText(title);
+        // TODO: sometimes this runs while the app is shutting down, causing
+        // another exception that the resource has been disposed
+        Display.getDefault()
+            .syncExec(new Runnable() {
+                    @Override
+                    public void run() {
+                        MessageBox msgBox = new MessageBox(shell, type.swtIconValue);
+                        msgBox.setText(title);
 
-                if (exception == null) {
-                    msgBox.setMessage(message);
-                } else {
-                    msgBox.setMessage(message + "/n" + exception.getLocalizedMessage());
-                }
+                        if (exception == null) {
+                            msgBox.setMessage(message);
+                        } else {
+                            msgBox.setMessage(message + "/n" + exception.getLocalizedMessage());
+                        }
 
-                msgBox.open();
-            }
-        });
+                        msgBox.open();
+                    }
+                });
     }
 
     /**
@@ -80,13 +87,16 @@ public class UIStarter {
      * @param title the window title
      * @param message the message content
      */
-    public static void showMessageBox(final SWTMessageBoxType type, final String title, final String message) {
+    public static void showMessageBox(final SWTMessageBoxType type, final String title,
+                                      final String message)
+    {
         showMessageBox(type, title, message, null);
     }
 
     public static void handleNoConnection(Exception exception) {
-        String message = "Unable connect to the TV listing website, please check your internet connection.  "
-            + "\nNote that proxies are not currently supported.";
+        String message =
+                "Unable connect to the TV listing website, please check your internet connection.  "
+                        + "\nNote that proxies are not currently supported.";
         logger.log(Level.WARNING, message, exception);
         showMessageBox(SWTMessageBoxType.ERROR, "Error", message);
     }
