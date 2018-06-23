@@ -2,7 +2,6 @@ package org.tvrenamer.model.util;
 
 import org.apache.commons.codec.binary.Base64;
 
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,8 +21,14 @@ public class CryptographyUtils {
     // A little bit of a security flaw having the password and salt in clear text, but securing the password in the settings file is more important
     private static final char[] PASSWORD = "sai;fdug213j,09ah2kfd/sa92n]sdf'65a".toCharArray();
     private static final byte[] SALT = {
-        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde,
+        (byte) 0x33,
+        (byte) 0x10,
+        (byte) 0x12,
+        (byte) 0xde,
+        (byte) 0x33,
+        (byte) 0x10,
+        (byte) 0x12,
     };
 
     public static String encrypt(String value) {
@@ -53,14 +58,12 @@ public class CryptographyUtils {
             return new String(pbeCipher.doFinal(base64Decode(value)));
         } catch (GeneralSecurityException gse) {
             logger.log(Level.WARNING, "Exception when encrypting value", gse);
-        } catch (IOException ioe) {
-            logger.log(Level.WARNING, "Exception when encrypting value", ioe);
         }
 
         return null;
     }
 
-    private static byte[] base64Decode(String value) throws IOException {
+    private static byte[] base64Decode(String value) {
         return base64.decode(value);
     }
 }
