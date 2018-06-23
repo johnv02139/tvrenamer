@@ -17,10 +17,11 @@ public class CryptographyUtilsTest {
     public void testTwoWay() {
         String password = "password";
         String encryptedPassword = CryptographyUtils.encrypt(password);
-        Assert.assertNotSame(password, encryptedPassword);  // Ensure it did something
+        Assert.assertNotSame(password, encryptedPassword); // Ensure it did something
 
         String decryptedEncryptedPassword = CryptographyUtils.decrypt(encryptedPassword);
-        Assert.assertEquals(password, decryptedEncryptedPassword);  // Ensure that we are back where we started
+        Assert.assertEquals(
+                password, decryptedEncryptedPassword); // Ensure that we are back where we started
     }
 
     /**
@@ -46,7 +47,8 @@ public class CryptographyUtilsTest {
         f.close();
         String encryptedPasswordFromFile = new String(buffer);
 
-        String decryptedEncryptedPasswordFromFile = CryptographyUtils.decrypt(encryptedPasswordFromFile);
+        String decryptedEncryptedPasswordFromFile =
+                CryptographyUtils.decrypt(encryptedPasswordFromFile);
 
         Assert.assertEquals(password, decryptedEncryptedPasswordFromFile);
         tempFile.delete();
