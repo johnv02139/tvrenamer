@@ -86,9 +86,10 @@ public class ProxySettings {
     }
 
     public String getDecryptedPassword() {
+        //noinspection UnnecessaryLocalVariable
         String decrypted = CryptographyUtils.decrypt(encryptedPassword);
         // logger.fine("Decrypting [" + encryptedPassword + "] into [" + decrypted + "]"); // Disable logging of
-                                                                       // sensitive information, but helps debug
+        // sensitive information, but helps debug
         return decrypted;
     }
 
@@ -98,33 +99,42 @@ public class ProxySettings {
     }
 
     public void setPlainTextPassword(String passwordToEncyrypt) {
+        //noinspection UnnecessaryLocalVariable
         String encrypted = CryptographyUtils.encrypt(passwordToEncyrypt);
         // logger.fine("Encrypting [" + passwordToEncyrypt + "] into [" + encrypted + "]"); // Disable logging of
-                                                                        // sensitive information, but helps debug
+        // sensitive information, but helps debug
         this.encryptedPassword = encrypted;
         setupAuthenticator();
     }
 
     private void setupAuthenticator() {
         if (authenticationRequired) {
-            Authenticator.setDefault(new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    String decrypted = CryptographyUtils.decrypt(encryptedPassword);
-                    if (decrypted == null) {
-                        // TODO: throw exception?
-                        return null;
-                    }
-                    return new PasswordAuthentication(username.replace("\\", "\\\\"),
-                                                      decrypted.toCharArray());
-                }
-            });
+            Authenticator.setDefault(
+                    new Authenticator() {
+                        @Override
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            String decrypted = CryptographyUtils.decrypt(encryptedPassword);
+                            if (decrypted == null) {
+                                return null;
+                            }
+                            char[] password = decrypted.toCharArray();
+                            return new PasswordAuthentication(username.replace("\\", "\\\\"), password);
+                        }
+                    });
         }
     }
 
     @Override
     public String toString() {
-        return "[enabled=" + enabled + ", hostname=" + hostname + ", port=" + port + ", username=" + username + "]";
+        return "[enabled="
+                + enabled
+                + ", hostname="
+                + hostname
+                + ", port="
+                + port
+                + ", username="
+                + username
+                + "]";
     }
 
     @Override
@@ -134,24 +144,17 @@ public class ProxySettings {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (obj == this) {
-            return true;
-        }
-        if (obj.getClass() != getClass()) {
-            return false;
-        }
+        if (obj == null) return false;
+        if (obj == this) return true;
+        if (obj.getClass() != getClass()) return false;
 
         ProxySettings rhs = (ProxySettings) obj;
 
-        if (this.enabled == rhs.enabled && this.hostname.equals(rhs.hostname) && this.port.equals(rhs.port)
-            && this.authenticationRequired == rhs.authenticationRequired && this.username.equals(rhs.username)
-            && this.encryptedPassword.equals(rhs.encryptedPassword))
-        {
-            return true;
-        }
-        return false;
+        return (this.enabled == rhs.enabled
+                && this.hostname.equals(rhs.hostname)
+                && this.port.equals(rhs.port)
+                && this.authenticationRequired == rhs.authenticationRequired
+                && this.username.equals(rhs.username)
+                && this.encryptedPassword.equals(rhs.encryptedPassword));
     }
 }
