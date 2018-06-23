@@ -13,16 +13,16 @@ public enum ReplacementToken {
     EPISODE_RESOLUTION("%r", "Episode resolution"),
 
     DATE_YEAR_FULL("%yyyy", "Year e.g. 2012"),
-    DATE_YEAR_MIN ("%yy", "Short year e.g. 12"),
+    DATE_YEAR_MIN("%yy", "Short year e.g. 12"),
     DATE_MONTH_NUM("%m", "Month num"),
     DATE_MONTH_NUMLZ("%0m", "Month num (with leading 0s)"),
     DATE_DAY_NUM("%d", "Day num"),
     DATE_DAY_NUMLZ("%0d", "Day num (with leading 0s)");
 
-    private String token;
-    private String description;
+    private final String token;
+    private final String description;
 
-    private ReplacementToken(String token, String description) {
+    ReplacementToken(String token, String description) {
         this.token = token;
         this.description = description;
     }
