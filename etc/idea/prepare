@@ -19,7 +19,7 @@ sandbox = ''
 # top-level of the repository), with the path components separated
 # by forward slashes.  'src' is exactly the same, except it could be
 # a dict with keys 'darwin' and 'win32' for platform-specific files.
-idea = [  {'dst': 'tvrenamer.iml', 'src': 'etc/idea/tvrenamer.iml'},
+idea = [  {'dst': 'showfinder.iml', 'src': 'etc/idea/showfinder.iml'},
           {'dst': '.idea/.name', 'src': 'etc/idea/files/.name'},
           {'dst': '.idea/codeStyleSettings.xml',
            'src': 'etc/idea/files/codeStyleSettings.xml'},
