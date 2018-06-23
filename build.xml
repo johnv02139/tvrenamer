@@ -22,7 +22,7 @@
 
   <property file="launch4j.properties" />
 
-  <property name="version.file" value="${res}/tvrenamer.version" />
+  <property name="version.file" value="${res}/showfinder.version" />
   <property name="logging.file" value="${res}/logging.properties" />
 
   <property name="iconfile" value="${dropin}/${ant.project.name}.icns" />

@@ -1,6 +1,6 @@
 package org.tvrenamer.model.util;
 
-import org.tvrenamer.controller.util.StringUtils;
+import org.showfinder.controller.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,10 +44,10 @@ public class Environment {
     static String readVersionNumber() {
         byte[] buffer = new byte[10];
         // Release env (jar)
-        InputStream versionStream = Environment.class.getResourceAsStream("/tvrenamer.version");
+        InputStream versionStream = Environment.class.getResourceAsStream("/showfinder.version");
         // Dev env
         if (versionStream == null) {
-            versionStream = Environment.class.getResourceAsStream("/src/main/resources/tvrenamer.version");
+            versionStream = Environment.class.getResourceAsStream("/src/main/resources/showfinder.version");
         }
 
         int bytesRead = -1;
