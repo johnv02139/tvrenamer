@@ -673,12 +673,12 @@ class PreferencesDialog extends Dialog {
             prefs.setMoveSelected(false);
         }
 
-        prefs.slam(new UserPreferences.Builder()
+        prefs.slam(new UserPreferences.Accumulator()
                    .destinationDirectory(destDirText.getText())
                    .seasonPrefix(seasonPrefixString)
                    .seasonPrefixLeadingZero(seasonPrefixLeadingZeroCheckbox.getSelection())
-                   .moveEnabled(moveSelectedCheckbox.getSelection())
-                   .renameEnabled(renameSelectedCheckbox.getSelection())
+                   .moveSelected(moveSelectedCheckbox.getSelection())
+                   .renameSelected(renameSelectedCheckbox.getSelection())
                    .removeEmptiedDirectories(rmdirEmptyCheckbox.getSelection())
                    .deleteRowAfterMove(deleteRowsCheckbox.getSelection())
                    .renameReplacementMask(replacementStringText.getText())

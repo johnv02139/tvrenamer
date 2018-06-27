@@ -606,12 +606,12 @@ public class UserPreferences extends Observable {
             + ",\n  setRecursivelyAddFolders=" + recursivelyAddFolders + "]";
     }
 
-    public static class Builder {
+    public static class Accumulator {
         String destinationDirectory = null;
         String seasonPrefix = null;
         Boolean seasonPrefixLeadingZero = null;
-        Boolean moveEnabled = null;
-        Boolean renameEnabled = null;
+        Boolean moveSelected = null;
+        Boolean renameSelected = null;
         Boolean removeEmptiedDirectories = null;
         Boolean deleteRowAfterMove = null;
         String renameReplacementMask = null;
@@ -619,10 +619,10 @@ public class UserPreferences extends Observable {
         Boolean recursivelyAddFolders = null;
         String ignoreKeywordsString = null;
 
-        public Builder() {
+        public Accumulator() {
         }
 
-        public Builder destinationDirectory(String val) {
+        public Accumulator destinationDirectory(String val) {
             if (destinationDirectory == null) {
                 destinationDirectory = val;
             } else {
@@ -639,7 +639,7 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder seasonPrefix(String val) {
+        public Accumulator seasonPrefix(String val) {
             if (seasonPrefix == null) {
                 seasonPrefix = val;
             } else {
@@ -656,7 +656,7 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder seasonPrefixLeadingZero(boolean val) {
+        public Accumulator seasonPrefixLeadingZero(boolean val) {
             if (seasonPrefixLeadingZero == null) {
                 seasonPrefixLeadingZero = val;
             } else {
@@ -673,41 +673,41 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder moveEnabled(boolean val) {
-            if (moveEnabled == null) {
-                moveEnabled = val;
+        public Accumulator moveSelected(boolean val) {
+            if (moveSelected == null) {
+                moveSelected = val;
             } else {
-                throw new IllegalStateException("cannot re-set moveEnabled");
+                throw new IllegalStateException("cannot re-set moveSelected");
             }
             return this;
         }
 
-        public boolean getMoveEnabled() {
-            if (moveEnabled == null) {
+        public boolean getMoveSelected() {
+            if (moveSelected == null) {
                 return false;
             } else {
-                return moveEnabled;
+                return moveSelected;
             }
         }
 
-        public Builder renameEnabled(boolean val) {
-            if (renameEnabled == null) {
-                renameEnabled = val;
+        public Accumulator renameSelected(boolean val) {
+            if (renameSelected == null) {
+                renameSelected = val;
             } else {
-                throw new IllegalStateException("cannot re-set renameEnabled");
+                throw new IllegalStateException("cannot re-set renameSelected");
             }
             return this;
         }
 
-        public boolean getRenameEnabled() {
-            if (renameEnabled == null) {
+        public boolean getRenameSelected() {
+            if (renameSelected == null) {
                 return true;
             } else {
-                return renameEnabled;
+                return renameSelected;
             }
         }
 
-        public Builder removeEmptiedDirectories(boolean val) {
+        public Accumulator removeEmptiedDirectories(boolean val) {
             if (removeEmptiedDirectories == null) {
                 removeEmptiedDirectories = val;
             } else {
@@ -724,7 +724,7 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder deleteRowAfterMove(boolean val) {
+        public Accumulator deleteRowAfterMove(boolean val) {
             if (deleteRowAfterMove == null) {
                 deleteRowAfterMove = val;
             } else {
@@ -741,7 +741,7 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder renameReplacementMask(String val) {
+        public Accumulator renameReplacementMask(String val) {
             if (renameReplacementMask == null) {
                 renameReplacementMask = val;
             } else {
@@ -758,7 +758,7 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder checkForUpdates(boolean val) {
+        public Accumulator checkForUpdates(boolean val) {
             if (checkForUpdates == null) {
                 checkForUpdates = val;
             } else {
@@ -775,7 +775,7 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder recursivelyAddFolders(boolean val) {
+        public Accumulator recursivelyAddFolders(boolean val) {
             if (recursivelyAddFolders == null) {
                 recursivelyAddFolders = val;
             } else {
@@ -792,7 +792,7 @@ public class UserPreferences extends Observable {
             }
         }
 
-        public Builder ignoreKeywordsString(String val) {
+        public Accumulator ignoreKeywordsString(String val) {
             if (ignoreKeywordsString == null) {
                 ignoreKeywordsString = val;
             } else {
@@ -808,29 +808,29 @@ public class UserPreferences extends Observable {
                 return ignoreKeywordsString;
             }
         }
+
+        public void slam() {
+            UserPreferences.INSTANCE.slam(this);
+        }
     }
 
     /**
-     * Use the Builder to set all the values of INSTANCE at once
+     * Use the Accumulator to set all the values of INSTANCE at once
      *
-     * @param builder
-     *   the Builder holding the values to slam in
+     * @param accumulator
+     *   the Accumulator holding the values to slam in
      */
-    public synchronized void slam(Builder builder) {
-        // Update the preferences object from the UI control values
-        setMoveSelected(builder.getMoveEnabled());
-        setSeasonPrefix(builder.getSeasonPrefix());
-        setSeasonPrefixLeadingZero(builder.getSeasonPrefixLeadingZero());
-        setRenameReplacementString(builder.getRenameReplacementMask());
-        setIgnoreKeywords(builder.getIgnoreKeywordsString());
-        setRenameSelected(builder.getRenameEnabled());
-
-        setCheckForUpdates(builder.getCheckForUpdates());
-        setRecursivelyAddFolders(builder.getRecursivelyAddFolders());
-        setRemoveEmptiedDirectories(builder.getRemoveEmptiedDirectories());
-        setDeleteRowAfterMove(builder.getDeleteRowAfterMove());
-        setDestinationDirectory(builder.getDestinationDirectory());
-
-        UserPreferences.store(this);
+    public synchronized void slam(Accumulator accumulator) {
+        destDir = accumulator.getDestinationDirectory();
+        seasonPrefix = accumulator.getSeasonPrefix();
+        seasonPrefixLeadingZero = accumulator.getSeasonPrefixLeadingZero();
+        moveSelected = accumulator.getMoveSelected();
+        renameSelected = accumulator.getRenameSelected();
+        removeEmptiedDirectories = accumulator.getRemoveEmptiedDirectories();
+        deleteRowAfterMove = accumulator.getDeleteRowAfterMove();
+        renameReplacementMask = accumulator.getRenameReplacementMask();
+        checkForUpdates = accumulator.getCheckForUpdates();
+        recursivelyAddFolders = accumulator.getRecursivelyAddFolders();
+        setIgnoreKeywords(accumulator.getIgnoreKeywordsString());
     }
 }
