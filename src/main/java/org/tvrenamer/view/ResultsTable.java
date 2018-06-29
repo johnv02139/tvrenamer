@@ -122,14 +122,14 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         return taskItem;
     }
 
-    private Combo newComboBox() {
+    Combo newComboBox() {
         if (swtTable.isDisposed()) {
             return null;
         }
         return new Combo(swtTable, SWT.DROP_DOWN | SWT.READ_ONLY);
     }
 
-    private TableItem newTableItem() {
+    TableItem newTableItem() {
         return new TableItem(swtTable, SWT.NONE);
     }
 
@@ -287,7 +287,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         });
     }
 
-    private synchronized void noteApiFailure() {
+    synchronized void noteApiFailure() {
         boolean showDialogBox = !apiDeprecated;
         apiDeprecated = true;
         if (showDialogBox) {
@@ -665,7 +665,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
-    private void successfulMove(final TableItem item) {
+    void successfulMove(final TableItem item) {
         if (prefs.isDeleteRowAfterMove()) {
             deleteTableItem(item);
         } else {
