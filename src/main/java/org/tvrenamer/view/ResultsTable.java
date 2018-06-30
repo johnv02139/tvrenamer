@@ -47,6 +47,7 @@ import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Observable;
@@ -272,31 +273,23 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      *    the direction to sort by; SWT.UP means sort A-Z, while SWT.DOWN is Z-A
      */
     void sortTable(final Column column, final int sortDirection) {
-        EpisodeView.Comparator comparator = new EpisodeView.Comparator(column.field, sortDirection);
+        Collections.sort(views, new EpisodeView.Comparator(column.field, sortDirection));
+        int nViews = views.size();
+
         // Get the items
         TableItem[] items = swtTable.getItems();
+        int nRows = items.length;
 
-        for (int i = 0; i < items.length - 1; i++) {
-            EpisodeView epview1 = getEpisodeView(items[i]);
-            if (epview1 == null) {
-                logger.severe("table item has no episode view: " + itemText(items[i]));
-            } else {
-                EpisodeView min = epview1;
-                for (int j = i + 1; j < items.length; j++) {
-                    EpisodeView epview2 = getEpisodeView(items[j]);
-                    if (epview2 == null) {
-                        logger.severe("table item has no episode view: " + itemText(items[j]));
-                    } else {
-                        // Compare the two values and order accordingly
-                        if (0 < comparator.compare(min, epview2)) {
-                            min = epview2;
-                        }
-                    }
-                }
-                if (epview1 != min) {
-                    epview1.swapWith(min);
-                }
-            }
+        if (nRows != nViews) {
+            String msg = "mismatch between UI items (" + nRows
+                + ") and internal views (" + nViews + ")";
+            logger.severe(msg);
+            throw new IllegalStateException(msg);
+        }
+
+        int i = 0;
+        for (EpisodeView view : views) {
+            view.replaceTableItem(items[i++]);
         }
 
         swtTable.setSortDirection(sortDirection);

@@ -132,45 +132,6 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
         }
     }
 
-    public void swapWith(final EpisodeView epview2) {
-        final TableItem origItem = item;
-        final TableItem newItem = epview2.item;
-        if ((origItem == null) || (newItem == null) || (origItem.equals(newItem))) {
-            logger.severe("error getting table items!");
-            return;
-        }
-        display.syncExec(() -> {
-            epview2.item = origItem;
-            origItem.setData(epview2);
-
-            this.item = newItem;
-            newItem.setData(this);
-        });
-
-        display.asyncExec(() -> {
-            setProposedDestination();
-            epview2.setProposedDestination();
-
-            if (currentFile.equals(epview2.currentFile)) {
-                logger.severe("should never be able to have two rows with the same current file: "
-                              + currentFile);
-            } else {
-                setCurrentFile();
-                epview2.setCurrentFile();
-            }
-
-            if (status != epview2.status) {
-                setStatus();
-                epview2.setStatus();
-            }
-
-            if (isSelected != epview2.isSelected) {
-                setCheckbox();
-                epview2.setCheckbox();
-            }
-        });
-    }
-
     /**
      * Fill in the value for the "Proposed File" column of the given row, with the text
      * we get from the given episode.  This is the only method that should ever set
