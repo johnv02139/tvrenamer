@@ -43,6 +43,9 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
     private long maximum;
     private int loopCount = 0;
 
+    private boolean isCheckable = true;
+    private String reasonIgnored = null;
+
     // Initially we add items to the table unchecked.  When we successfully obtain enough
     // information about the episode to determine how to rename it, the check box will
     // automatically be activated.
@@ -197,6 +200,16 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
             isSelected = newStatus;
             setCheckbox();
         }
+    }
+
+    /**
+     *
+     * @param ignoreReason the substring that is contained in the filename that
+     *   the user has told us to ignore
+     */
+    public void setIgnoreReason(final String ignoreReason) {
+        reasonIgnored = ignoreReason;
+        setProposedDestination();
     }
 
     public void setFail() {
