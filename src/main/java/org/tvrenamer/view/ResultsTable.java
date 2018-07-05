@@ -80,7 +80,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     private final Shell shell;
     private final Display display;
     private final Table swtTable;
-    private final EpisodeDb episodeMap = new EpisodeDb();
+    final EpisodeDb episodeMap = new EpisodeDb();
 
     private Button actionButton;
     private ProgressBar totalProgressBar;
@@ -382,7 +382,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         return progressLabel;
     }
 
-    private void renameFiles() {
+    void renameFiles() {
         if (!prefs.isMoveEnabled() && !prefs.isRenameSelected()) {
             logger.info("move and rename both disabled, nothing to be done.");
             return;
