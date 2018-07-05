@@ -3,10 +3,13 @@ package org.tvrenamer.view;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
@@ -189,6 +192,44 @@ public final class UIStarter {
         return helpMenu;
     }
 
+    private void setupFileMenu(final Menu fileMenu) {
+
+        final DirectoryDialog dd = new DirectoryDialog(shell, SWT.SINGLE);
+        MenuItem fileOpenItem = new MenuItem(fileMenu, SWT.PUSH);
+        fileOpenItem.setText("Open...");
+        fileOpenItem.setAccelerator(SWT.COMMAND | 'O');
+        fileOpenItem.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                String directory = dd.open();
+                if (directory != null) {
+                    // load all of the files in the dir
+                    resultsTable.episodeMap.addFolderToQueue(directory);
+                }
+            }
+        });
+
+        MenuItem fileMoveItem = new MenuItem(fileMenu, SWT.PUSH);
+        fileMoveItem.setText("Move Selected Files");
+        fileMoveItem.setAccelerator(SWT.COMMAND | SWT.CR);
+        fileMoveItem.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                resultsTable.renameFiles();
+            }
+        });
+    }
+
+    private void createFileMenu(final Menu menuBar) {
+        MenuItem fileMenuItem = new MenuItem(menuBar, SWT.CASCADE);
+        fileMenuItem.setText("File");
+
+        Menu fileMenu = new Menu(shell, SWT.DROP_DOWN);
+        fileMenuItem.setMenu(fileMenu);
+
+        setupFileMenu(fileMenu);
+    }
+
     private void setupMenuBar() {
         Menu menuBarMenu = new Menu(shell, SWT.BAR);
         Menu helpMenu;
@@ -208,6 +249,8 @@ public final class UIStarter {
             CocoaUIEnhancer enhancer = new CocoaUIEnhancer();
             enhancer.hookApplicationMenu(display, quitListener, aboutListener, preferencesListener);
 
+            createFileMenu(menuBarMenu);
+
             setupHelpMenuBar(menuBarMenu);
         } else {
             // Add the normal Preferences, About and Quit menus.
@@ -216,6 +259,8 @@ public final class UIStarter {
 
             Menu fileMenu = new Menu(shell, SWT.DROP_DOWN);
             fileMenuItem.setMenu(fileMenu);
+
+            setupFileMenu(fileMenu);
 
             makeMenuItem(fileMenu, PREFERENCES_LABEL, preferencesListener, 'P');
             makeMenuItem(fileMenu, EXIT_LABEL, quitListener, 'Q');
