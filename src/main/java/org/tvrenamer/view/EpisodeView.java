@@ -317,7 +317,9 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
         if (StringUtils.isBlank(showName)) {
             logger.fine("no show name found for " + this);
         } else {
-            ShowStore.mapStringToShow(showName, EpisodeView.this);
+            new Thread(() -> {
+                ShowStore.mapStringToShow(showName, EpisodeView.this);
+            }).start();
         }
     }
 
