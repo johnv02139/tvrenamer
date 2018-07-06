@@ -2,10 +2,8 @@ package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
 import static org.tvrenamer.view.Fields.*;
-import static org.tvrenamer.view.ItemState.*;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.TableEditor;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
@@ -40,43 +38,35 @@ import org.eclipse.swt.widgets.TaskItem;
 import org.tvrenamer.controller.AddEpisodeListener;
 import org.tvrenamer.controller.FileMover;
 import org.tvrenamer.controller.MoveRunner;
-import org.tvrenamer.controller.ShowInformationListener;
-import org.tvrenamer.controller.ShowListingsListener;
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.controller.UrlLauncher;
-import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.AppData;
 import org.tvrenamer.model.EpisodeDb;
-import org.tvrenamer.model.FailedShow;
 import org.tvrenamer.model.FileEpisode;
-import org.tvrenamer.model.Series;
-import org.tvrenamer.model.Show;
-import org.tvrenamer.model.ShowStore;
 import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 
-import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Queue;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public final class ResultsTable implements Observer, AddEpisodeListener {
     private static final Logger logger = Logger.getLogger(ResultsTable.class.getName());
     // load preferences
     private static final UserPreferences prefs = UserPreferences.getInstance();
     private static final AppData appData = AppData.getInstance();
-    private static final Collator COLLATOR = Collator.getInstance(Locale.getDefault());
-
-    private static final int ITEM_NOT_IN_TABLE = -1;
 
     private final UIStarter ui;
     private final Shell shell;
     private final Display display;
     private final Table swtTable;
+    private final List<EpisodeView> views = new ArrayList<>(1000);
     final EpisodeDb episodeMap = new EpisodeDb();
 
     private Button actionButton;
@@ -148,142 +138,6 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
-    private void setComboBoxProposedDest(final TableItem item, final FileEpisode ep) {
-        if (swtTable.isDisposed() || item.isDisposed()) {
-            return;
-        }
-        final List<String> options = ep.getReplacementOptions();
-        final int chosen = ep.getChosenEpisode();
-        final String defaultOption = options.get(chosen);
-        NEW_FILENAME_FIELD.setCellText(item, defaultOption);
-
-        final Combo combo = newComboBox();
-        if (combo == null) {
-            return;
-        }
-        options.forEach(combo::add);
-        combo.setText(defaultOption);
-        combo.addModifyListener(e -> ep.setChosenEpisode(combo.getSelectionIndex()));
-        item.setData(combo);
-
-        final TableEditor editor = new TableEditor(swtTable);
-        editor.grabHorizontal = true;
-        NEW_FILENAME_FIELD.setEditor(item, editor, combo);
-    }
-
-    private void deleteItemCombo(final TableItem item) {
-        final Object itemData = item.getData();
-        if (itemData != null) {
-            final Control oldCombo = (Control) itemData;
-            if (!oldCombo.isDisposed()) {
-                oldCombo.dispose();
-            }
-        }
-    }
-
-    /**
-     * Fill in the value for the "Proposed File" column of the given row, with the text
-     * we get from the given episode.  This is the only method that should ever set
-     * this text, to ensure that the text of each row is ALWAYS the value returned by
-     * getReplacementText() on the associated episode.
-     *
-     * @param item
-     *    the row in the table to set the text of the "Proposed File" column
-     * @param ep
-     *    the FileEpisode to use to obtain the text
-     */
-    private void setProposedDestColumn(final TableItem item, final FileEpisode ep) {
-        if (swtTable.isDisposed() || item.isDisposed()) {
-            return;
-        }
-        deleteItemCombo(item);
-
-        int nOptions = ep.optionCount();
-        if (nOptions > 1) {
-            setComboBoxProposedDest(item, ep);
-        } else if (nOptions == 1) {
-            NEW_FILENAME_FIELD.setCellText(item, ep.getReplacementText());
-        } else {
-            NEW_FILENAME_FIELD.setCellText(item, ep.getReplacementText());
-            item.setChecked(false);
-        }
-    }
-
-    private void failTableItem(final TableItem item) {
-        STATUS_FIELD.setCellImage(item, FAIL);
-        item.setChecked(false);
-    }
-
-    private void setTableItemStatus(final TableItem item, final int epsFound) {
-        if (epsFound > 1) {
-            STATUS_FIELD.setCellImage(item, OPTIONS);
-            item.setChecked(true);
-        } else if (epsFound == 1) {
-            STATUS_FIELD.setCellImage(item, SUCCESS);
-            item.setChecked(true);
-        } else {
-            failTableItem(item);
-        }
-    }
-
-    private int getTableItemIndex(final TableItem item) {
-        try {
-            return swtTable.indexOf(item);
-        } catch (IllegalArgumentException | SWTException ignored) {
-            // We'll just fall through and return the sentinel.
-        }
-        return ITEM_NOT_IN_TABLE;
-    }
-
-    private boolean tableContainsTableItem(final TableItem item) {
-        return (ITEM_NOT_IN_TABLE != getTableItemIndex(item));
-    }
-
-    private void listingsDownloaded(final TableItem item, final FileEpisode episode) {
-        int epsFound = episode.listingsComplete();
-        display.asyncExec(() -> {
-            if (tableContainsTableItem(item)) {
-                setProposedDestColumn(item, episode);
-                setTableItemStatus(item, epsFound);
-            }
-        });
-    }
-
-    private void listingsFailed(final TableItem item, final FileEpisode episode, final Exception err) {
-        episode.listingsFailed(err);
-        display.asyncExec(() -> {
-            if (tableContainsTableItem(item)) {
-                setProposedDestColumn(item, episode);
-                failTableItem(item);
-            }
-        });
-    }
-
-    private void getSeriesListings(final Series series, final TableItem item,
-                                   final FileEpisode episode)
-    {
-        series.addListingsListener(new ShowListingsListener() {
-            @Override
-            public void listingsDownloadComplete() {
-                listingsDownloaded(item, episode);
-            }
-
-            @Override
-            public void listingsDownloadFailed(Exception err) {
-                listingsFailed(item, episode, err);
-            }
-        });
-    }
-
-    private void tableItemFailed(final TableItem item, final FileEpisode episode) {
-        display.asyncExec(() -> {
-            if (tableContainsTableItem(item)) {
-                setProposedDestColumn(item, episode);
-                failTableItem(item);
-            }
-        });
-    }
-
     synchronized void noteApiFailure() {
         boolean showDialogBox = !apiDeprecated;
         apiDeprecated = true;
@@ -294,68 +148,35 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
-    private TableItem createTableItem(final FileEpisode episode) {
-        TableItem item = newTableItem();
-
-        // Initially we add items to the table unchecked.  When we successfully obtain enough
-        // information about the episode to determine how to rename it, the check box will
-        // automatically be activated.
-        item.setChecked(false);
-        CURRENT_FILE_FIELD.setCellText(item, episode.getFilepath());
-        setProposedDestColumn(item, episode);
-        STATUS_FIELD.setCellImage(item, DOWNLOADING);
-        return item;
+    private void renderEpisodeView(final EpisodeView epview) {
+        final TableItem item = epview.getItem();
+        if (item == null) {
+            logger.severe("could not refresh " + epview);
+            return;
+        }
+        epview.refreshTableItem();
     }
 
     @Override
     public void addEpisodes(final Queue<FileEpisode> episodes) {
+        final List<EpisodeView> newViews = new ArrayList<>(episodes.size());
         for (final FileEpisode episode : episodes) {
-            final TableItem item = createTableItem(episode);
-            if (!episode.wasParsed()) {
-                failTableItem(item);
-                continue;
-            }
-            synchronized (this) {
-                if (apiDeprecated) {
-                    tableItemFailed(item, episode);
-                    continue;
-                }
-            }
-
-            final String showName = episode.getFilenameShow();
-            if (StringUtils.isBlank(showName)) {
-                logger.fine("no show name found for " + episode);
-                continue;
-            }
-            ShowStore.mapStringToShow(showName, new ShowInformationListener() {
-                    @Override
-                    public void downloadSucceeded(Show show) {
-                        episode.setEpisodeShow(show);
-                        display.asyncExec(() -> {
-                            if (tableContainsTableItem(item)) {
-                                setProposedDestColumn(item, episode);
-                                STATUS_FIELD.setCellImage(item, ADDED);
-                            }
-                        });
-                        if (show.isValidSeries()) {
-                            getSeriesListings(show.asSeries(), item, episode);
-                        }
-                    }
-
-                    @Override
-                    public void downloadFailed(FailedShow failedShow) {
-                        episode.setFailedShow(failedShow);
-                        tableItemFailed(item, episode);
-                    }
-
-                    @Override
-                    public void apiHasBeenDeprecated() {
-                        noteApiFailure();
-                        episode.setApiDiscontinued();
-                        tableItemFailed(item, episode);
-                    }
-                });
+            final EpisodeView epview = new EpisodeView(this, episode);
+            newViews.add(epview);
+            renderEpisodeView(epview);
         }
+
+        synchronized (this) {
+            if (apiDeprecated) {
+                newViews.forEach(EpisodeView::setFail);
+            }
+        }
+
+        synchronized (views) {
+            views.addAll(newViews.stream().collect(Collectors.toList()));
+        }
+
+        newViews.forEach(EpisodeView::lookupShow);
     }
 
     /**
@@ -379,6 +200,38 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         return progressLabel;
     }
 
+    private EpisodeView getEpisodeView(final TableItem item) {
+        if (item == null) {
+            logger.severe("null table item!");
+            return null;
+        }
+        final Object itemData = item.getData();
+        if (itemData != null) {
+            if (itemData instanceof EpisodeView) {
+                final EpisodeView epview = (EpisodeView) itemData;
+                if (epview.getItem() == item) {
+                    return epview;
+                }
+            }
+        }
+        final String itemText = itemText(item);
+        if (itemData == null) {
+            logger.severe("table item with no episode view: " + itemText);
+            return null;
+        }
+        if (itemData instanceof EpisodeView) {
+            final EpisodeView epview = (EpisodeView) itemData;
+            logger.severe("inconsistent table item state: user data of "
+                          + itemText + " is " + epview);
+            final TableItem epviewItem = epview.getItem();
+            logger.severe("but the item for that view is " + itemText(epviewItem));
+            return null;
+        }
+        logger.severe("serious internal error: table item data for \"" + itemText
+                      + "\" is of wrong type: " + itemData);
+        return null;
+    }
+
     void renameFiles() {
         if (!prefs.isMoveEnabled() && !prefs.isRenameSelected()) {
             logger.info("move and rename both disabled, nothing to be done.");
@@ -388,15 +241,19 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         final List<FileMover> pendingMoves = new LinkedList<>();
         for (final TableItem item : swtTable.getItems()) {
             if (item.getChecked()) {
-                String fileName = CURRENT_FILE_FIELD.getCellText(item);
-                final FileEpisode episode = episodeMap.get(fileName);
+                final EpisodeView epview = getEpisodeView(item);
+                if (epview == null) {
+                    logger.severe("(checked) item with no episode view: " + itemText(item));
+                    continue;
+                }
+                final FileEpisode episode = epview.getEpisode();
                 // Skip files not successfully downloaded and ready to be moved
                 if (episode.optionCount() == 0) {
                     logger.info("checked but not ready: " + itemText(item));
                     continue;
                 }
                 FileMover pendingMove = new FileMover(episode);
-                pendingMove.addObserver(new FileCopyMonitor(this, item));
+                pendingMove.addObserver(epview);
                 pendingMoves.add(pendingMove);
             }
         }
@@ -408,38 +265,6 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     /**
-     * Insert a copy of the row at the given position, and then delete the original row.
-     * Note that insertion does not overwrite the row that is already there.  It pushes
-     * the row, and every row below it, down one slot.
-     *
-     * @param oldItem
-     *   the TableItem to copy
-     * @param positionToInsert
-     *   the position where we should insert the row
-     */
-    private void setSortedItem(final TableItem oldItem, final int positionToInsert) {
-        boolean wasChecked = oldItem.getChecked();
-
-        TableItem item = new TableItem(swtTable, SWT.NONE, positionToInsert);
-        item.setChecked(wasChecked);
-        CURRENT_FILE_FIELD.setCellText(item, CURRENT_FILE_FIELD.getCellText(oldItem));
-        NEW_FILENAME_FIELD.setCellText(item, NEW_FILENAME_FIELD.getCellText(oldItem));
-        STATUS_FIELD.setCellImage(item, STATUS_FIELD.getCellImage(oldItem));
-
-        final Object itemData = oldItem.getData();
-
-        // Although the name suggests dispose() is primarily about reclaiming system
-        // resources, it also deletes the item from the Table.
-        oldItem.dispose();
-        if (itemData != null) {
-            final TableEditor newEditor = new TableEditor(swtTable);
-            newEditor.grabHorizontal = true;
-            NEW_FILENAME_FIELD.setEditor(item, newEditor, (Control) itemData);
-            item.setData(itemData);
-        }
-    }
-
-    /**
      * Sort the table by the given column in the given direction.
      *
      * @param column
@@ -448,30 +273,25 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      *    the direction to sort by; SWT.UP means sort A-Z, while SWT.DOWN is Z-A
      */
     void sortTable(final Column column, final int sortDirection) {
-        Field field = column.field;
+        Collections.sort(views, new EpisodeView.Comparator(column.field, sortDirection));
+        int nViews = views.size();
 
         // Get the items
         TableItem[] items = swtTable.getItems();
+        int nRows = items.length;
 
-        // Go through the item list and bubble rows up to the top as appropriate
-        for (int i = 1; i < items.length; i++) {
-            String value1 = field.getItemTextValue(items[i]);
-            for (int j = 0; j < i; j++) {
-                String value2 = field.getItemTextValue(items[j]);
-                // Compare the two values and order accordingly
-                int comparison = COLLATOR.compare(value1, value2);
-                if (((comparison < 0) && (sortDirection == SWT.UP))
-                    || (comparison > 0) && (sortDirection == SWT.DOWN))
-                {
-                    // Insert a copy of row i at position j, and then delete
-                    // row i.  Then fetch the list of items anew, since we
-                    // just modified it.
-                    setSortedItem(items[i], j);
-                    items = swtTable.getItems();
-                    break;
-                }
-            }
+        if (nRows != nViews) {
+            String msg = "mismatch between UI items (" + nRows
+                + ") and internal views (" + nViews + ")";
+            logger.severe(msg);
+            throw new IllegalStateException(msg);
         }
+
+        int i = 0;
+        for (EpisodeView view : views) {
+            view.replaceTableItem(items[i++]);
+        }
+
         swtTable.setSortDirection(sortDirection);
         swtTable.setSortColumn(column.swtColumn);
     }
@@ -493,18 +313,15 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     public void refreshDestinations() {
         logger.info("Refreshing destinations");
         for (TableItem item : swtTable.getItems()) {
-            String fileName = CURRENT_FILE_FIELD.getCellText(item);
-            String newFileName = episodeMap.currentLocationOf(fileName);
-            if (newFileName == null) {
-                // Not expected, but could happen, primarily if some other,
-                // unrelated program moves the file out from under us.
-                deleteTableItem(item);
-                return;
+            final EpisodeView epview = getEpisodeView(item);
+            if (epview == null) {
+                logger.severe("disposing of table row that had no episode view: "
+                              + itemText(item));
+                // TODO: could do getEditor()?
+                item.dispose();
+            } else {
+                epview.refreshProposedDest();
             }
-            FileEpisode episode = episodeMap.get(newFileName);
-            episode.refreshReplacement();
-            setProposedDestColumn(item, episode);
-            setTableItemStatus(item, episode.optionCount());
         }
     }
 
@@ -563,20 +380,25 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void deleteTableItem(final TableItem item) {
-        deleteItemCombo(item);
-        episodeMap.remove(CURRENT_FILE_FIELD.getCellText(item));
+        final EpisodeView epview = getEpisodeView(item);
+        String currentFile = itemText(item);
+        if (epview == null) {
+            logger.warning("deleting table item that lacks episode view: " + currentFile);
+        } else {
+            boolean removed = views.remove(epview);
+            if (!removed) {
+                logger.warning("deleting episode view that was not in list: "
+                           + epview);
+            }
+            epview.delete();
+        }
+        episodeMap.remove(currentFile);
         item.dispose();
     }
 
     private void deleteSelectedTableItems() {
         for (final TableItem item : swtTable.getSelection()) {
-            int index = getTableItemIndex(item);
             deleteTableItem(item);
-
-            if (ITEM_NOT_IN_TABLE == index) {
-                logger.info("error: somehow selected item (" + itemText(item)
-                            + ") not found in table");
-            }
         }
         swtTable.deselectAll();
     }
@@ -648,32 +470,33 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
             if (item.isDisposed()) {
                 return;
             }
+            final EpisodeView epview = getEpisodeView(item);
             String fileName = CURRENT_FILE_FIELD.getCellText(item);
-            String newLocation = episodeMap.currentLocationOf(fileName);
-            if (newLocation == null) {
-                // Not expected, but could happen, primarily if some other,
-                // unrelated program moves the file out from under us.
-                deleteTableItem(item);
-                return;
+            if (epview == null) {
+                logger.severe("disposing of table row that had no episode view: "
+                              + fileName);
+                // TODO: could do getEditor()?
+                item.dispose();
+            } else {
+                String newLocation = episodeMap.currentLocationOf(fileName);
+                if (newLocation == null) {
+                    // Not expected, but could happen, primarily if some other,
+                    // unrelated program moves the file out from under us.
+                    deleteTableItem(item);
+                    return;
+                }
+                if (!fileName.equals(newLocation)) {
+                    epview.onFileMoved(newLocation);
+                    renderEpisodeView(epview);
+                }
             }
-            if (!fileName.equals(newLocation)) {
-                CURRENT_FILE_FIELD.setCellText(item, newLocation);
-            }
-        }
-    }
-
-    void successfulMove(final TableItem item) {
-        if (prefs.isDeleteRowAfterMove()) {
-            deleteTableItem(item);
-        } else {
-            updateTableItemAfterMove(item);
         }
     }
 
     /**
-     * A callback that indicates that the {@link FileMover} has finished trying
-     * to move a file, the one displayed in the given item.  We want to take
-     * an action when the move has been finished.
+     * A callback that indicates that the {@link FileMover} has finished moving
+     * a file, the one displayed in the given item.  We want to take an action
+     * when the move has been finished.
      *
      * The specific action depends on the user preference, "deleteRowAfterMove".
      * As its name suggests, when it's true, and we successfully move the file,
@@ -685,25 +508,14 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      * But one thing that has changed is the file's current location.  We call
      * helper method updateTableItemAfterMove to update the table.
      *
-     * If the move actually did not succeed, we log a message in development,
-     * but currently don't do anything to make it obvious to the user that the
-     * move failed.  Perhaps we should do more...
-     *
      * @param item
      *   the item representing the file that we've just finished trying to move
-     * @param success
-     *   whether or not we actually succeeded in moving the file
      */
-    public void finishMove(final TableItem item, final boolean success) {
-        if (success) {
-            successfulMove(item);
+    void successfulMove(final TableItem item) {
+        if (prefs.isDeleteRowAfterMove()) {
+            deleteTableItem(item);
         } else {
-            // Should we do anything else, visible to the user?  Change to
-            // a different, "fail to move" icon, rather than the generic
-            // "fail"?  We don't really have a good option, right now.  TODO.
-            failTableItem(item);
-            logger.info("failed to move " + itemText(item)
-                        + "\n  to " + NEW_FILENAME_FIELD.getCellText(item));
+            updateTableItemAfterMove(item);
         }
     }
 
@@ -834,12 +646,18 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                         break;
                     }
                 }
-                if (isSelected) {
-                    for (final TableItem item : swtTable.getSelection()) {
-                        item.setChecked(checked);
+                if (!isSelected) {
+                    checked = false;
+                }
+                for (final TableItem item : swtTable.getSelection()) {
+                    final EpisodeView epview = getEpisodeView(item);
+                    if (epview == null) {
+                        logger.severe("deleting table item with no EpisodeView: "
+                                      + itemText(item));
+                        deleteTableItem(item);
+                    } else {
+                        epview.setChecked(checked);
                     }
-                } else {
-                    swtTable.deselectAll();
                 }
             }
             // else, it's a SELECTED event, which we just don't care about

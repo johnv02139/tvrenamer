@@ -285,14 +285,12 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
         }
 
         public int compare(final EpisodeView epview1, final EpisodeView epview2) {
-            TableItem item1 = epview1.getItem();
-            TableItem item2 = epview2.getItem();
             if (sortDirection == SWT.UP) {
-                return COLLATOR.compare(field.getItemTextValue(item1),
-                                        field.getItemTextValue(item2));
+                return COLLATOR.compare(field.getItemTextValue(epview1),
+                                        field.getItemTextValue(epview2));
             } else {
-                return COLLATOR.compare(field.getItemTextValue(item2),
-                                        field.getItemTextValue(item1));
+                return COLLATOR.compare(field.getItemTextValue(epview2),
+                                        field.getItemTextValue(epview1));
             }
         }
     }
@@ -305,8 +303,7 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
 
     @Override
     public void downloadFailed(FailedShow failedShow) {
-        // We don't send a FailedShow to the FileEpisode
-        setEpisodeShow(null);
+        episode.setFailedShow(failedShow);
     }
 
     @Override
@@ -320,9 +317,7 @@ public class EpisodeView implements ShowListingsListener, ShowInformationListene
         if (StringUtils.isBlank(showName)) {
             logger.fine("no show name found for " + this);
         } else {
-            new Thread(() -> {
-                ShowStore.mapStringToShow(showName, EpisodeView.this);
-            }).start();
+            ShowStore.mapStringToShow(showName, EpisodeView.this);
         }
     }
 

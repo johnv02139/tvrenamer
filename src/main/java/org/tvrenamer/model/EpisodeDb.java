@@ -68,10 +68,6 @@ public class EpisodeDb implements Observer {
         episodes.remove(key);
     }
 
-    public FileEpisode get(String key) {
-        return episodes.get(key);
-    }
-
     private boolean fileIsVisible(Path path) {
         boolean isVisible = false;
         try {
