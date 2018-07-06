@@ -638,35 +638,38 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         });
     }
 
+    private void handleCheckEvent(final TableItem eventItem) {
+        // This assumes that the current status of the TableItem
+        // already reflects its toggled state, which appears to
+        // be the case.
+        boolean checked = eventItem.getChecked();
+        boolean isSelected = false;
+
+        for (final TableItem item : swtTable.getSelection()) {
+            if (item == eventItem) {
+                isSelected = true;
+                break;
+            }
+        }
+        if (!isSelected) {
+            checked = false;
+        }
+        for (final TableItem item : swtTable.getSelection()) {
+            final EpisodeView epview = getEpisodeView(item);
+            if (epview == null) {
+                logger.severe("deleting table item with no EpisodeView: "
+                              + itemText(item));
+                deleteTableItem(item);
+            } else {
+                epview.setChecked(checked);
+            }
+        }
+    }
+
     private void setupSelectionListener() {
         swtTable.addListener(SWT.Selection, event -> {
             if (event.detail == SWT.CHECK) {
-                TableItem eventItem = (TableItem) event.item;
-                // This assumes that the current status of the TableItem
-                // already reflects its toggled state, which appears to
-                // be the case.
-                boolean checked = eventItem.getChecked();
-                boolean isSelected = false;
-
-                for (final TableItem item : swtTable.getSelection()) {
-                    if (item == eventItem) {
-                        isSelected = true;
-                        break;
-                    }
-                }
-                if (!isSelected) {
-                    checked = false;
-                }
-                for (final TableItem item : swtTable.getSelection()) {
-                    final EpisodeView epview = getEpisodeView(item);
-                    if (epview == null) {
-                        logger.severe("deleting table item with no EpisodeView: "
-                                      + itemText(item));
-                        deleteTableItem(item);
-                    } else {
-                        epview.setChecked(checked);
-                    }
-                }
+                handleCheckEvent((TableItem) event.item);
             }
             // else, it's a SELECTED event, which we just don't care about
         });
