@@ -133,6 +133,24 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         return new TableItem(swtTable, SWT.NONE);
     }
 
+    private String itemText(final TableItem item) {
+        try {
+            if (item == null) {
+                return "null TableItem";
+            }
+            final String currentFile = CURRENT_FILE_FIELD.getCellText(item);
+            if (currentFile == null) {
+                return "TableItem with null \"current file\"";
+            }
+            if (currentFile.length() == 0) {
+                return "TableItem with empty \"current file\"";
+            }
+            return currentFile;
+        } catch (Exception e) {
+            return "TableItem that had exception accessing: " + e.getMessage();
+        }
+    }
+
     private void setComboBoxProposedDest(final TableItem item, final FileEpisode ep) {
         if (swtTable.isDisposed() || item.isDisposed()) {
             return;
@@ -377,7 +395,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                 final FileEpisode episode = episodeMap.get(fileName);
                 // Skip files not successfully downloaded and ready to be moved
                 if (episode.optionCount() == 0) {
-                    logger.info("checked but not ready: " + episode.getFilepath());
+                    logger.info("checked but not ready: " + itemText(item));
                     continue;
                 }
                 FileMover pendingMove = new FileMover(episode);
@@ -559,7 +577,8 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
             deleteTableItem(item);
 
             if (ITEM_NOT_IN_TABLE == index) {
-                logger.info("error: somehow selected item not found in table");
+                logger.info("error: somehow selected item (" + itemText(item)
+                            + ") not found in table");
             }
         }
         swtTable.deselectAll();
@@ -646,6 +665,14 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
         }
     }
 
+    private void successfulMove(final TableItem item) {
+        if (prefs.isDeleteRowAfterMove()) {
+            deleteTableItem(item);
+        } else {
+            updateTableItemAfterMove(item);
+        }
+    }
+
     /**
      * A callback that indicates that the {@link FileMover} has finished trying
      * to move a file, the one displayed in the given item.  We want to take
@@ -672,17 +699,13 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
      */
     public void finishMove(final TableItem item, final boolean success) {
         if (success) {
-            if (prefs.isDeleteRowAfterMove()) {
-                deleteTableItem(item);
-            } else {
-                updateTableItemAfterMove(item);
-            }
+            successfulMove(item);
         } else {
             // Should we do anything else, visible to the user?  Change to
             // a different, "fail to move" icon, rather than the generic
             // "fail"?  We don't really have a good option, right now.  TODO.
             failTableItem(item);
-            logger.info("failed to move " + CURRENT_FILE_FIELD.getCellText(item)
+            logger.info("failed to move " + itemText(item)
                         + "\n  to " + NEW_FILENAME_FIELD.getCellText(item));
         }
     }
