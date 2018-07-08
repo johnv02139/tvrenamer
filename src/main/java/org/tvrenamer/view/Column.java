@@ -44,6 +44,14 @@ final class Column {
         position = id;
     }
 
+    int getWidth() {
+        if (swtColumn == null) {
+            logger.severe("column has no TableColumn: " + this);
+            return 0;
+        }
+        return swtColumn.getWidth();
+    }
+
     /**
      * Is this Column currently visible in the table?
      *
@@ -71,6 +79,14 @@ final class Column {
         }
         logger.warning("TableColumn's data is not a Column: " + columnObj);
         return null;
+    }
+
+    public void destroy() {
+        if (swtColumn.isDisposed()) {
+            logger.warning(toString() + " is already destroyed");
+        } else {
+            swtColumn.dispose();
+        }
     }
 
     /**
