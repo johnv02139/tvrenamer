@@ -2,6 +2,8 @@ package org.tvrenamer.view;
 
 import static org.eclipse.swt.SWT.*;
 
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Table;
@@ -12,11 +14,12 @@ import java.util.logging.Logger;
 final class Column {
     private static final Logger logger = Logger.getLogger(Column.class.getName());
 
+    private static final int MIN_COLUMN_WIDTH = 6;
+
     final TableColumn swtColumn;
     final Field field;
     final int id;
-    @SuppressWarnings("CanBeFinal")
-    private Integer position = null;
+    Integer position = null;
 
     private int sortDirection = UP;
 
@@ -51,7 +54,7 @@ final class Column {
         if (swtColumn.isDisposed()) {
             return false;
         }
-        return (swtColumn.getWidth() > 0);
+        return ((position != null) && (swtColumn.getWidth() > 0));
     }
 
     /**
@@ -130,6 +133,9 @@ final class Column {
             if (id > 0) {
                 throw new IllegalStateException("checkbox field can only be column zero");
             }
+            // If it is being added as column zero, note we do not make it moveable.
+        } else {
+            tcol.setMoveable(true);
         }
 
         final Column col = new Column(tcol, field, id);
@@ -151,6 +157,30 @@ final class Column {
                     col.sortDirection = UP;
                 }
                 resultsTable.sortTable(col, col.sortDirection);
+            }
+        });
+        tcol.addControlListener(new ControlListener() {
+            @Override
+            public void controlResized(ControlEvent e) {
+                int newWidth = tcol.getWidth();
+                if (newWidth < MIN_COLUMN_WIDTH) {
+                    tcol.setWidth(MIN_COLUMN_WIDTH);
+                }
+            }
+
+            @Override
+            public void controlMoved(ControlEvent e) {
+                col.position = null;
+                int[] newOrder = swtTable.getColumnOrder();
+                for (int i = 0; i < newOrder.length; i++) {
+                    if (newOrder[i] == id) {
+                        col.position = i;
+                    }
+                }
+                if (col.position == null) {
+                    logger.severe("unable to find column " + this
+                                  + " after column was moved");
+                }
             }
         });
 
