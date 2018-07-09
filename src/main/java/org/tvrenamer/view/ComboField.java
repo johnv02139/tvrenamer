@@ -3,7 +3,7 @@ package org.tvrenamer.view;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.TableItem;
 
-public class ComboField extends TextField {
+public abstract class ComboField extends TextField {
 
     @SuppressWarnings("SameParameterValue")
     ComboField(final String name, final String label) {

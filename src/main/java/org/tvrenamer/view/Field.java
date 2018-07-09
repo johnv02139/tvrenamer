@@ -104,6 +104,8 @@ public abstract class Field {
         return null;
     }
 
+    public abstract String getItemTextValue(final EpisodeView epview);
+
     public abstract String getItemTextValue(final TableItem item);
 
     /**

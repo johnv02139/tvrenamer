@@ -23,7 +23,7 @@ import org.eclipse.swt.widgets.TableItem;
  *
  * This restriction is enforced in Column.createColumn().
  */
-public class CheckboxField extends Field {
+public abstract class CheckboxField extends Field {
 
     @SuppressWarnings("SameParameterValue")
     CheckboxField(final String name, final String label) {

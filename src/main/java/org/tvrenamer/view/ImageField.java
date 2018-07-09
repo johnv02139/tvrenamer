@@ -5,7 +5,7 @@ import org.eclipse.swt.widgets.TableItem;
 
 import org.tvrenamer.model.util.Constants;
 
-public class ImageField extends Field {
+public abstract class ImageField extends Field {
 
     @SuppressWarnings("SameParameterValue")
     ImageField(final String name, final String label) {

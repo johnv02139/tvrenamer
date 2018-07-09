@@ -4,7 +4,7 @@ import org.eclipse.swt.widgets.TableItem;
 
 import org.tvrenamer.model.util.Constants;
 
-public class TextField extends Field {
+public abstract class TextField extends Field {
 
     TextField(final Type type, final String name, final String label) {
         super(type, name, label);
