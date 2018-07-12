@@ -53,6 +53,7 @@ public class ShowName {
      */
     private static class QueryString {
         final String queryString;
+        final String sanitised;
         private ShowOption matchedShow = null;
         private final List<ShowInformationListener> listeners = new LinkedList<>();
 
@@ -60,6 +61,7 @@ public class ShowName {
 
         private QueryString(String queryString) {
             this.queryString = queryString;
+            sanitised = StringUtils.sanitiseTitle(queryString);
         }
 
         /**
@@ -391,6 +393,18 @@ public class ShowName {
      */
     public String getQueryString() {
         return queryString.queryString;
+    }
+
+    /**
+     * Get this ShowName's "sanitised" attribute.
+     *
+     * @return sanitised
+     *            the name of the show after being run through the
+     *            "sanitising" filter.  The value should be appropriate
+     *            for any supported filesystem (free from illegal characters)
+     */
+    public String getSanitised() {
+        return queryString.sanitised;
     }
 
     /**
