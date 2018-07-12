@@ -34,8 +34,12 @@ public class CheckboxField extends Field {
         item.setChecked(isChecked);
     }
 
+    String getCheckTextValue(final boolean isChecked) {
+        return isChecked ? "0" : "1";
+    }
+
     @Override
     public String getItemTextValue(final TableItem item) {
-        return (item.getChecked()) ? "0" : "1";
+        return getCheckTextValue(item.getChecked());
     }
 }

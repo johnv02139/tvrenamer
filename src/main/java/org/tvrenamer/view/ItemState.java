@@ -51,6 +51,25 @@ public class ItemState {
     }
 
     /**
+     * Returns a "prioritized" string that this ItemState is mapped to.
+     *
+     * This is used for sorting.  If the user clicks the column header to sort
+     * by "Status", we want to sort the table in a meaningful way.  Specifically,
+     * assuming sort direction is "up", we want the "most resolved" files at
+     * the top, and the "least resolved" at the bottom.
+     *
+     * Therefore, we associate each status with a String, which is meaningless
+     * except that it is lexicographically appropriate relative to the Strings
+     * of the other statuses.
+     *
+     * @return
+     *   the priority String of this ItemState
+     */
+    public String getStatusPriority() {
+        return ordering;
+    }
+
+    /**
      * Returns a "prioritized" string that the given Image is mapped to.
      *
      * This is used for sorting.  If the user clicks the column header to sort

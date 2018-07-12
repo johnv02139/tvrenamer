@@ -56,6 +56,10 @@ public class ImageField extends Field {
         return null;
     }
 
+    String getStatusString(final ItemState state) {
+        return state.getStatusPriority();
+    }
+
     /**
      * Gets the "text" of the given cell, for sorting.
      *
