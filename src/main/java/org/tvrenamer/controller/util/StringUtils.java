@@ -329,6 +329,12 @@ public class StringUtils {
      * This method is intended to return true if the given string is composed
      * purely of entirely-lower-case words separated by hyphens.<p>
      *
+     * The purpose is that often hyphens serve a real purpose, e.g., hyphenated
+     * words, but they are also sometimes used in filenames as a separator.
+     * If the given substring is all lower case, with no whitespace or dots,
+     * then we can guess that the hyphen is probably being used to separate
+     * words.<p>
+     *
      * To do this, we say the following:<ul>
      * <li>it must contain a hyphen</li>
      * <li>it must not contain a capital letter (must be all lower case)</li>
