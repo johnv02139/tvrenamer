@@ -678,9 +678,12 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
                 updateTableItemAfterMove(item);
             }
         } else {
-            // Should we do anything else, visible to the user?  Uncheck the row?
-            // We don't really have a good option, right now.  TODO.
-            logger.info("failed to move item: " + CURRENT_FILE_FIELD.getCellText(item));
+            // Should we do anything else, visible to the user?  Change to
+            // a different, "fail to move" icon, rather than the generic
+            // "fail"?  We don't really have a good option, right now.  TODO.
+            failTableItem(item);
+            logger.info("failed to move " + CURRENT_FILE_FIELD.getCellText(item)
+                        + "\n  to " + NEW_FILENAME_FIELD.getCellText(item));
         }
     }
 
