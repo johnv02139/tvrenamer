@@ -37,7 +37,11 @@ public interface ProgressObserver {
     void setProgressStatus(String status);
 
     /**
-     * Finish the activity
+     * Finish the activity.
+     *
+     * <p>The implementation of this method should be idempotent.
+     * That is, it should be able to be called multiple times without
+     * error or negative side effects.
      *
      * @param succeeded
      *    whether the activity completed successfully

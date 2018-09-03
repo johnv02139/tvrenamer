@@ -347,6 +347,9 @@ public class FileMover implements Callable<Boolean> {
         } catch (Exception e) {
             logger.log(Level.WARNING, "exception caught doing file move", e);
         }
+        if (observer != null) {
+            observer.finishProgress(success);
+        }
         if (success) {
             episode.setRenamed();
         } else {
