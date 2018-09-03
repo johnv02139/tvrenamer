@@ -2,6 +2,10 @@ package org.tvrenamer.controller.util;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +18,10 @@ public class StringUtils {
     private static final Logger logger = Logger.getLogger(StringUtils.class.getName());
 
     private static final Locale THIS_LOCALE = Locale.getDefault();
+
+    private static final String encodingName = System.getProperty("sun.jnu.encoding");
+    private static final Charset encodingCharset = Charset.forName(encodingName);
+    private static final CharsetEncoder encoder = encodingCharset.newEncoder();
 
     public static final Map<Character, String> SANITISE
         = Collections.unmodifiableMap(new HashMap<Character, String>()
@@ -266,6 +274,18 @@ public class StringUtils {
      *    which contains no illegal characters
      */
     private static String replaceIllegalCharacters(final String title, final int start, final int end) {
+        encoder.reset();
+        CharBuffer cb = CharBuffer.wrap(title);
+        if (encoder.canEncode(cb)) {
+            try {
+                ByteBuffer encoded = encodingCharset.encode(cb);
+            } catch (Exception e) {
+                logger.info("exception trying to encode " + title);
+            }
+        } else {
+            logger.warning("current encoder cannot encode " + title);
+        }
+
         StringBuilder sanitised = new StringBuilder(end + 1);
         for (int i = start; i <= end; i++) {
             char c = title.charAt(i);
