@@ -9,6 +9,7 @@ import org.tvrenamer.model.UserPreferences;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.Callable;
@@ -314,7 +315,13 @@ public class FileMover implements Callable<Boolean> {
             return false;
         }
 
-        Path destPath = destDir.resolve(filename);
+        Path destPath = null;
+        try {
+            destPath = destDir.resolve(filename);
+        } catch (InvalidPathException ivpe) {
+            logger.log(Level.WARNING, "could not resolve " + filename, ivpe);
+            return false;
+        }
         if (Files.exists(destPath)) {
             if (destPath.equals(realSrc)) {
                 logger.info("nothing to be done to " + srcPath);
