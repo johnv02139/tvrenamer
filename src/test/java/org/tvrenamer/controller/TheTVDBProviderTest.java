@@ -1266,7 +1266,7 @@ public class TheTVDBProviderTest {
     // This can be used to limit the number of episode title tests we run.
     // There is no sentinel value; if you set it to -1, it will not run
     // any tests.  To run all tests, just set it to a large value like 1000.
-    private static final int MAX_EPISODE_TITLE_TESTS = 0;
+    private static final int MAX_EPISODE_TITLE_TESTS = 1000;
 
     @Test
     public void testGetEpisodeTitle() {
