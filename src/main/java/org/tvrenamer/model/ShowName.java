@@ -53,7 +53,7 @@ public class ShowName {
      */
     private static class QueryString {
         final String queryString;
-        private Show matchedShow = null;
+        private ShowOption matchedShow = null;
         private final List<ShowInformationListener> listeners = new LinkedList<>();
 
         private static final Map<String, QueryString> QUERY_STRINGS = new ConcurrentHashMap<>();
@@ -67,24 +67,20 @@ public class ShowName {
          * been mapped to a show, but if it has, we still accept the new mapping; we just warn
          * about it.
          *
-         * @param show the Show to map this QueryString to
-         * @return false if this QueryString had already been mapped to a show;
-         *         true otherwise.
+         * @param showOption the ShowOption to map this QueryString to
          */
-        @SuppressWarnings("UnusedReturnValue")
-        synchronized boolean setShow(Show show) {
+        synchronized void setShowOption(ShowOption showOption) {
             if (matchedShow == null) {
-                matchedShow = show;
-                return true;
+                matchedShow = showOption;
+                return;
             }
-            if (matchedShow == show) {
+            if (matchedShow == showOption) {
                 // same object; not just equals() but ==
                 logger.info("re-setting show in QueryString " + queryString);
-                return true;
+                return;
             }
             logger.warning("changing show in QueryString " + queryString);
-            matchedShow = show;
-            return false;
+            matchedShow = showOption;
         }
 
         // see ShowName.addListener for documentation
@@ -105,26 +101,33 @@ public class ShowName {
         private void nameResolved(Show show) {
             synchronized (listeners) {
                 for (ShowInformationListener informationListener : listeners) {
-                    informationListener.downloaded(show);
+                    informationListener.downloadSucceeded(show);
                 }
             }
         }
 
         // see ShowName.nameNotFound for documentation
-        private void nameNotFound(Show show) {
+        private void nameNotFound(FailedShow failedShow) {
             synchronized (listeners) {
                 for (ShowInformationListener informationListener : listeners) {
-                    informationListener.downloadFailed(show);
+                    informationListener.downloadFailed(failedShow);
                 }
             }
         }
 
+        // see ShowName.apiDiscontinued for documentation
+        private void apiDiscontinued() {
+            synchronized (listeners) {
+                listeners.forEach(ShowInformationListener::apiHasBeenDeprecated);
+            }
+        }
+
         /**
-         * Get the mapping between this QueryString and a Show, if any has been established.
+         * Get the mapping between this QueryString and a ShowOption, if any has been established.
          *
-         * @return show the Show to map this QueryString to
+         * @return show the ShowOption to map this QueryString to
          */
-        synchronized Show getMatchedShow() {
+        synchronized ShowOption getMatchedShow() {
             return matchedShow;
         }
 
@@ -138,7 +141,6 @@ public class ShowName {
          */
         static QueryString lookupQueryString(String foundName) {
             String queryString = StringUtils.makeQueryString(foundName);
-            // TODO: process queryString through standard filter?
             QueryString queryObj = QUERY_STRINGS.get(queryString);
             if (queryObj == null) {
                 queryObj = new QueryString(queryString);
@@ -169,21 +171,6 @@ public class ShowName {
             SHOW_NAMES.put(filenameShow, showName);
         }
         return showName;
-    }
-
-    /**
-     * Inner class -- basically a record -- to encapsulate information we received from
-     * the provider about potential Shows.  We shouldn't create actual Show objects for
-     * the options we reject.
-     */
-    private static class ShowOption {
-        final int id;
-        final String actualName;
-
-        ShowOption(final Integer id, final String actualName) {
-            this.id = id;
-            this.actualName = actualName;
-        }
     }
 
     /*
@@ -243,11 +230,22 @@ public class ShowName {
      * viable option, and provide a stand-in object.
      *
      * @param show
-     *    the Show object representing the string we searched for.
+     *    the FailedShow object representing the string we searched for.
      */
-    public void nameNotFound(Show show) {
+    public void nameNotFound(FailedShow show) {
         synchronized (queryString) {
             queryString.nameNotFound(show);
+        }
+    }
+
+    /**
+     * Notify registered interested parties that the provider is unusable
+     * due to a discontinued API.
+     *
+     */
+    public void apiDiscontinued() {
+        synchronized (queryString) {
+            queryString.apiDiscontinued();
         }
     }
 
@@ -273,7 +271,7 @@ public class ShowName {
      * @return true if this ShowName has show options; false otherwise
      */
     public boolean hasShowOptions() {
-        return (showOptions != null) && (showOptions.size() > 0);
+        return (showOptions.size() > 0);
     }
 
     /**
@@ -284,29 +282,19 @@ public class ShowName {
      * @param seriesName
      *    the "official" show name
      */
-    public void addShowOption(final int tvdbId, final String seriesName) {
-        ShowOption option = new ShowOption(tvdbId, seriesName);
+    public void addShowOption(final String tvdbId, final String seriesName) {
+        ShowOption option = ShowOption.getShowOption(tvdbId, seriesName);
         showOptions.add(option);
     }
 
     /**
      * Add a possible Show option that could be mapped to this ShowName
      *
-     * @param idString
-     *    the show's id in the TVDB database, as a String
-     * @param seriesName
-     *    the "official" show name
+     * @param seriesInfo
+     *    the show's info
      */
-    public void addShowOption(final String idString, final String seriesName) {
-        Integer parsedId = null;
-        try {
-            parsedId = Integer.parseInt(idString);
-        } catch (Exception e) {
-            logger.warning("Show option's ID " + idString + " could not be parsed "
-                           + " as an integer; not adding as option");
-            return;
-        }
-        addShowOption(parsedId, seriesName);
+    public void addShowOption(final SeriesInfo seriesInfo) {
+        addShowOption(String.valueOf(seriesInfo.id), seriesInfo.seriesName);
     }
 
     /**
@@ -316,21 +304,9 @@ public class ShowName {
      *            May be null.
      * @return a Show representing this ShowName
      */
-    public Show getFailedShow(TVRenamerIOException err) {
-        Show standIn = new Show(foundName, err);
-        queryString.setShow(standIn);
-        return standIn;
-    }
-
-    /**
-     * Create a stand-in Show object in the case of failure from the provider.
-     *
-     * @param actualName the formatted name of the Show for which we want a stand-in
-     * @return a Show representing this ShowName
-     */
-    public Show getLocalShow(String actualName) {
-        Show standIn = new Show(actualName);
-        queryString.setShow(standIn);
+    public FailedShow getFailedShow(TVRenamerIOException err) {
+        FailedShow standIn = new FailedShow(foundName, err);
+        queryString.setShowOption(standIn);
         return standIn;
     }
 
@@ -340,7 +316,7 @@ public class ShowName {
      *
      * @return the series from the list which best matches the series information
      */
-    public Show selectShowOption() {
+    public ShowOption selectShowOption() {
         int nOptions = showOptions.size();
         if (nOptions == 0) {
             logger.info("did not find any options for " + foundName);
@@ -349,12 +325,14 @@ public class ShowName {
         // logger.info("got " + nOptions + " options for " + foundName);
         ShowOption selected = null;
         for (ShowOption s : showOptions) {
-            String actualName = s.actualName;
-            if (foundName.equals(actualName)) {
+            String actualName = s.getName();
+            // Possibly instead of ignore case, we should make the foundName be
+            // properly capitalized, and then we can do an exact comparison.
+            if (foundName.equalsIgnoreCase(actualName)) {
                 if (selected == null) {
                     selected = s;
                 } else {
-                    // TODO: could check language?  other criteria?
+                    // TODO: could check language?  other criteria?  Case sensitive?
                     logger.warning("multiple exact hits for " + foundName
                                    + "; choosing first one");
                 }
@@ -366,9 +344,8 @@ public class ShowName {
             selected = showOptions.get(0);
         }
 
-        Show selectedShow = Show.getShowInstance(selected.id, selected.actualName);
-        queryString.setShow(selectedShow);
-        return selectedShow;
+        queryString.setShowOption(selected);
+        return selected;
     }
 
     /**
@@ -410,7 +387,7 @@ public class ShowName {
      *
      * @return a Show, if this ShowName is matched to one.  Null if not.
      */
-    synchronized Show getMatchedShow() {
+    public synchronized ShowOption getMatchedShow() {
         return queryString.getMatchedShow();
     }
 

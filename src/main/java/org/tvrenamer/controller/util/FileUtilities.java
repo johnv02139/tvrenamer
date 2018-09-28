@@ -5,6 +5,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,6 +17,14 @@ import java.util.logging.Logger;
  */
 public class FileUtilities {
     private static final Logger logger = Logger.getLogger(FileUtilities.class.getName());
+
+    public static void loggingOff() {
+        logger.setLevel(Level.SEVERE);
+    }
+
+    public static void loggingOn() {
+        logger.setLevel(Level.INFO);
+    }
 
     /**
      * Delete the given file.  This method is intended to be used with "regular" files;
@@ -87,6 +96,7 @@ public class FileUtilities {
      * @return
      *    true if the paths refer to the same file, false if they don't
      */
+    @SuppressWarnings("SameParameterValue")
     public static boolean isSameFile(final Path path1, final Path path2) {
         try {
             return Files.isSameFile(path1, path2);
@@ -119,6 +129,116 @@ public class FileUtilities {
             return false;
         }
         return Files.exists(dir);
+    }
+
+
+    /**
+     * Given a Path, if the Path exists, returns it.  If not, but its parent
+     * exists, returns that, etc.  That is, returns the closest ancestor
+     * (including itself) that exists.
+     *
+     * @param checkPath the path to check for the closest existing ancestor
+     * @return the longest path, from the root dir towards the given path,
+     *   that exists
+     */
+    public static Path existingAncestor(final Path checkPath) {
+        Path root = checkPath.getRoot();
+        Path existent = checkPath;
+        while (Files.notExists(existent)) {
+            if (root.equals(existent)) {
+                // Presumably, this can't happen, because it suggests
+                // the root dir doesn't exist, which doesn't make sense.
+                // But just to be sure to avoid an infinite iteration...
+                return null;
+            }
+            existent = existent.getParent();
+        }
+
+        return existent;
+    }
+
+    /**
+     * Given a String representing a path, if the path exists, returns it.
+     * If not, but its parent exists, returns that, etc.  That is, returns
+     * the closest ancestor (including itself) that exists.
+     *
+     * @param pathName the path to check for the closest existing ancestor
+     * @return the longest path, from the root dir towards the given path,
+     *   that exists
+     */
+    public static Path existingAncestor(final String pathName) {
+        return existingAncestor(Paths.get(pathName));
+    }
+
+    /**
+     * Returns whether or not a Path is a writable directory.  The argument may be null.
+     *
+     * @param path
+     *    the path to check; may be null
+     * @return true if path names a directory that is writable by the user running this
+     *    process; false otherwise.
+     */
+    public static boolean isWritableDirectory(final Path path) {
+        return ((path != null)
+                && Files.isDirectory(path)
+                && Files.isWritable(path));
+    }
+
+    /**
+     * Takes the name of a Path which is a directory that the user wants to write into.
+     *
+     * @param destDirName
+     *    the name (a String) of the Path that the caller will want to write into
+     * @return true if the given String names a writable directory, or if it
+     *    presumably could be created as such; false otherwise.
+     *
+     *    As an example, if the value is /Users/me/Files/Videos/TV, and no such
+     *    file exists, we just keep going up the tree until something exists.
+     *    If we find /Users/me/Files exists, and it's a writable directory, then
+     *    presumably we could create a "Videos" directory in it, and "TV" in that,
+     *    thereby creating the directory.  But if /Users/me/Files is not a directory,
+     *    or is not writable, then we know we cannot create the target, and so we
+     *    return false.
+     */
+    public static boolean checkForCreatableDirectory(final String destDirName) {
+        return isWritableDirectory(existingAncestor(destDirName));
+    }
+
+    /**
+     * Takes a Path which is a directory that the user wants to write into.  Makes sure
+     * that the directory exists (or creates it if it doesn't) and is writable.  If the
+     * directory cannot be created, or is not a directory, or is not writable, this method
+     * fails.
+     *
+     * @param destDir
+     *    the Path that the caller will want to write into
+     * @return true if, upon completion of this method, the desired Path exists, is a
+     *         directory, and is writable.  False otherwise.
+     */
+    public static boolean ensureWritableDirectory(final Path destDir) {
+        if (Files.notExists(destDir)) {
+            try {
+                Files.createDirectories(destDir);
+            } catch (IOException ioe) {
+                logger.log(Level.SEVERE, "Unable to create directory " + destDir, ioe);
+                return false;
+            }
+        }
+        if (!Files.exists(destDir)) {
+            logger.warning("could not create destination directory " + destDir);
+            return false;
+        }
+        if (!Files.isDirectory(destDir)) {
+            logger.warning("cannot use specified destination " + destDir
+                           + " because it is not a directory");
+            return false;
+        }
+        if (!Files.isWritable(destDir)) {
+            logger.warning("cannot write file to " + destDir);
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -166,6 +286,9 @@ public class FileUtilities {
      *
      * @param dir
      *    the leaf directory to check for emptiness
+     * @return true if the Path is an existent directory, and we succeeded in removing
+     *    any empty directories we tried; false if the Path was null, didn't exist,
+     *    or was not a directory, or if we can't remove a directory we tried to remove
      */
     public static boolean removeWhileEmpty(final Path dir) {
         if (dir == null) {

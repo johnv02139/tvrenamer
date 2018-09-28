@@ -22,7 +22,8 @@ public class UserPreferencesPersistence {
 
     static {
         xstream.alias("preferences", UserPreferences.class);
-        xstream.omitField(UserPreferences.class, "proxy");
+        xstream.aliasField("moveEnabled", UserPreferences.class, "moveSelected");
+        xstream.aliasField("renameEnabled", UserPreferences.class, "renameSelected");
         // Make the fields of Observable transient
         xstream.omitField(Observable.class, "obs");
         xstream.omitField(Observable.class, "changed");
@@ -40,7 +41,7 @@ public class UserPreferencesPersistence {
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(xml);
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
-            logger.log(Level.SEVERE, "Exception occured when writing preferences file", e);
+            logger.log(Level.SEVERE, "Exception occurred when writing preferences file", e);
         }
     }
 
@@ -54,9 +55,7 @@ public class UserPreferencesPersistence {
         if (Files.exists(path)) {
             try (InputStream in = Files.newInputStream(path)) {
                 return (UserPreferences) xstream.fromXML(in);
-            } catch (IllegalArgumentException | UnsupportedOperationException
-                     | IOException  | SecurityException e)
-            {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "Exception reading preferences file '"
                            + path.toAbsolutePath().toString(), e);
                 logger.info("assuming default preferences");
@@ -67,6 +66,6 @@ public class UserPreferencesPersistence {
                        + "' does not exist - assuming defaults");
         }
 
-        return UserPreferences.getInstance();
+        return null;
     }
 }

@@ -9,13 +9,13 @@ import org.tvrenamer.model.ProgressUpdater;
 
 public class ProgressBarUpdater implements ProgressUpdater {
 
-    private final UIStarter ui;
+    private final ResultsTable ui;
     private final Display display;
     private final TaskItem taskItem;
     private final ProgressBar progressBar;
     private final int barSize;
 
-    public ProgressBarUpdater(UIStarter ui) {
+    public ProgressBarUpdater(ResultsTable ui) {
         this.ui = ui;
         this.display = ui.getDisplay();
         this.taskItem = ui.getTaskItem();
@@ -24,7 +24,7 @@ public class ProgressBarUpdater implements ProgressUpdater {
 
         if (taskItem != null) {
             taskItem.setProgressState(SWT.NORMAL);
-            taskItem.setOverlayImage(FileMoveIcon.RENAMING.icon);
+            taskItem.setOverlayImage(FileMoveIcon.getIcon(FileMoveIcon.Status.RENAMING));
         }
     }
 
@@ -35,11 +35,14 @@ public class ProgressBarUpdater implements ProgressUpdater {
     @Override
     public void finish() {
         display.asyncExec(() -> {
+            if (progressBar != null) {
+                progressBar.setSelection(0);
+            }
             if (taskItem != null) {
                 taskItem.setOverlayImage(null);
                 taskItem.setProgressState(SWT.DEFAULT);
             }
-            ui.refreshTable();
+            ui.finishAllMoves();
         });
     }
 

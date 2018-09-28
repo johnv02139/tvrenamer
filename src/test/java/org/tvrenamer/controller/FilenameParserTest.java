@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import org.tvrenamer.model.EpisodePlacement;
 import org.tvrenamer.model.EpisodeTestData;
 import org.tvrenamer.model.FileEpisode;
 
@@ -16,29 +17,25 @@ import java.util.List;
  * There are three major steps to turning a filename into real show information.
  *
  * First is we parse the filename, and attempt to identify the parts of the
- * filename that represents the show name, the season number, the episode
+ * filename that represent the show name, the season number, the episode
  * number, and possibly the screen resolution.  For the substring that we think
  * identifies the show name, we normalize it somewhat.  We replace punctuation
  * and lower-case the name.
  *
- * The method "testParseFileName" in this file tests that functionality.  Each
- * line of the test input has a filename, and the expected values for show
- * name, season number, episode number, and resolution.  The method parses
- * the filename and verifies the values are as expected.
+ * We refer to the season/episode combination as the episode "placement".
  *
- * (Note that the show name, as given in the test input is never used as-is.
- * We immediately lower-case it, and, in this file, refer to it as the
- * "query string", because it's the string we send to the provider for the
- * query.  So, it might make sense to just provide the query string lower-cased
- * to begin with.  But for now, leaving it like this.)
+ * The method "testParseFileName" in this file tests that functionality.  Each
+ * line of the test input has a filename, and the expected values for show name,
+ * placement, and resolution.  The method parses the filename and verifies the
+ * values are as expected.
  *
  * The next step is to take the normalized string and send it to the
  * provider to try to figure out which show this is actually referring to.
  * The provider might return any number of results, including zero.  If
  * it returns more than one, we try to select the right one.
  *
- * Once we have identified the actual show, then we use the season and
- * episode information to look up the actual episode.
+ * Once we have identified the actual show, then we use the placement
+ * information to look up the actual episode.
  *
  * The method testDownloadAndRename tests the second and third steps.  The
  * static data provided includes the expected episode title, and the test
@@ -60,6 +57,17 @@ public class FilenameParserTest {
                    .filenameShow("The.Daily.Show.")
                    .seasonNumString("22")
                    .episodeNumString("105")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValuesBug20() {
+        // See Issue #20
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Neighbours/neighbours.s23e233.pdtv.xvid-ss.txt")
+                   .filenameShow("neighbours.")
+                   .seasonNumString("23")
+                   .episodeNumString("233")
                    .build());
     }
 
@@ -782,17 +790,307 @@ public class FilenameParserTest {
                    .build());
     }
 
+    @BeforeClass
+    public static void setupValues68() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets.S01E02.Quintagious.avi")
+                   .filenameShow("Quintuplets.")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues69() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/S01E02.Quintagious.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues70() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/versions/S01E02.Quintagious.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues71() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/versions/S01E02.Quintagious~2.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues72() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/Season1/versions/S01E02.Quintagious~9.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues73() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/Season01/versions/S01E02.Quintagious~4.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues74() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets.Season01/S01E02.Quintagious.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues75() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/s01/1x02.Quintagious.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("1")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues76() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/01x02.Quintagious.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues77() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Videos/TVShows/Fullscreen/LiveAction/Quintuplets/"
+                                  + "Season01/S01E02.Quintagious.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues78() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Quintuplets/Quintuplets.Season01/s01/"
+                                  + "versions/season1/S01E02.Quintagious~7.avi")
+                   .filenameShow("Quintuplets ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues79() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("AFV.S01E03.September.22.1991.mp4")
+                   .filenameShow("AFV.")
+                   .seasonNumString("01")
+                   .episodeNumString("03")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues80() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("AFV.S01E03.September.22.1991.1991.09.22.mp4")
+                   .filenameShow("AFV.")
+                   .seasonNumString("01")
+                   .episodeNumString("03")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues81() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("The Big Bang Theory - S04E09 - The 2003 Approximation.mkv")
+                   .filenameShow("The Big Bang Theory - ")
+                   .seasonNumString("04")
+                   .episodeNumString("09")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues82() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("The Big Bang Theory - S04E09 - The 2003 Approximation - 2015-10-12.mkv")
+                   .filenameShow("The Big Bang Theory - ")
+                   .seasonNumString("04")
+                   .episodeNumString("09")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues83() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer.2009.S01E02.Training.Day.mp4")
+                   .filenameShow("Archer.2009.")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues84() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer (2009)/S01E02 Training Day.mp4")
+                   .filenameShow("Archer (2009) ")
+                   .seasonNumString("1")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues85() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer (2009)/Archer (2009) S01E02 Training Day 2010.01.14.mp4")
+                   .filenameShow("Archer (2009) ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues86() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer (2009)/S01E02 Training Day 2010.01.14.mp4")
+                   .filenameShow("Archer (2009) ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues87() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer.2009.S01E02.Training.Day.2010.01.14.mp4")
+                   .filenameShow("Archer.2009.")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues88() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer (2009) - S01E02 - Training Day - 2010.01.14.mp4")
+                   .filenameShow("Archer (2009) - ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues89() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer (2009) S01E02 Training Day 2010.01.14.mp4")
+                   .filenameShow("Archer (2009) ")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues90() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Archer.2009.S01E02.mp4")
+                   .filenameShow("Archer.2009.")
+                   .seasonNumString("01")
+                   .episodeNumString("02")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues91() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Cheers.S09E21.Its.A.Wonderful.Wife.avi")
+                   .filenameShow("Cheers.")
+                   .seasonNumString("09")
+                   .episodeNumString("21")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues92() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Cheers - S09E21 - It's a Wonderful Wife - 1991.02.28.avi")
+                   .filenameShow("Cheers - ")
+                   .seasonNumString("09")
+                   .episodeNumString("21")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues93() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Cheers S09E21 It's a Wonderful Wife 1991.02.28.avi")
+                   .filenameShow("Cheers ")
+                   .seasonNumString("09")
+                   .episodeNumString("21")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues94() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("Cheers.S09E21.Its.A.Wonderful.Wife.1991.02.28.avi")
+                   .filenameShow("Cheers.")
+                   .seasonNumString("09")
+                   .episodeNumString("21")
+                   .build());
+    }
+
+    @BeforeClass
+    public static void setupValues95() {
+        values.add(new EpisodeTestData.Builder()
+                   .inputFilename("/TV/Dexter/407.Slack.Tide.hdtv.x264-sys.mkv")
+                   .filenameShow("Dexter ")
+                   .seasonNumString("4")
+                   .episodeNumString("07")
+                   .build());
+    }
+
     @Test
     public void testParseFileName() {
         for (EpisodeTestData testInput : values) {
             String input = testInput.inputFilename;
             FileEpisode retval = new FileEpisode(input);
             FilenameParser.parseFilename(retval);
-            assertTrue(input, retval.wasParsed());
-            assertEquals(input, testInput.filenameShow, retval.getFilenameShow());
-            assertEquals(input, Integer.parseInt(testInput.seasonNumString), retval.getSeasonNum());
-            assertEquals(input, Integer.parseInt(testInput.episodeNumString), retval.getEpisodeNum());
-            assertEquals(input, testInput.episodeResolution, retval.getFilenameResolution());
+            EpisodePlacement retPlacement = retval.getEpisodePlacement();
+
+            assertTrue("unable to parse:<[" + input + "]>",
+                       retval.wasParsed());
+            assertEquals("On input:<[" + input + "]>, for filenameShow,",
+                         testInput.filenameShow, retval.getFilenameShow());
+
+            assertEquals("On input:<[" + input + "]>, for season,",
+                         Integer.parseInt(testInput.seasonNumString), retPlacement.season);
+            assertEquals("On input:<[" + input + "]>, for episode,",
+                         Integer.parseInt(testInput.episodeNumString), retPlacement.episode);
+            assertEquals("On input:<[" + input + "]>, for resolution,",
+                         testInput.episodeResolution, retval.getFilenameResolution());
         }
     }
 }

@@ -1,14 +1,13 @@
 package org.tvrenamer.model;
 
-import java.util.logging.Logger;
-
 public class EpisodeTestData {
-    private static final Logger logger = Logger.getLogger(EpisodeTestData.class.getName());
-
     private static final String EMPTY_STRING = "";
     private static final String DEFAULT_SEPARATOR = ".";
+    @SuppressWarnings("unused")
     private static final String DEFAULT_SHOW_ID = "1";
+    @SuppressWarnings("unused")
     private static final String DEFAULT_FILENAME_SUFFIX = ".avi";
+    @SuppressWarnings("unused")
     private static final String DEFAULT_REPLACEMENT_MASK = "%S [%sx%e] %t";
 
     private static class Counter {
@@ -27,13 +26,13 @@ public class EpisodeTestData {
     public final String seasonNumString;
     public final String episodeNumString;
     public final String episodeResolution;
-    public final String separator;
     public final String filenameSuffix;
 
     // These attributes are about looking up the show and episode from the provider
     public final String queryString;
     public final Integer seasonNum;
     public final Integer episodeNum;
+    public final Boolean preferDvd;
 
     // These are attributes we get back from the provider
     public final String properShowName;
@@ -49,17 +48,19 @@ public class EpisodeTestData {
     public final String documentation;
 
     public static class Builder {
+        String separator;
+
         String inputFilename;
         String filenameShow;
         String seasonNumString;
         String episodeNumString;
         String episodeResolution;
-        String separator;
         String filenameSuffix;
 
         String queryString;
         Integer seasonNum;
         Integer episodeNum;
+        Boolean preferDvd;
 
         String properShowName;
         String episodeTitle;
@@ -72,6 +73,24 @@ public class EpisodeTestData {
         String documentation;
 
         public Builder() {
+        }
+
+        @SuppressWarnings("unused")
+        public Builder separator(String val) {
+            if (separator == null) {
+                separator = val;
+            } else {
+                throw new IllegalStateException("cannot re-set separator");
+            }
+            return this;
+        }
+
+        public String getSeparator() {
+            if (separator == null) {
+                return DEFAULT_SEPARATOR;
+            } else {
+                return separator;
+            }
         }
 
         public Builder inputFilename(String val) {
@@ -151,23 +170,6 @@ public class EpisodeTestData {
             }
         }
 
-        public Builder separator(String val) {
-            if (separator == null) {
-                separator = val;
-            } else {
-                throw new IllegalStateException("cannot re-set separator");
-            }
-            return this;
-        }
-
-        public String getSeparator() {
-            if (separator == null) {
-                return DEFAULT_SEPARATOR;
-            } else {
-                return separator;
-            }
-        }
-
         public Builder filenameSuffix(String val) {
             if (filenameSuffix == null) {
                 filenameSuffix = val;
@@ -242,6 +244,15 @@ public class EpisodeTestData {
             } else {
                 return episodeNum;
             }
+        }
+
+        public Builder preferDvd(boolean val) {
+            if ((preferDvd == null) || (preferDvd == val)) {
+                preferDvd = val;
+            } else {
+                throw new IllegalStateException("cannot re-set preferDvd");
+            }
+            return this;
         }
 
         public Builder properShowName(String val) {
@@ -338,17 +349,19 @@ public class EpisodeTestData {
         }
     }
 
-    public EpisodeTestData(Builder builder) {
+    private EpisodeTestData(Builder builder) {
+        final String separator = builder.getSeparator();
+
         filenameShow = builder.filenameShow;
         seasonNumString = builder.getSeasonNumString();
         episodeNumString = builder.getEpisodeNumString();
         episodeResolution = builder.getEpisodeResolution();
-        separator = builder.getSeparator();
         filenameSuffix = builder.getFilenameSuffix();
 
         queryString = builder.queryString;
         seasonNum = builder.getSeasonNum();
         episodeNum = builder.getEpisodeNum();
+        preferDvd = builder.preferDvd;
 
         properShowName = builder.properShowName;
         episodeTitle = builder.episodeTitle;
@@ -368,7 +381,8 @@ public class EpisodeTestData {
             inputFilename = filenameShow
                 + separator + seasonNumString
                 + separator + episodeNumString
-                + resolutionString;
+                + resolutionString
+                + separator + filenameSuffix;
         } else {
             inputFilename = builder.inputFilename;
         }

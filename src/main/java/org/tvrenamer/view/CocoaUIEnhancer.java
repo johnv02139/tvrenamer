@@ -8,6 +8,7 @@ import org.eclipse.swt.internal.Callback;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Listener;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -49,7 +50,6 @@ class CocoaUIEnhancer {
     /**
      * Class invoked via the Callback object to run the about and preferences actions.
      */
-    @SuppressWarnings({"UnusedParameters", "SameReturnValue", "unused"})
     private static class MenuHookObject {
         final Listener about;
         final Listener pref;
@@ -85,6 +85,7 @@ class CocoaUIEnhancer {
          *    not used
          * @return an irrelevant value; ignore it
          */
+        @SuppressWarnings({"UnusedParameters", "SameReturnValue"})
         public long actionProc(long id, long sel, long arg0) {
             if (sel == sel_aboutMenuItemSelected_) {
                 about.handleEvent(null);
@@ -124,7 +125,7 @@ class CocoaUIEnhancer {
      *            The action to run when the Preferences menu is invoked.
      */
     public void hookApplicationMenu(Display display, Listener quitListener, Listener aboutAction,
-                                     Listener preferencesAction)
+                                    Listener preferencesAction)
     {
         // This is our callbackObject whose 'actionProc' method will be called
         // when the About or Preferences menuItem is invoked.
@@ -153,7 +154,7 @@ class CocoaUIEnhancer {
     }
 
     private void initialize(Object callbackObject)
-            throws Exception
+        throws IllegalAccessException, NoSuchMethodException, InvocationTargetException
     {
         Class<?> osCls = classForName("org.eclipse.swt.internal.cocoa.OS");
 
@@ -228,19 +229,19 @@ class CocoaUIEnhancer {
         // SWTApplicationDelegate and we have registered the new selectors on
         // it. So just set the new action to invoke the selector.
         invoke(nsmenuitemCls, prefMenuItem, "setAction",
-                new Object[] { wrapPointer(sel_preferencesMenuItemSelected_) });
+               new Object[] { wrapPointer(sel_preferencesMenuItemSelected_) });
         invoke(nsmenuitemCls, aboutMenuItem, "setAction",
-                new Object[] { wrapPointer(sel_aboutMenuItemSelected_) });
+               new Object[] { wrapPointer(sel_aboutMenuItemSelected_) });
     }
 
-    private long registerName(Class<?> osCls, String name)
-            throws IllegalArgumentException, SecurityException
+    private static long registerName(Class<?> osCls, String name)
+        throws IllegalArgumentException, SecurityException
     {
         Object object = invoke(osCls, "sel_registerName", new Object[] { name });
         return convertToLong(object);
     }
 
-    private long convertToLong(Object object) {
+    private static long convertToLong(Object object) {
         if (object instanceof Integer) {
             Integer i = (Integer) object;
             return i.longValue();
@@ -251,12 +252,11 @@ class CocoaUIEnhancer {
         return 0;
     }
 
-    @SuppressWarnings("UnnecessaryBoxing")
     private static Object wrapPointer(long value) {
         if (C.PTR_SIZEOF == 8) {
-            return Long.valueOf(value);
+            return value;
         } else {
-            return Integer.valueOf((int) value);
+            return (int) value;
         }
     }
 
@@ -283,12 +283,12 @@ class CocoaUIEnhancer {
             }
             Method method = clazz.getMethod(methodName, signature);
             return method.invoke(target, args);
-        } catch (Exception e) {
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException  e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private Class<?> classForName(String classname) {
+    private static Class<?> classForName(String classname) {
         try {
             return Class.forName(classname);
         } catch (ClassNotFoundException e) {
@@ -310,9 +310,10 @@ class CocoaUIEnhancer {
     }
 
     private Object invoke(Object obj, String methodName) {
-        return invoke(obj, methodName, (Class<?>[]) null, (Object[]) null);
+        return invoke(obj, methodName, null, (Object[]) null);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private Object invoke(Object obj, String methodName, Class<?>[] paramTypes, Object... arguments) {
         try {
             Method m = obj.getClass().getDeclaredMethod(methodName, paramTypes);

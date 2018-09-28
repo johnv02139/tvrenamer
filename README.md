@@ -76,7 +76,7 @@ If the application doesn't start with a java error, [ensure that your JAVA_HOME 
   * On OSX:
     1. Open the Terminal application (at /Applications/Utilities/Terminal.app)
     1. Navigate to where the TVRenamer application is.
-    1. Execute it via `./TVRenamer-<version>.app/Contents/MacOS/run-mac.sh`
+    1. Execute it via `./TVRenamer-<version>.app/Contents/MacOS/JavaAppLauncher`
   * On Linux:
     1. Open the Terminal application (from the Gnome Applications menu)
     1. Navigate to where the TVRenamer application is.
@@ -85,6 +85,6 @@ If the application doesn't start with a java error, [ensure that your JAVA_HOME 
 ## Contributions
 The development team is just a couple of blokes, so anything from Java code patches to UI/UX recommendations would be gratefully received.
 
-To contribute to the code side of things you should know Java and it would be helpful if you know some SWT and git. The easiest way to submit changes is via a [guthub pull request](http://help.github.com/forking/) based off the [master branch](http://github.com/tvrenamer/tvrenamer/tree/master).
+To contribute to the code side of things you should know Java and it would be helpful if you know some SWT and git. The easiest way to submit changes is via a [github pull request](http://help.github.com/forking/) based off the [master branch](http://github.com/tvrenamer/tvrenamer/tree/master).
 
 For anything else (feature requests, comments, fanmail!), [create a new issue](https://github.com/tvrenamer/tvrenamer/issues/new) and set the label to 'Type-Enhancement'.

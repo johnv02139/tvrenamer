@@ -37,18 +37,40 @@ public class FileEpisodeTest {
      */
     private static final Path OUR_TEMP_DIR = TMP_DIR.resolve(APPLICATION_NAME);
 
-    private UserPreferences prefs = UserPreferences.getInstance();
+    /**
+     * Static inner class to delete everything, in conjunction with walkFileTree
+     */
+    private static class FileDeleter extends SimpleFileVisitor<Path> {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+            throws IOException
+        {
+            FileUtilities.deleteFile(file);
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+            throws IOException
+        {
+            FileUtilities.rmdir(dir);
+            return FileVisitResult.CONTINUE;
+        }
+    }
+
+    private final UserPreferences prefs = UserPreferences.getInstance();
 
     // Helper method.  Basically mkdirs, but expects that the directory does
     // NOT exist, and considers it an error if it does.  Also does one final
     // check that, after we believe we've created it, the directory actually
     // does exist.
+    @SuppressWarnings("SameParameterValue")
     private void createNewDirectory(Path newdir) {
         if (Files.exists(newdir)) {
             fail("directory " + newdir + " already exists.  It should not!");
         }
         boolean madeDir = FileUtilities.mkdirs(newdir);
-        if (false == madeDir) {
+        if (!madeDir) {
             fail("unable to create directory " + newdir);
         }
         if (!Files.exists(newdir)) {
@@ -101,8 +123,8 @@ public class FileEpisodeTest {
             }
         }
         if (FileUtilities.isDirEmpty(OUR_TEMP_DIR)) {
-            boolean rmed = FileUtilities.rmdir(OUR_TEMP_DIR);
-            if (!rmed) {
+            boolean removed = FileUtilities.rmdir(OUR_TEMP_DIR);
+            if (!removed) {
                 fail("unable to delete empty temp directory " + OUR_TEMP_DIR);
             }
         } else {
@@ -158,8 +180,13 @@ public class FileEpisodeTest {
                    .episodeTitle("The Way of the Gun")
                    .replacementMask("%S [%sx%e] %t")
                    .documentation("makes sure illegal characters are not included in filename")
-                   .expectedReplacement("Steven Seagal - Lawman [1x1] The Way of the Gun")
+                   .expectedReplacement("Steven Seagal- Lawman [1x1] The Way of the Gun")
                    .build());
+        /**
+         * Ensure that an episode from season 9 of a show, when using "%0s",
+         * produces "09" and not just "9".  Tests fix for
+         * <a href="https://github.com/tvrenamer/tvrenamer/issues/172">Issue 172</a>
+         */
         values.add(new EpisodeTestData.Builder()
                    .filenameShow("supernatural")
                    .properShowName("Supernatural")
@@ -167,6 +194,7 @@ public class FileEpisodeTest {
                    .episodeNumString("21")
                    .filenameSuffix(".mp4")
                    .episodeTitle("King of the Damned")
+                   .episodeId("4837871")
                    .replacementMask("%S S%0sE%0e %t")
                    .expectedReplacement("Supernatural S09E21 King of the Damned")
                    .build());
@@ -343,7 +371,7 @@ public class FileEpisodeTest {
                    .episodeId("806851")
                    // .replacementMask("%S [%sx%e] %t %r")
                    .replacementMask("%S S%0sE%0e %t")
-                   .expectedReplacement("24 S08E01 Day 8 - 4 -00 P.M. - 5 -00 P.M.")
+                   .expectedReplacement("24 S08E01 Day 8- 4-00 P.M. - 5-00 P.M.")
                    .build());
     }
 
@@ -360,7 +388,7 @@ public class FileEpisodeTest {
                    .episodeId("423760")
                    // .replacementMask("%S [%sx%e] %t %r")
                    .replacementMask("%S S%0sE%0e %t")
-                   .expectedReplacement("24 S07E18 Day 7 - 1 -00 A.M. - 2 -00 A.M.")
+                   .expectedReplacement("24 S07E18 Day 7- 1-00 A.M. - 2-00 A.M.")
                    .build());
         values.add(new EpisodeTestData.Builder()
                    .filenameShow("dexter")
@@ -761,6 +789,10 @@ public class FileEpisodeTest {
                    .replacementMask("%S S%0sE%0e %t")
                    .expectedReplacement("Firefly S01E04 Shindig")
                    .build());
+    }
+
+    @BeforeClass
+    public static void setupValuesFirefly2() {
         values.add(new EpisodeTestData.Builder()
                    .filenameShow("firefly")
                    .properShowName("Firefly")
@@ -794,10 +826,6 @@ public class FileEpisodeTest {
                    .replacementMask("%S S%0sE%0e %t")
                    .expectedReplacement("Firefly S01E07 Jaynestown")
                    .build());
-    }
-
-    @BeforeClass
-    public static void setupValuesFirefly2() {
         values.add(new EpisodeTestData.Builder()
                    .filenameShow("firefly")
                    .properShowName("Firefly")
@@ -809,6 +837,10 @@ public class FileEpisodeTest {
                    .replacementMask("%S S%0sE%0e %t")
                    .expectedReplacement("Firefly S01E08 Out of Gas")
                    .build());
+    }
+
+    @BeforeClass
+    public static void setupValuesFirefly3() {
         values.add(new EpisodeTestData.Builder()
                    .filenameShow("firefly")
                    .properShowName("Firefly")
@@ -853,6 +885,10 @@ public class FileEpisodeTest {
                    .replacementMask("%S S%0sE%0e %t")
                    .expectedReplacement("Firefly S01E12 The Message")
                    .build());
+    }
+
+    @BeforeClass
+    public static void setupValuesFirefly4() {
         values.add(new EpisodeTestData.Builder()
                    .filenameShow("firefly")
                    .properShowName("Firefly")
@@ -1013,17 +1049,14 @@ public class FileEpisodeTest {
      * Then, we're done.  We return the replacement text to the driver method, and let it
      * do the checking.
      */
-    private String getReplacementBasename(EpisodeTestData data, Path path)
-        throws IOException
-    {
+    private FileEpisode getEpisode(EpisodeTestData data, Path path) {
         prefs.setRenameReplacementString(data.replacementMask);
 
         String pathstring = path.toAbsolutePath().toString();
 
         FileEpisode episode = new FileEpisode(pathstring);
         episode.setFilenameShow(data.filenameShow);
-        episode.setFilenameSeason(data.seasonNumString);
-        episode.setFilenameEpisode(data.episodeNumString);
+        episode.setEpisodePlacement(data.seasonNumString, data.episodeNumString);
         episode.setFilenameResolution(data.episodeResolution);
 
         Show show = ShowStore.getOrAddShow(data.filenameShow, data.properShowName);
@@ -1039,7 +1072,7 @@ public class FileEpisodeTest {
         show.indexEpisodesBySeason();
         episode.listingsComplete();
 
-        return episode.getRenamedBasename();
+        return episode;
     }
 
     /**
@@ -1050,9 +1083,8 @@ public class FileEpisodeTest {
      */
     @Test
     public void testGetReplacementText() {
-        prefs.setMoveEnabled(false);
-        prefs.setRenameEnabled(true);
-        Show.clearAllEpisodes();
+        prefs.setRenameSelected(true);
+        prefs.setMoveSelected(false);
         List<Path> testFiles = new ArrayList<>();
         for (EpisodeTestData data : values) {
             try {
@@ -1060,8 +1092,11 @@ public class FileEpisodeTest {
                 Files.createFile(path);
                 testFiles.add(path);
 
-                String replacement = getReplacementBasename(data, path);
-                assertEquals(data.expectedReplacement, replacement);
+                FileEpisode episode = getEpisode(data, path);
+                assertEquals("suffix fail on " + data.inputFilename,
+                             data.filenameSuffix, episode.getFilenameSuffix());
+                assertEquals("test which " + data.documentation,
+                             data.expectedReplacement, episode.getRenamedBasename(0));
             } catch (Exception e) {
                 verboseFail("testing " + data, e);
             }
@@ -1082,23 +1117,7 @@ public class FileEpisodeTest {
         if (Files.exists(OUR_TEMP_DIR)) {
             logger.warning("trying to clean up " + OUR_TEMP_DIR);
             try {
-                Files.walkFileTree(OUR_TEMP_DIR, new SimpleFileVisitor<Path>() {
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                            throws IOException
-                        {
-                            FileUtilities.deleteFile(file);
-                            return FileVisitResult.CONTINUE;
-                        }
-
-                        @Override
-                        public FileVisitResult postVisitDirectory(Path dir, IOException exc)
-                            throws IOException
-                        {
-                            FileUtilities.rmdir(dir);
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
+                Files.walkFileTree(OUR_TEMP_DIR, new FileDeleter());
             } catch (IOException e) {
                 verboseFail("unable to clean up leftover directory " + OUR_TEMP_DIR, e);
             }

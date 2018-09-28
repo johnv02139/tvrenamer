@@ -20,12 +20,12 @@ import java.util.logging.Logger;
 
 public class FileMover implements Callable<Boolean> {
     private static final Logger logger = Logger.getLogger(FileMover.class.getName());
+    private static final UserPreferences userPrefs = UserPreferences.getInstance();
 
     private final FileEpisode episode;
     private final Path destRoot;
     private final String destBasename;
     private final String destSuffix;
-    private final UserPreferences userPrefs = UserPreferences.getInstance();
     private ProgressObserver observer = null;
     Integer destIndex = null;
 
@@ -40,7 +40,8 @@ public class FileMover implements Callable<Boolean> {
     /**
      * Sets the progress observer for this FileMover
      *
-     * @param the observer to add
+     * @param observer
+     *   the observer to add
      */
     public void addObserver(ProgressObserver observer) {
         this.observer = observer;
@@ -65,15 +66,15 @@ public class FileMover implements Callable<Boolean> {
     }
 
     /**
-     * The "basename" of the destination we want to move the file to.
-     * The "basename" is the filename without the filename suffix (or
-     * the dot), or the parent directory.
+     * The filename of the destination we want to move the file to.
+     * We may not be able to actually use this filename due to a conflict,
+     * in which case, we will probably add an index and use a subdirectory.
+     * But this is the name we WANT to change it to.
      *
-     * @return the basic part of the filename that we want to move the
-     *         file to
+     * @return the filename that we want to move the file to
      */
-    String getDestBasename() {
-        return destBasename;
+    String getDesiredDestName() {
+        return destBasename + destSuffix;
     }
 
     /**
@@ -137,7 +138,7 @@ public class FileMover implements Callable<Boolean> {
             // the original.  In some cases, like ownership, that might actually be desirable
             // (have the copy be owned by the user running the program).  But there may be
             // other attributes we should try to adopt.  In any case, requires investigation.
-            FileUtilities.deleteFile(source);
+            ok = FileUtilities.deleteFile(source);
         } else {
             logger.warning("failed to move " + source);
         }
@@ -156,7 +157,7 @@ public class FileMover implements Callable<Boolean> {
      * @param destPath
      *    the Path to which the file should be moved
      * @param tryRename
-     *    if false, do not try to simpy rename the file; always do a "copy-and-delete"
+     *    if false, do not try to simply rename the file; always do a "copy-and-delete"
      * @return true on complete success, false otherwise.
      */
     private boolean doActualMove(final Path srcPath, final Path destPath, final boolean tryRename) {
@@ -165,8 +166,14 @@ public class FileMover implements Callable<Boolean> {
         if (tryRename) {
             try {
                 actualDest = Files.move(srcPath, destPath);
+                if (observer != null) {
+                    observer.finishProgress(true);
+                }
             } catch (IOException ioe) {
                 logger.log(Level.SEVERE, "Unable to move " + srcPath, ioe);
+                if (observer != null) {
+                    observer.finishProgress(false);
+                }
                 return false;
             }
         } else {
@@ -176,20 +183,21 @@ public class FileMover implements Callable<Boolean> {
             }
             boolean success = copyAndDelete(srcPath, destPath);
             if (observer != null) {
-                observer.cleanUp();
+                observer.finishProgress(success);
             }
             // TODO: what about file attributes?  In the case of owner, it might be
             // desirable to change it, or not.  What about writability?  And the
             // newer, more system-specific attributes, like "this file was downloaded
             // from the internet"?
-            observer.cleanUp();
             if (success) {
                 actualDest = destPath;
             } else {
                 actualDest = null;
             }
         }
-        episode.setPath(actualDest);
+        if (actualDest != null) {
+            episode.setPath(actualDest);
+        }
         boolean same = destPath.equals(actualDest);
         if (!same) {
             logger.warning("actual destination did not match intended:\n  "
@@ -213,6 +221,46 @@ public class FileMover implements Callable<Boolean> {
     }
 
     /**
+     * Execute the move using real paths.  Also does side-effects, like
+     * updating the FileEpisode.
+     *
+     * @param realSrc
+     *    the "real" Path of the source file to be moved
+     * @param destPath
+     *    the "real" destination where the file should be moved; can contain
+     *    non-existent directories, which will be created
+     * @param destDir
+     *    an existent ancestor of destPath
+     * @return true on success, false otherwise.
+     */
+    private boolean tryToMoveRealPaths(Path realSrc, Path destPath, Path destDir) {
+        boolean tryRename = FileUtilities.areSameDisk(realSrc, destDir);
+        Path srcDir = realSrc.getParent();
+
+        episode.setMoving();
+        boolean success = doActualMove(realSrc, destPath, tryRename);
+        if (!success) {
+            logger.info("failed to move " + realSrc);
+            return false;
+        }
+
+        logger.info("successful:\n  " + realSrc + "\n  " + destPath);
+        if (userPrefs.isRemoveEmptiedDirectories()) {
+            FileUtilities.removeWhileEmpty(srcDir);
+        }
+        return true;
+    }
+
+    /**
+     * Add a version string to the destination filename.
+     *
+     * @return destination filename with a version added
+     */
+    private String addVersionString() {
+        return destBasename + " (" + destIndex + ")" + destSuffix;
+    }
+
+    /**
      * Check/verify numerous things, and if everything is as it should be,
      * execute the move.
      *
@@ -231,63 +279,45 @@ public class FileMover implements Callable<Boolean> {
             episode.setDoesNotExist();
             return false;
         }
+        Path realSrc;
+        try {
+            realSrc = srcPath.toRealPath();
+        } catch (IOException ioe) {
+            logger.warning("could not get real path of " + srcPath);
+            return false;
+        }
         Path destDir = destRoot;
         String filename = destBasename + destSuffix;
         if (destIndex != null) {
             if (userPrefs.isMoveEnabled()) {
                 destDir = destRoot.resolve(DUPLICATES_DIRECTORY);
             }
-            filename = destBasename + VERSION_SEPARATOR_STRING + destIndex + destSuffix;
+            filename = addVersionString();
         }
-        if (Files.notExists(destDir)) {
-            try {
-                Files.createDirectories(destDir);
-            } catch (IOException ioe) {
-                logger.log(Level.SEVERE, "Unable to create directory " + destDir, ioe);
-                return false;
-            }
-        }
-        if (!Files.exists(destDir)) {
-            logger.warning("could not create destination directory " + destDir
-                           + "; not attempting to move " + srcPath);
+
+        if (!FileUtilities.ensureWritableDirectory(destDir)) {
+            logger.warning("not attempting to move " + srcPath);
             return false;
         }
-        if (!Files.isDirectory(destDir)) {
-            logger.warning("cannot use specified destination " + destDir
-                           + "because it is not a directory; not attempting to move "
-                           + srcPath);
+
+        try {
+            destDir = destDir.toRealPath();
+        } catch (IOException ioe) {
+            logger.warning("could not get real path of " + destDir);
             return false;
         }
 
         Path destPath = destDir.resolve(filename);
         if (Files.exists(destPath)) {
-            if (destPath.equals(srcPath)) {
+            if (destPath.equals(realSrc)) {
                 logger.info("nothing to be done to " + srcPath);
                 return true;
             }
             logger.warning("cannot move; destination exists:\n  " + destPath);
             return false;
         }
-        if (!Files.isWritable(destDir)) {
-            logger.warning("cannot write file to " + destDir);
-            return false;
-        }
 
-        boolean tryRename = FileUtilities.areSameDisk(srcPath, destDir);
-        Path srcDir = srcPath.getParent();
-
-        episode.setMoving();
-        //noinspection PointlessBooleanExpression
-        if (false == doActualMove(srcPath, destPath, tryRename)) {
-            return false;
-        }
-
-        logger.info("successful:\n  " + srcPath.toAbsolutePath().toString()
-                    + "\n  " + destPath.toAbsolutePath().toString());
-        if (userPrefs.isRemoveEmptiedDirectories()) {
-            FileUtilities.removeWhileEmpty(srcDir);
-        }
-        return true;
+        return tryToMoveRealPaths(realSrc, destPath, destDir);
     }
 
     /**

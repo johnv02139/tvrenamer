@@ -8,52 +8,118 @@ public class StringUtilsTest {
 
     @Test
     public void testSanitiseTitleBackslash() {
-        assertEquals(StringUtils.sanitiseTitle("Test\\"), "Test-");
+        assertEquals("Test-", StringUtils.sanitiseTitle("Test\\"));
+        assertEquals("Test-", StringUtils.replaceIllegalCharacters("Test\\"));
     }
 
     @Test
-    public void testSanitiseTitleForwardslash() {
-        assertEquals(StringUtils.sanitiseTitle("Test/"), "Test-");
+    public void testSanitiseTitleForwardSlash() {
+        assertEquals("Test-", StringUtils.sanitiseTitle("Test/"));
+        assertEquals("Test-", StringUtils.replaceIllegalCharacters("Test/"));
     }
 
     @Test
     public void testSanitiseTitleColon() {
-        assertEquals(StringUtils.sanitiseTitle("Test:"), "Test -");
+        assertEquals("Test-", StringUtils.sanitiseTitle("Test:"));
+        assertEquals("Test-", StringUtils.replaceIllegalCharacters("Test:"));
     }
 
     @Test
     public void testSanitiseTitlePipe() {
-        assertEquals(StringUtils.sanitiseTitle("Test|"), "Test-");
+        assertEquals("Test-", StringUtils.sanitiseTitle("Test|"));
+        assertEquals("Test-", StringUtils.replaceIllegalCharacters("Test|"));
     }
 
     @Test
     public void testSanitiseTitleAsterisk() {
-        assertEquals(StringUtils.sanitiseTitle("Test*"), "Test-");
+        assertEquals("Test-", StringUtils.sanitiseTitle("Test*"));
+        assertEquals("Test-", StringUtils.replaceIllegalCharacters("Test*"));
     }
 
     @Test
     public void testSanitiseTitleQuestionMark() {
-        assertEquals(StringUtils.sanitiseTitle("Test?"), "Test");
+        assertEquals("Test", StringUtils.sanitiseTitle("Test?"));
+        assertEquals("Test", StringUtils.replaceIllegalCharacters("Test?"));
     }
 
     @Test
     public void testSanitiseTitleGreaterThan() {
-        assertEquals(StringUtils.sanitiseTitle("Test>"), "Test");
+        assertEquals("Test", StringUtils.sanitiseTitle("Test>"));
+        assertEquals("Test", StringUtils.replaceIllegalCharacters("Test>"));
     }
 
     @Test
     public void testSanitiseTitleLessThan() {
-        assertEquals(StringUtils.sanitiseTitle("Test<"), "Test");
+        assertEquals("Test", StringUtils.sanitiseTitle("Test<"));
+        assertEquals("Test", StringUtils.replaceIllegalCharacters("Test<"));
     }
 
     @Test
     public void testSanitiseTitleDoubleQuote() {
-        assertEquals(StringUtils.sanitiseTitle("Test\""), "Test'");
+        assertEquals("Test'", StringUtils.sanitiseTitle("Test\""));
+        assertEquals("Test'", StringUtils.replaceIllegalCharacters("Test\""));
     }
 
     @Test
     public void testSanitiseTitleTilde() {
-        assertEquals(StringUtils.sanitiseTitle("Test`"), "Test'");
+        assertEquals("Test'", StringUtils.sanitiseTitle("Test`"));
+        assertEquals("Test'", StringUtils.replaceIllegalCharacters("Test`"));
+    }
+
+    @Test
+    public void testSanitiseTitleTrim() {
+        assertEquals("Test", StringUtils.sanitiseTitle("  <Test> \n"));
+        assertEquals("  Test \n", StringUtils.replaceIllegalCharacters("  <Test> \n"));
+    }
+
+    @Test
+    public void testSanitiseTitleOnlyTrim() {
+        // The whitespace in between the words should NOT be removed.
+        assertEquals("Test Two", StringUtils.sanitiseTitle(" \t<Test Two> "));
+        assertEquals(" \tTest Two ", StringUtils.replaceIllegalCharacters(" \t<Test Two> "));
+    }
+
+    @Test
+    public void testSanitiseTitleEmpty() {
+        assertEquals("", StringUtils.sanitiseTitle(""));
+        assertEquals("", StringUtils.replaceIllegalCharacters(""));
+    }
+
+    @Test
+    public void testSanitiseTitleBlank() {
+        assertEquals("", StringUtils.sanitiseTitle("   "));
+        assertEquals("   ", StringUtils.replaceIllegalCharacters("   "));
+    }
+
+    @Test
+    public void testUnquoteStringNormal() {
+        assertEquals("Season ", StringUtils.unquoteString("\"Season \""));
+    }
+
+    @Test
+    public void testUnquoteStringUnbalanced() {
+        assertEquals("Season ", StringUtils.unquoteString("Season \""));
+        assertEquals("Season ", StringUtils.unquoteString("\"Season "));
+    }
+
+    @Test
+    public void testUnquoteStringNoQuotes() {
+        assertEquals("Season ", StringUtils.unquoteString("Season "));
+    }
+
+    @Test
+    public void testUnquoteStringShort() {
+        assertEquals("", StringUtils.unquoteString(""));
+        assertEquals(" ", StringUtils.unquoteString(" "));
+        assertEquals("s", StringUtils.unquoteString("s"));
+    }
+
+    @Test
+    public void testUnquoteStringWeird() {
+        assertEquals("", StringUtils.unquoteString("\""));
+        assertEquals("", StringUtils.unquoteString("\"\""));
+        assertEquals("\"foo", StringUtils.unquoteString("\"\"foo"));
+        assertEquals("foo\"", StringUtils.unquoteString("\"foo\"\""));
     }
 
     @Test
@@ -68,7 +134,7 @@ public class StringUtilsTest {
 
     @Test
     public void testRemoveLast() {
-        // Straighforward removal; note does not remove punctuation/separators
+        // Straightforward removal; note does not remove punctuation/separators
         assertEquals("foo..baz", StringUtils.removeLast("foo.bar.baz", "bar"));
 
         // Implementation detail, but the match is required to be all lower-case,

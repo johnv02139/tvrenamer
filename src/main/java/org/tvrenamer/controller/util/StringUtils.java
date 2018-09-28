@@ -3,13 +3,37 @@ package org.tvrenamer.controller.util;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Logger;
 
 public class StringUtils {
     private static final Logger logger = Logger.getLogger(StringUtils.class.getName());
 
     private static final Locale THIS_LOCALE = Locale.getDefault();
+
+    public static final HashMap<Character, String> SANITISE
+        = new HashMap<Character, String>()
+        {
+            // provide a replacement for anything that's not valid in Windows
+            // this list is: \ / : * ? " < > |
+            // see http://msdn.microsoft.com/en-us/library/aa365247%28VS.85%29.aspx for more information
+            {
+                put('\\', "-"); // replace backslash with hyphen
+                put('/', "-");  // replace forward slash with hyphen
+                put(':', "-");  // replace colon with a hyphen
+                put('|', "-");  // replace vertical bar with hyphen
+                put('*', "-");  // replace asterisk with hyphen; for example,
+                                // the episode "C**tgate" of Veep should become "C--tgate", not "Ctgate"
+                put('?', "");   // remove question marks
+                put('<', "");   // remove less-than symbols
+                put('>', "");   // remove greater-than symbols
+                put('"', "'");  // replace double quote with apostrophe
+                put('`', "'");  // replace backquote with apostrophe
+            }
+        };
+    public static final Set<Character> ILLEGAL_CHARACTERS = SANITISE.keySet();
 
     private static final ThreadLocal<DecimalFormat> DIGITS =
         new ThreadLocal<DecimalFormat>() {
@@ -68,10 +92,10 @@ public class StringUtils {
         return rval;
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public static String makeDotTitle(String titleString) {
         String pass1 = titleString.replaceAll("(\\w)\\s+(\\w)", "$1.$2");
         String pass2 = pass1.replaceAll("(\\w)\\s+(\\w)", "$1.$2");
-        @SuppressWarnings("UnnecessaryLocalVariable")
         String pass3 = pass2.replaceAll("\\s", "");
         return pass3;
     }
@@ -85,23 +109,106 @@ public class StringUtils {
         return input;
     }
 
-    public static String sanitiseTitle(String title) {
-        // anything that's not valid in Windows will be replaced
-        // this list is: \ / : * ? " < > |
-        // see http://msdn.microsoft.com/en-us/library/aa365247%28VS.85%29.aspx for more information
+    public static String makeQuotedString(final String original) {
+        return ("\"" + original + "\"");
+    }
 
-        title = title.replace('\\', '-'); // replace '\' with '-'
-        title = title.replace('/', '-'); // replace '/' with '-'
-        title = title.replace(":", " -"); // replace ':' with ' -'
-        title = title.replace('|', '-'); // replace '|' with '-'
-        // For example, the episode "C**tgate" of Veep should become "C--tgate", not "Ctgate"
-        title = title.replace("*", "-"); // replace '*' with '-'
-        title = title.replace("?", ""); // replace '?' with ''
-        title = title.replace("<", ""); // replace '<' with ''
-        title = title.replace(">", ""); // replace '>' with ''
-        title = title.replace("\"", "'"); // replace '"' with "'"
-        title = title.replace("`", "'"); // replace '`' with "'"
-        return title.trim();
+    /**
+     * Strip away double-quote characters at the beginning and end of a string.
+     *
+     * Returns a string identical to the original, except that if the first and/or last
+     * character of the original was a double-quote character, it is omitted.  The quotes
+     * do not have to be balanced.  If there is one at the beginning but not the end, it's
+     * removed.  Or the end but not the beginning, or both.
+     *
+     * Any double-quote characters that may occur in the middle of the string are untouched.
+     * This would even include a situation where the string begins with two double quotes.
+     * It is not analagous to String.trim() in that sense.  It strips at most one character
+     * from the beginning, and at most one from the end.
+     *
+     * @param original the String to trim double quotes from
+     * @return the original, stripped of an opening double-quote, if it was present, and
+     *   stripped of a closing double-quote, if it was present.
+     *
+     */
+    public static String unquoteString(final String original) {
+        int start = 0;
+        int end = original.length();
+
+        // Remove surrounding double quotes, if present;
+        // any other double quotes should not be removed.
+        if ((end >= 1) && (original.charAt(0) == '"')) {
+            start++;
+        }
+        if ((end >= 2) && (original.charAt(end - 1) == '"')) {
+            end--;
+        }
+
+        return original.substring(start, end);
+    }
+
+    /**
+     * Return whether or not the given character is legal in filenames.
+     *
+     * @param ch the character to check
+     * @return true if the character is ok to include in filenames, false if it is not
+     */
+    public static boolean isLegalFilenameCharacter(final char ch) {
+        return !ILLEGAL_CHARACTERS.contains(ch);
+    }
+
+    /**
+     * Certain characters cannot be included in file or folder names.  We create files and folders
+     * based on both information the user provides, and data about the actual episode.  It's likely
+     * that sometimes illegal characters will occur.  This method takes a String that may have
+     * illegal characters, and returns one that is similar but has no illegal characters.
+     *
+     * How illegal characters are handled actually depends on the particular character.  Some are
+     * simply stripped away, others are replaced with a hyphen or apostrophe.
+     *
+     * This method operates only on the specified portion of the string, and ignores (strips away)
+     * anything that comes before the start or after the end.
+     *
+     * @param title the original string, which may contain illegal characters
+     * @param start the index of the first character to consider
+     * @param end the index of the last character to consider
+     * @return a version of the substring, from start to end, of the original string,
+     *    which contains no illegal characters
+     */
+    public static String replaceIllegalCharacters(final String title, final int start, final int end) {
+        StringBuilder sanitised = new StringBuilder(end + 1);
+        for (int i = start; i <= end; i++) {
+            char c = title.charAt(i);
+            String replace = SANITISE.get(c);
+            if (replace == null) {
+                sanitised.append(c);
+            } else {
+                sanitised.append(replace);
+            }
+        }
+        return sanitised.toString();
+    }
+
+    public static String replaceIllegalCharacters(final String title) {
+        return replaceIllegalCharacters(title, 0, title.length() - 1);
+    }
+
+    public static String sanitiseTitle(String title) {
+        // We don't only replace illegal characters; we also want to "trim" the string of whitespace
+        // at the front and back, but not in the middle.  We'll accomplish this by finding the limits
+        // of the non-whitespace characters before we even create the StringBuilder, and use those as
+        // the limits of the string.
+        int end = title.length() - 1;
+        while ((end > 0) && Character.isWhitespace(title.charAt(end))) {
+            end--;
+        }
+
+        int i = 0;
+        while ((i <= end) && Character.isWhitespace(title.charAt(i))) {
+            i++;
+        }
+
+        return replaceIllegalCharacters(title, i, end);
     }
 
     /**
@@ -121,6 +228,11 @@ public class StringUtils {
      *
      * This is already pretty involved for such a simple thing, and it's still
      * not perfect.  But it's a pretty good heuristic.
+     *
+     * @param s
+     *    the String to analyze
+     * @return true if it's composed purely of entirely-lower-case words
+     *    separated by hyphens; false otherwise
      */
     private static boolean isLowerCaseWithHyphens(String s) {
         boolean status = false;
@@ -142,7 +254,6 @@ public class StringUtils {
         return status;
     }
 
-    @SuppressWarnings("WeakerAccess")
     public static String replacePunctuation(String s) {
         String rval = s;
 
@@ -238,7 +349,7 @@ public class StringUtils {
      *            the String that we want to normalize; we assume it is:
      *            the substring of the file path that we think represents the show name
      * @return a version of the show name that is more suitable for a query; this may
-     *         include case normalization, removal of superfluous whitepsace and
+     *         include case normalization, removal of superfluous whitespace and
      *         punctuation, etc.
      */
     public static String makeQueryString(String text) {

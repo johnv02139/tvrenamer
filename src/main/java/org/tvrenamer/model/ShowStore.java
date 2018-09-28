@@ -6,6 +6,8 @@ import org.tvrenamer.controller.TheTVDBSwaggerProvider;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Logger;
 
 /**
@@ -117,6 +119,39 @@ public class ShowStore {
 
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
+
+    /**
+     * Submits the task to download the information about the ShowName.
+     *
+     * Makes sure that the task is successfully submitted, and provides the
+     * ShowName with an alternate path if anything goes wrong with the task.
+     *
+     * @param showName
+     *    an object containing the part of the filename that is presumed to name
+     *    the show, as well as the version of that string we can give the provider
+     * @param showFetcher
+     *    the task that will download the information
+     */
+    private static void submitDownloadTask(final ShowName showName,
+                                           final Callable<Boolean> showFetcher)
+    {
+        Future<Boolean> result = null;
+        FailedShow failure = null;
+        try {
+            result = threadPool.submit(showFetcher);
+        } catch (RejectedExecutionException | NullPointerException e) {
+            logger.warning("unable to submit download task (" + showName + ") for execution");
+            failure = showName.getFailedShow(new TVRenamerIOException(e.getMessage()));
+        }
+        if ((result == null) && (failure == null)) {
+            logger.warning("not downloading " + showName);
+            failure = showName.getFailedShow(null);
+        }
+        if (failure != null) {
+            showName.nameNotFound(failure);
+        }
+    }
+
     /**
      * <p>
      * Download the show details if required, otherwise notify listener.
@@ -141,9 +176,9 @@ public class ShowStore {
             return;
         }
         ShowName showName = ShowName.lookupShowName(filenameShow);
-        Show show = showName.getMatchedShow();
+        ShowOption showOption = showName.getMatchedShow();
 
-        if (show == null) {
+        if (showOption == null) {
             // Since "show" is null, we know we haven't downloaded the options for
             // this filenameShow yet; that is, we know we haven't FINISHED doing so.
             // But we might have started.  If the showName already has one or more
@@ -157,17 +192,15 @@ public class ShowStore {
                     downloadShow(showName);
                 }
             }
-        } else {
-            // Since we've already downloaded the show, we don't need to involve the
+            // If we've already downloaded the show, we don't need to involve the
             // ShowName at all.  We invoke the listener's callback immediately and
             // directly.  If, in the future, we expand ShowInformationListener so
             // that there is more information to be sent later, we'd want to edit
-            // this to add the listener.
-            if (show.isLocalShow()) {
-                listener.downloadFailed(show);
-            } else {
-                listener.downloaded(show);
-            }
+            // the following clauses to add the listener.
+        } else if (showOption.isFailedShow()) {
+            listener.downloadFailed(showOption.asFailedShow());
+        } else {
+            listener.downloadSucceeded(showOption.getShowInstance());
         }
     }
 
@@ -193,23 +226,23 @@ public class ShowStore {
      */
     private static void downloadShow(final ShowName showName) {
         Callable<Boolean> showFetcher = () -> {
-            Show thisShow;
+            ShowOption showOption;
             try {
-                TheTVDBSwaggerProvider.getShowOptions(showName);
-                thisShow = showName.selectShowOption();
+                TheTVDBSwaggerProvider.getSeriesOptions(showName);
+                showOption = showName.selectShowOption();
             } catch (TVRenamerIOException e) {
-                thisShow = showName.getFailedShow(e);
+                showOption = showName.getFailedShow(e);
             }
 
-            logger.fine("Show options for '" + thisShow.getName() + "' downloaded");
-            if (thisShow.isFailedShow()) {
-                showName.nameNotFound(thisShow);
+            logger.fine("Show options for '" + showOption.getName() + "' downloaded");
+            if (showOption.isFailedShow()) {
+                showName.nameNotFound(showOption.asFailedShow());
             } else {
-                showName.nameResolved(thisShow);
+                showName.nameResolved(showOption.getShowInstance());
             }
             return true;
         };
-        threadPool.submit(showFetcher);
+        submitDownloadTask(showName, showFetcher);
     }
 
     public static void cleanUp() {
@@ -233,10 +266,10 @@ public class ShowStore {
      */
     static Show getOrAddShow(String filenameShow, String actualName) {
         ShowName showName = ShowName.lookupShowName(filenameShow);
-        Show show = showName.getMatchedShow();
-        if (show == null) {
-            show = showName.getLocalShow(actualName);
+        ShowOption showOption = showName.getMatchedShow();
+        if (showOption == null) {
+            return new Show(filenameShow, actualName);
         }
-        return show;
+        return showOption.getShowInstance();
     }
 }

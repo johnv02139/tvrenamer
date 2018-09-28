@@ -14,31 +14,56 @@ public class Episode {
     // Unlike java.text.DateFormat, DateTimeFormatter is thread-safe, so we can create just one instance here.
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
 
-    private String title;
-    private String airDateString;
+    private final String title;
+    private final String episodeId;
+
+    private final String airDateString;
+    // Not final; we don't calculate it in the constructor.  When we look up a series, we process every
+    // episode of that series, whether the user has that episode or not.  But we only need to know the
+    // air date for episodes the user actually has.  We parse the string only on demand.
     private LocalDate firstAired = null;
 
     // This object does not have an opinion of its place within the series ordering.
     // It does serve as a useful place to hang information about such questions, as
     // we do, below.  But it's up to the Show to decide what the "real" answer is.
-    private String seasonNumber;
-    private String episodeNumber;
-    private String dvdSeason;
-    private String dvdEpisodeNumber;
-
-    private String episodeId;
+    private final EpisodePlacement airPlacement;
+    private final EpisodePlacement dvdPlacement;
 
     public Episode(EpisodeInfo info) {
-        this.title = info.episodeName;
-        this.airDateString = info.firstAired;
-        this.seasonNumber = info.seasonNumber;
-        this.episodeNumber = info.episodeNumber;
-        this.dvdSeason = info.dvdSeason;
-        this.dvdEpisodeNumber = info.dvdEpisodeNumber;
-        this.episodeId = info.episodeId;
-    }
+        title = info.episodeName;
+        episodeId = info.episodeId;
 
-    public Episode() {
+        airDateString = info.firstAired;
+
+        // stringToInt handles null or empty values ok
+        final Integer airSeasonNumber = StringUtils.stringToInt(info.seasonNumber);
+        final Integer airEpisodeNumber = StringUtils.stringToInt(info.episodeNumber);
+        final Integer dvdSeasonNumber = StringUtils.stringToInt(info.dvdSeason);
+        final Integer dvdEpisodeNumber = StringUtils.stringToInt(info.dvdEpisodeNumber);
+
+        if (airSeasonNumber == null) {
+            logger.warning("episode \"" + title + "\" does not have an integer season ("
+                           + info.seasonNumber + ")");
+            airPlacement = null;
+        } else if (airEpisodeNumber == null) {
+            logger.info("episode \"" + title + "\" does not have an integer episode number ("
+                        + info.episodeNumber + ")");
+            airPlacement = null;
+        } else {
+            airPlacement = new EpisodePlacement(airSeasonNumber, airEpisodeNumber);
+        }
+
+        if (dvdSeasonNumber == null) {
+            logger.finer("episode \"" + title + "\" does not have an integer DVD season ("
+                         + info.dvdSeason + ")");
+            dvdPlacement = null;
+        } else if (dvdEpisodeNumber == null) {
+            logger.fine("episode \"" + title + "\" does not have an integer DVD episode number ("
+                        + info.dvdEpisodeNumber + ")");
+            dvdPlacement = null;
+        } else {
+            dvdPlacement = new EpisodePlacement(dvdSeasonNumber, dvdEpisodeNumber);
+        }
     }
 
     public String getTitle() {
@@ -47,22 +72,6 @@ public class Episode {
 
     public String getEpisodeId() {
         return episodeId;
-    }
-
-    public String getSeasonNumber() {
-        return seasonNumber;
-    }
-
-    public String getEpisodeNumber() {
-        return episodeNumber;
-    }
-
-    public String getDvdSeasonNumber() {
-        return dvdSeason;
-    }
-
-    public String getDvdEpisodeNumber() {
-        return dvdEpisodeNumber;
     }
 
     public LocalDate getAirDate() {
@@ -82,6 +91,13 @@ public class Episode {
             }
         }
         return firstAired;
+    }
+
+    public EpisodePlacement getEpisodePlacement(boolean useDvd) {
+        if (useDvd) {
+            return dvdPlacement;
+        }
+        return airPlacement;
     }
 
     // "Package-private".  Used by Show; should not be used by other classes.

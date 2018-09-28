@@ -2,6 +2,7 @@ package org.tvrenamer.controller;
 
 import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.TVRenamerIOException;
+import org.tvrenamer.model.util.Constants;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -77,7 +78,7 @@ class HttpConnectionHandler {
                 String s;
                 // always specify encoding while reading streams
                 try (BufferedReader reader
-                     = new BufferedReader(new InputStreamReader(inputStream, "UTF-8")))
+                     = new BufferedReader(new InputStreamReader(inputStream, Constants.TVR_CHARSET)))
                 {
                     while ((s = reader.readLine()) != null) {
                         contents.append(s);
@@ -101,8 +102,8 @@ class HttpConnectionHandler {
             // we just don't log it at the same level.
             logger.fine(message);
             throw new TVRenamerIOException(message, e);
-        } catch (Exception e) {
-            String message = "Exception when attempting to download and parse URL " + url;
+        } catch (IOException e) {
+            String message = "I/O Exception when attempting to download and parse URL " + url;
             logger.log(Level.SEVERE, message, e);
             throw new TVRenamerIOException(message, e);
         } finally {

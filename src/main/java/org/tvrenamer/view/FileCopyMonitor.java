@@ -11,9 +11,9 @@ import java.text.NumberFormat;
 public class FileCopyMonitor implements ProgressObserver {
     private final NumberFormat format = NumberFormat.getPercentInstance();
 
-    private final UIStarter ui;
+    private final ResultsTable ui;
     private final TableItem item;
-    private Display display = null;
+    private final Display display;
     private Label label = null;
     private long maximum;
     private int loopCount = 0;
@@ -21,26 +21,24 @@ public class FileCopyMonitor implements ProgressObserver {
     /**
      * Creates the monitor, with the label and the display.
      *
-     * @param ui - the UIStarter instance
+     * @param ui - the ResultsTable instance
      * @param item - the TableItem to monitor
      */
-    public FileCopyMonitor(UIStarter ui, TableItem item) {
+    public FileCopyMonitor(ResultsTable ui, TableItem item) {
         this.ui = ui;
         this.item = item;
+        display = ui.getDisplay();
         format.setMaximumFractionDigits(1);
     }
 
     /**
      * Update the maximum value.
      *
-     * @param value the new maximum value
+     * @param max the new maximum value
      */
     @Override
     public void initialize(final long max) {
-        display = ui.getDisplay();
-        display.syncExec(() -> {
-            label = ui.getProgressLabel(item);
-        });
+        display.syncExec(() -> label = ui.getProgressLabel(item));
         maximum = max;
         setValue(0);
     }
@@ -81,15 +79,14 @@ public class FileCopyMonitor implements ProgressObserver {
      * Dispose of the label.  We need to do this whether the label was used or not.
      */
     @Override
-    public void cleanUp() {
+    public void finishProgress(final boolean succeeded) {
         if (!display.isDisposed()) {
             display.asyncExec(() -> {
-                if (label.isDisposed()) {
-                    return;
+                if ((label != null) && (!label.isDisposed())) {
+                    label.dispose();
                 }
-                label.dispose();
+                ui.finishMove(item, succeeded);
             });
         }
     }
-
 }

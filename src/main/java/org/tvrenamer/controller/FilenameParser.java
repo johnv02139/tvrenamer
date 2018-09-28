@@ -24,9 +24,6 @@ public class FilenameParser {
     private static final String RESOLUTION_REGEX = "\\D(\\d+[pk]).*";
 
     private static final String[] REGEX = {
-        // this one works for titles with years:
-        "(.+?\\d{4}[^a-zA-Z0-9]\\D*?)[sS]?(\\d\\d?)\\D*?(\\d\\d).*",
-
         // this one matches SXXEXX:
         "(.+?[^a-zA-Z0-9]\\D*?)[sS](\\d\\d?)[eE](\\d\\d*).*",
 
@@ -39,6 +36,11 @@ public class FilenameParser {
         // this one matches SSxEE, with an optional leading "S"
         "(.+[^a-zA-Z0-9]\\D*?)[Ss](\\d\\d?)x(\\d\\d\\d?).*",
 
+        // this one works for titles with years; note, this can be problematic when
+        // the filename contains a year as part of the air date, rather than as part
+        // of the show name or title
+        "(.+?\\d{4}[^a-zA-Z0-9]\\D*?)[sS]?(\\d\\d?)\\D*?(\\d\\d).*",
+
         // this one matches SXXYY; note, must be exactly four digits
         "(.+?[^a-zA-Z0-9]\\D*?)[sS](\\d\\d)(\\d\\d)\\D.*",
 
@@ -50,7 +52,7 @@ public class FilenameParser {
     };
 
     // REGEX is a series of regular expressions for different patterns comprising
-    // show name, season number, and epsiode number.  We also want to be able to
+    // show name, season number, and episode number.  We also want to be able to
     // recognize episode resolution ("720p", etc.)  To make the resolution optional,
     // we compile the patterns with the resolution first, and then compile the
     // basic patterns.  So we need an array twice the size of REGEX to hold the
@@ -80,11 +82,13 @@ public class FilenameParser {
         Path filePath = episode.getPath();
         String withShowName = insertShowNameIfNeeded(filePath);
         String strippedName = stripJunk(withShowName);
-        int idx = 0;
         Matcher matcher;
-        while (idx < COMPILED_REGEX.length) {
-            matcher = COMPILED_REGEX[idx++].matcher(strippedName);
+        for (Pattern patt : COMPILED_REGEX) {
+            matcher = patt.matcher(strippedName);
             if (matcher.matches()) {
+                String foundName = matcher.group(1);
+                ShowName.lookupShowName(foundName);
+
                 String resolution = "";
                 if (matcher.groupCount() == 4) {
                     resolution = matcher.group(4);
@@ -93,11 +97,8 @@ public class FilenameParser {
                     // an error if it does, but not important.
                     continue;
                 }
-                String foundName = matcher.group(1);
-                ShowName.lookupShowName(foundName);
                 episode.setFilenameShow(foundName);
-                episode.setFilenameSeason(matcher.group(2));
-                episode.setFilenameEpisode(matcher.group(3));
+                episode.setEpisodePlacement(matcher.group(2), matcher.group(3));
                 episode.setFilenameResolution(resolution);
                 episode.setParsed();
 
@@ -116,24 +117,36 @@ public class FilenameParser {
     }
 
     private static String extractParentName(Path parent) {
+        if (parent == null) {
+            return Constants.EMPTY_STRING;
+        }
+
         Path parentPathname = parent.getFileName();
+        if (parentPathname == null) {
+            return Constants.EMPTY_STRING;
+        }
+
         String parentName = parentPathname.toString();
         return parentName.replaceFirst(EXCESS_SEASON, "");
     }
 
     private static String insertShowNameIfNeeded(final Path filePath) {
-        String pName = filePath.getFileName().toString();
+        if (filePath == null) {
+            throw new IllegalArgumentException("insertShowNameIfNeeded received null argument.");
+        }
+
+        final Path justNamePath = filePath.getFileName();
+        if (justNamePath == null) {
+            throw new IllegalArgumentException("insertShowNameIfNeeded received path with no name.");
+        }
+
+        final String pName = justNamePath.toString();
         logger.fine("pName = " + pName);
         if (pName.matches(FILENAME_BEGINS_WITH_SEASON)) {
             Path parent = filePath.getParent();
             String parentName = extractParentName(parent);
             while (StringUtils.toLower(parentName).startsWith("season")
                    || parentName.matches(DIR_LOOKS_LIKE_SEASON)
-                   || parentName.equals("Fullscreen")
-                   || parentName.equals("DVDRip")
-                   || parentName.equals("BDRip")
-                   || parentName.equals("Evolve")
-                   || parentName.equals("Again")
                    || parentName.equals(Constants.DUPLICATES_DIRECTORY))
             {
                 parent = parent.getParent();
@@ -141,8 +154,7 @@ public class FilenameParser {
             }
             logger.fine("appending parent directory '" + parentName + "' to filename '" + pName + "'");
             return parentName + " " + pName;
-        } else {
-            return pName;
         }
+        return pName;
     }
 }
