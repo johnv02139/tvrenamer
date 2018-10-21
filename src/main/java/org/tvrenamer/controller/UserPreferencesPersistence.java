@@ -2,7 +2,6 @@ package org.tvrenamer.controller;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
-
 import org.tvrenamer.model.UserPreferences;
 
 import java.io.BufferedWriter;
@@ -23,8 +22,7 @@ public class UserPreferencesPersistence {
 
     static {
         xstream.alias("preferences", UserPreferences.class);
-        xstream.aliasField("moveEnabled", UserPreferences.class, "moveSelected");
-        xstream.aliasField("renameEnabled", UserPreferences.class, "renameSelected");
+        xstream.omitField(UserPreferences.class, "proxy");
         // Make the fields of Observable transient
         xstream.omitField(Observable.class, "obs");
         xstream.omitField(Observable.class, "changed");
@@ -42,7 +40,7 @@ public class UserPreferencesPersistence {
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(xml);
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
-            logger.log(Level.SEVERE, "Exception occurred when writing preferences file", e);
+            logger.log(Level.SEVERE, "Exception occured when writing preferences file", e);
         }
     }
 
@@ -56,17 +54,19 @@ public class UserPreferencesPersistence {
         if (Files.exists(path)) {
             try (InputStream in = Files.newInputStream(path)) {
                 return (UserPreferences) xstream.fromXML(in);
-            } catch (IOException e) {
+            } catch (IllegalArgumentException | UnsupportedOperationException
+                     | IOException  | SecurityException e)
+            {
                 logger.log(Level.SEVERE, "Exception reading preferences file '"
                            + path.toAbsolutePath().toString(), e);
                 logger.info("assuming default preferences");
             }
         } else {
             // If file doesn't exist, assume defaults
-            logger.fine("Preferences file '" + path.toAbsolutePath().toString()
-                        + "' does not exist - assuming defaults");
+            logger.log(Level.FINE, "Preferences file '" + path.toAbsolutePath().toString()
+                       + "' does not exist - assuming defaults");
         }
 
-        return null;
+        return UserPreferences.getInstance();
     }
 }

@@ -1,52 +1,39 @@
 package org.tvrenamer.model;
 
-import java.net.SocketTimeoutException;
+import org.tvrenamer.controller.TheTVDBProvider;
 
-public class FailedShow extends ShowOption {
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+class FailedShow extends LocalShow {
 
     private final TVRenamerIOException err;
-    private final boolean didTimeout;
 
     /**
-     * Create a FailedShow
+     * Find out if the results of querying for this show indicate that the API
+     * is no longer supported.
      *
-     * A FailedShow is a stand-in object that we use when we do not have any
-     * better options.  It contains enough information to know what we were
-     * looking for, and give us some idea what went wrong.
-     *
-     * @param name
-     *   the name of the show we were looking for (and did not find)
-     * @param err
-     *   an exception, if one occurred while trying to look for the show;
-     *   certainly may be null
+     * @return true if the API is deprecated; false otherwise.
      */
+    public boolean isApiDeprecated() {
+        return TheTVDBProvider.isApiDiscontinuedError(err);
+    }
+
+    /**
+     * Log the reason for the show's failure to the given logger.
+     *
+     * This method does not check to see IF the show has failed.  It assumes
+     * the caller has some reason to assume there was a failure, and tries
+     * to provide as much information as it can.
+     *
+     * @param logger the logger object to send the failure message to
+     */
+    public void logShowFailure(Logger logger) {
+        logger.log(Level.WARNING, "failed to get show for " + getName(), err);
+    }
+
     public FailedShow(String name, TVRenamerIOException err) {
-        super(null, name);
+        super(name);
         this.err = err;
-        boolean timeout = false;
-        Throwable exception = err;
-        while (exception != null) {
-            if (exception instanceof SocketTimeoutException) {
-                timeout = true;
-                break;
-            }
-            exception = exception.getCause();
-        }
-        this.didTimeout = timeout;
-    }
-
-    /**
-     * Return whether the failure to look up the show was due to a timeout
-     * trying to download data from the provider.
-     *
-     * @return true if we timed out trying to look up the show; false otherwise
-     */
-    public boolean isTimeout() {
-        return didTimeout;
-    }
-
-    @Override
-    public String toString() {
-        return name + " (" + err + ") [FailedShow]";
     }
 }
