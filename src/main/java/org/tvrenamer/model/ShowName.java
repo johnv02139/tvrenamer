@@ -19,8 +19,8 @@ import java.util.logging.Logger;
  *   <li>"the.office.s06e20.mkv"</li>
  *   <li>"the.office.us.s08e11.avi"</li></ul><p>
  *
- * These would produce "filenameShow" values of "The Office", "The Office", "the.office",
- * and "the.office.us", respectively.  The first two are identical, and therefore will map
+ * These would produce "filenameShow" values of "The Office ", "The Office ", "the.office.",
+ * and "the.office.us", respectively.  The first two are the same, and therefore will map
  * to the same ShowName object.<p>
  *
  * From the filenameShow, we create a query string, which normalizes the case and punctuation.
@@ -53,7 +53,7 @@ public class ShowName {
      */
     private static class QueryString {
         final String queryString;
-        private ShowOption matchedShow = null;
+        private Show matchedShow = null;
         private final List<ShowInformationListener> listeners = new LinkedList<>();
 
         private static final Map<String, QueryString> QUERY_STRINGS = new ConcurrentHashMap<>();
@@ -67,20 +67,24 @@ public class ShowName {
          * been mapped to a show, but if it has, we still accept the new mapping; we just warn
          * about it.
          *
-         * @param showOption the ShowOption to map this QueryString to
+         * @param show the Show to map this QueryString to
+         * @return false if this QueryString had already been mapped to a show;
+         *         true otherwise.
          */
-        synchronized void setShowOption(ShowOption showOption) {
+        @SuppressWarnings("UnusedReturnValue")
+        synchronized boolean setShow(Show show) {
             if (matchedShow == null) {
-                matchedShow = showOption;
-                return;
+                matchedShow = show;
+                return true;
             }
-            if (matchedShow == showOption) {
+            if (matchedShow == show) {
                 // same object; not just equals() but ==
                 logger.info("re-setting show in QueryString " + queryString);
-                return;
+                return true;
             }
             logger.warning("changing show in QueryString " + queryString);
-            matchedShow = showOption;
+            matchedShow = show;
+            return false;
         }
 
         // see ShowName.addListener for documentation
@@ -101,33 +105,26 @@ public class ShowName {
         private void nameResolved(Show show) {
             synchronized (listeners) {
                 for (ShowInformationListener informationListener : listeners) {
-                    informationListener.downloadSucceeded(show);
+                    informationListener.downloaded(show);
                 }
             }
         }
 
         // see ShowName.nameNotFound for documentation
-        private void nameNotFound(FailedShow failedShow) {
+        private void nameNotFound(Show show) {
             synchronized (listeners) {
                 for (ShowInformationListener informationListener : listeners) {
-                    informationListener.downloadFailed(failedShow);
+                    informationListener.downloadFailed(show);
                 }
             }
         }
 
-        // see ShowName.apiDiscontinued for documentation
-        private void apiDiscontinued() {
-            synchronized (listeners) {
-                listeners.forEach(ShowInformationListener::apiHasBeenDeprecated);
-            }
-        }
-
         /**
-         * Get the mapping between this QueryString and a ShowOption, if any has been established.
+         * Get the mapping between this QueryString and a Show, if any has been established.
          *
-         * @return show the ShowOption to map this QueryString to
+         * @return show the Show to map this QueryString to
          */
-        synchronized ShowOption getMatchedShow() {
+        synchronized Show getMatchedShow() {
             return matchedShow;
         }
 
@@ -160,32 +157,6 @@ public class ShowName {
      * Get the ShowName object for the given String.  If one was already created,
      * it is returned, and if not, one will be created, stored, and returned.
      *
-     * Note, the functionality here is identical to {@link #lookupShowName}.  The only
-     * implementation difference is the error message.  But callers should know which
-     * one they want.
-     *
-     * @param filenameShow
-     *            the name of the show as it appears in the filename
-     * @return the ShowName object for that filenameShow
-     */
-    public static ShowName mapShowName(String filenameShow) {
-        ShowName showName = SHOW_NAMES.get(filenameShow);
-        if (showName == null) {
-            showName = new ShowName(filenameShow);
-            SHOW_NAMES.put(filenameShow, showName);
-        }
-        return showName;
-    }
-
-    /**
-     * Get the ShowName object for the given String, under the assumption that such
-     * a mapping already exists.  If no mapping is found, one will be created, stored,
-     * and returned, but an error message will also be generated.
-     *
-     * Note, the functionality here is identical to {@link #mapShowName}.  The only
-     * implementation difference is the error message.  But callers should know which
-     * one they want.
-     *
      * @param filenameShow
      *            the name of the show as it appears in the filename
      * @return the ShowName object for that filenameShow
@@ -195,16 +166,30 @@ public class ShowName {
         if (showName == null) {
             showName = new ShowName(filenameShow);
             SHOW_NAMES.put(filenameShow, showName);
-            logger.severe("could not get show name for " + filenameShow
-                          + ", so created one instead");
         }
         return showName;
+    }
+
+    /**
+     * Inner class -- basically a record -- to encapsulate information we received from
+     * the provider about potential Shows.  We shouldn't create actual Show objects for
+     * the options we reject.
+     */
+    private static class ShowOption {
+        final int id;
+        final String actualName;
+
+        ShowOption(final Integer id, final String actualName) {
+            this.id = id;
+            this.actualName = actualName;
+        }
     }
 
     /*
      * Instance variables
      */
     private final String foundName;
+    private final String sanitised;
     private final QueryString queryString;
 
     private final List<ShowOption> showOptions;
@@ -221,26 +206,21 @@ public class ShowName {
      * @param listener
      *            the listener registering interest
      */
-    void addShowInformationListener(final ShowInformationListener listener) {
+    public void addListener(ShowInformationListener listener) {
         synchronized (queryString) {
             queryString.addListener(listener);
         }
     }
 
     /**
-     * Determine if this ShowName needs to be queried.
+     * Determine if this ShowName's query string has any listeners yet
      *
-     * If the answer is "yes", we add a listener and query immediately,
-     * in a synchronized block.  Therefore, that becomes how we determine
-     * the answer: if this ShowName already has a listener, that means
-     * its download is already underway.
-     *
-     * @return false if this ShowName's query string already has a listener;
-     *     true if not
+     * @return true if this ShowName's query string already has a listener;
+     *     false if not
      */
-    boolean needsQuery() {
+    public boolean hasListeners() {
         synchronized (queryString) {
-            return !queryString.hasListeners();
+            return queryString.hasListeners();
         }
     }
 
@@ -262,28 +242,17 @@ public class ShowName {
      * viable option, and provide a stand-in object.
      *
      * @param show
-     *    the FailedShow object representing the string we searched for.
+     *    the Show object representing the string we searched for.
      */
-    public void nameNotFound(FailedShow show) {
+    public void nameNotFound(Show show) {
         synchronized (queryString) {
             queryString.nameNotFound(show);
         }
     }
 
     /**
-     * Notify registered interested parties that the provider is unusable
-     * due to a discontinued API.
-     *
-     */
-    public void apiDiscontinued() {
-        synchronized (queryString) {
-            queryString.apiDiscontinued();
-        }
-    }
-
-    /**
      * Create a ShowName object for the given "foundName" String.  The "foundName"
-     * is expected to be the exact String that was extracted by the FilenameParser
+     * is expected to be the exact String that was extracted by the TVRenamer parser
      * from the filename, that is believed to represent the show name.
      *
      * @param foundName
@@ -291,6 +260,7 @@ public class ShowName {
      */
     private ShowName(String foundName) {
         this.foundName = foundName;
+        sanitised = StringUtils.sanitiseTitle(foundName);
         queryString = QueryString.lookupQueryString(foundName);
 
         showOptions = new LinkedList<>();
@@ -302,7 +272,7 @@ public class ShowName {
      * @return true if this ShowName has show options; false otherwise
      */
     public boolean hasShowOptions() {
-        return (showOptions.size() > 0);
+        return (showOptions != null) && (showOptions.size() > 0);
     }
 
     /**
@@ -313,9 +283,29 @@ public class ShowName {
      * @param seriesName
      *    the "official" show name
      */
-    public void addShowOption(final String tvdbId, final String seriesName) {
-        ShowOption option = ShowOption.getShowOption(tvdbId, seriesName);
+    public void addShowOption(final int tvdbId, final String seriesName) {
+        ShowOption option = new ShowOption(tvdbId, seriesName);
         showOptions.add(option);
+    }
+
+    /**
+     * Add a possible Show option that could be mapped to this ShowName
+     *
+     * @param idString
+     *    the show's id in the TVDB database, as a String
+     * @param seriesName
+     *    the "official" show name
+     */
+    public void addShowOption(final String idString, final String seriesName) {
+        Integer parsedId = null;
+        try {
+            parsedId = Integer.parseInt(idString);
+        } catch (Exception e) {
+            logger.warning("Show option's ID " + idString + " could not be parsed "
+                           + " as an integer; not adding as option");
+            return;
+        }
+        addShowOption(parsedId, seriesName);
     }
 
     /**
@@ -325,9 +315,21 @@ public class ShowName {
      *            May be null.
      * @return a Show representing this ShowName
      */
-    public FailedShow getFailedShow(TVRenamerIOException err) {
-        FailedShow standIn = new FailedShow(foundName, err);
-        queryString.setShowOption(standIn);
+    public Show getFailedShow(TVRenamerIOException err) {
+        Show standIn = new Show(foundName, err);
+        queryString.setShow(standIn);
+        return standIn;
+    }
+
+    /**
+     * Create a stand-in Show object in the case of failure from the provider.
+     *
+     * @param actualName the formatted name of the Show for which we want a stand-in
+     * @return a Show representing this ShowName
+     */
+    public Show getLocalShow(String actualName) {
+        Show standIn = new Show(actualName);
+        queryString.setShow(standIn);
         return standIn;
     }
 
@@ -337,7 +339,7 @@ public class ShowName {
      *
      * @return the series from the list which best matches the series information
      */
-    public ShowOption selectShowOption() {
+    public Show selectShowOption() {
         int nOptions = showOptions.size();
         if (nOptions == 0) {
             logger.info("did not find any options for " + foundName);
@@ -346,14 +348,12 @@ public class ShowName {
         // logger.info("got " + nOptions + " options for " + foundName);
         ShowOption selected = null;
         for (ShowOption s : showOptions) {
-            String actualName = s.getName();
-            // Possibly instead of ignore case, we should make the foundName be
-            // properly capitalized, and then we can do an exact comparison.
-            if (foundName.equalsIgnoreCase(actualName)) {
+            String actualName = s.actualName;
+            if (foundName.equals(actualName)) {
                 if (selected == null) {
                     selected = s;
                 } else {
-                    // TODO: could check language?  other criteria?  Case sensitive?
+                    // TODO: could check language?  other criteria?
                     logger.warning("multiple exact hits for " + foundName
                                    + "; choosing first one");
                 }
@@ -365,21 +365,32 @@ public class ShowName {
             selected = showOptions.get(0);
         }
 
-        queryString.setShowOption(selected);
-        return selected;
+        Show selectedShow = Show.getShowInstance(selected.id, selected.actualName);
+        queryString.setShow(selectedShow);
+        return selectedShow;
     }
 
     /**
-     * Get this ShowName's "example filename".<p>
+     * Get this ShowName's "foundName" attribute.
      *
-     * The "example filename" is an exact substring of the filename that caused
-     * this ShowName to be created; specifically, it's the part of the filename
-     * that we believe represents the show.
-     *
-     * @return the example filename
+     * @return foundName
+     *            the name of the show as it appears in the filename
      */
-    public String getExampleFilename() {
+    public String getFoundName() {
         return foundName;
+    }
+
+    /**
+     * Get this ShowName's "sanitised" attribute.
+     *
+     * @return sanitised
+     *            the name of the show after being run through the
+     *            "sanitising" filter.  The value should be appropriate
+     *            for any supported filesystem (free from illegal characters)
+     */
+    @SuppressWarnings("unused")
+    public String getSanitised() {
+        return sanitised;
     }
 
     /**
@@ -398,7 +409,7 @@ public class ShowName {
      *
      * @return a Show, if this ShowName is matched to one.  Null if not.
      */
-    public synchronized ShowOption getMatchedShow() {
+    synchronized Show getMatchedShow() {
         return queryString.getMatchedShow();
     }
 

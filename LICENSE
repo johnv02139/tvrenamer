@@ -11,12 +11,12 @@ Website: http://www.eclipse.org/swt
 License: Eclipse Public License (EPL)
 License website: http://www.eclipse.org/legal/index.php
 
-Thoughtworks XStream (formerly Codehaus)
+Codehaus XStream
 =========================================
 Description: XStream is a simple library to serialize objects to XML and back again.
-Website: http://x-stream.github.io/
-License: Berkeley Software Distribution v2.0 (BSD)
-License website: http://x-stream.github.io/license.html
+Website: http://xstream.codehaus.org
+License: GNU GENERAL PUBLIC LICENSE (GPL)
+License website: http://xstream.codehaus.org/license.html
 
 XmlPull
 =========================================
@@ -47,20 +47,6 @@ License: Apache Copyright © 2003 The Trustees of Indiana University. All rights
 License website: http://www.extreme.indiana.edu/dist/java-repository/xpp3/licenses/LICENSE.txt
 License conditions: This product includes software developed by the Indiana University Extreme! Lab.  For further information please visit http://www.extreme.indiana.edu/
 
-Okio
-=========================================
-Description: Okio is a library that complements java.io and java.nio to make it much easier to access, store, and process your data.
-Website: https://square.github.io/okio/2.x/okio/jvm/okio/index.html
-License: Apache License v2.0
-License website: http://www.apache.org/licenses/LICENSE-2.0
-
-OkHttp
-=========================================
-Description: An HTTP & HTTP/2 client for Android and Java applications.
-Website: http://square.github.io/okhttp/
-License: Apache License v2.0
-License website: http://www.apache.org/licenses/LICENSE-2.0
-
 jEdit
 =========================================
 Description: The Programmer's Text Editor
@@ -70,6 +56,9 @@ License website: http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 Note: A very small amount of code was taken from the jEdit source and repackaged into the TVRenamer application.  See copyAndDelete in FileMover.java.  TVRenamer does not use the jEdit libraries at all.
 
 == End of TVRenamer 3rd Party licenses section ==
+
+
+
 
             GNU GENERAL PUBLIC LICENSE
                Version 2, June 1991

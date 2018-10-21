@@ -1,21 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!--suppress ALL -->
-<project name="TVRenamer" default="usage"
-         xmlns:fx="javafx:com.sun.javafx.tools.ant"
+<project name="TVRenamer build script" default="usage"
          xmlns:ivy="antlib:org.apache.ivy.ant">
 
   <property name="src.main" value="src/main" />
-  <property name="res" value="src/main/resources" />
-  <property name="icons" value="${res}/icons" />
   <property name="src.test" value="src/test" />
   <property name="build" value="out" />
-  <property name="build.main" value="${build}/main" />
-  <property name="build.test" value="${build}/test" />
-  <property name="build.jar" value="${build}/jar" />
-  <property name="build.bundle" value="${build}/bundle" />
   <property name="lib.dl" value="lib" />
-  <property name="jdoc" value="docs" />
-  <property name="dropin" value="package/macosx" />
+  <property name="lib.main" value="jars/main" />
+  <property name="lib.test" value="jars/test" />
+  <property name="res" value="src/main/resources" />
+  <property name="rel" value="release" />
 
   <property name="dist" value="dist" />
   <property name="etc" value="etc" />
@@ -24,116 +18,85 @@
 
   <property name="version.file" value="${res}/tvrenamer.version" />
   <property name="logging.file" value="${res}/logging.properties" />
-
-  <property name="iconfile" value="${dropin}/${ant.project.name}.icns" />
-
-  <property environment="env" />
-
   <loadfile property="version" srcFile="${version.file}">
     <filterchain>
       <striplinebreaks />
     </filterchain>
   </loadfile>
 
-  <property name="rel.name" value="${ant.project.name}-${version}" />
+  <property name="rel.name" value="TVRenamer-${version}" />
   <property name="jar.builtBy" value="https://github.com/tvrenamer/tvrenamer" />
   <property name="jar.mainClass" value="org.tvrenamer.controller.Launcher" />
-  <property name="vendor" value="TVRenamer.org" />
 
   <!-- To build, get launch4j, update the path in launch4j.properties -->
   <taskdef name="launch4j"
       classname="net.sf.launch4j.ant.Launch4jTask"
       classpath="${launch4j.path}/launch4j.jar:${launch4j.path}/lib/xstream.jar" onerror="report" />
 
+  <!-- for creating OS X app bundles -->
+
   <path id="classpath">
-    <fileset dir="${lib.dl}">
+    <fileset dir="${lib.main}">
       <!-- We can compile against any swt version-->
       <include name="org.eclipse.swt.cocoa.macosx-*.jar" />
     </fileset>
-    <fileset dir="${lib.dl}" id="classpath.runtime">
+    <fileset dir="${lib.main}" id="classpath.runtime">
       <include name="xstream-*.jar" />
       <include name="xmlpull-*.jar" />
       <include name="xpp3_min*.jar" />
       <include name="commons-codec-*.jar" />
-      <include name="okhttp-*.jar" />
-      <include name="okio-*.jar" />
     </fileset>
   </path>
 
   <path id="classpath.test">
     <path refid="classpath" />
-    <fileset dir="${lib.dl}" >
-      <include name="junit-*.jar" />
-      <include name="hamcrest-core-*.jar" />
-    </fileset>
+    <fileset dir="${lib.test}" />
 
-    <pathelement location="${build.main}" />
-    <pathelement location="${build.test}" />
+    <pathelement location="${build}" />
   </path>
 
   <target name="resolve" description="retrieve dependencies with ivy">
-    <mkdir dir="${lib.dl}" />
     <ivy:retrieve/>
   </target>
 
   <target name="init">
+    <mkdir dir="${build}" />
     <mkdir dir="${dist}" />
   </target>
 
-  <target name="compile" description="compile the main source code">
-
-    <fail message="You need to run ivy (ant resolve) first.">
-      <condition><not>
-        <available file="${lib.dl}" />
-      </not></condition>
-    </fail>
-
-    <mkdir dir="${build.main}" />
-    <javac srcdir="${src.main}/java" destdir="${build.main}" classpathref="classpath"
-           debug="true" debuglevel="lines,vars,source"
-           includeantruntime="false" target="1.8" source="1.8" />
-    <copy file="${version.file}" todir="${build.main}" />
-    <copy file="${logging.file}" todir="${build.main}" />
+  <target name="compile" depends="init">
+    <javac srcdir="${src.main}/java" destdir="${build}" classpathref="classpath" debug="true" debuglevel="lines,vars,source" includeantruntime="false" target="1.8" source="1.8" />
+    <copy file="${version.file}" todir="${build}" />
+    <copy file="${logging.file}" todir="${build}" />
   </target>
 
-  <target name="compile.test" depends="compile"
-          description="compile the test source code">
-
-    <fail message="You need to run ivy (ant resolve) first.">
-      <condition><not>
-        <available file="${lib.dl}" />
-      </not></condition>
-    </fail>
-
-    <mkdir dir="${build.test}" />
-    <javac srcdir="${src.test}/java" destdir="${build.test}" classpathref="classpath.test"
-           debug="true" debuglevel="lines,vars,source"
-           includeantruntime="false" />
+  <target name="compile.test" depends="compile">
+    <javac srcdir="${src.test}/java" destdir="${build}" classpathref="classpath.test" debug="true" debuglevel="lines,vars,source" includeantruntime="false" />
+    <copy file="${version.file}" todir="${build}" />
+    <copy file="${logging.file}" todir="${build}" />
   </target>
 
   <macrodef name="build.jar" description="Compiles the source then creates an executable jar for the given platform">
     <attribute name="platform" />
-    <attribute name="swtid" />
     <sequential>
-      <mkdir dir="${build.jar}/@{platform}" />
+      <mkdir dir="${build}/@{platform}" />
 
       <!-- Use antcall because macrodef's can't declare dependencies -->
       <antcall target="compile"/>
 
-      <jar destfile="${build.jar}/@{platform}/tvrenamer.jar" filesetmanifest="mergewithoutmain">
+      <jar destfile="${build}/@{platform}/tvrenamer.jar" filesetmanifest="mergewithoutmain">
         <manifest>
           <attribute name="Built-By" value="${jar.builtBy}" />
           <attribute name="Main-Class" value="${jar.mainClass}" />
         </manifest>
 
-        <fileset dir="${build.main}" />
+        <fileset dir="${build}" />
 
         <fileset dir="${res}">
           <include name="icons/tvrenamer.icns" />
           <include name="icons/tvrenamer.png" />
 
           <include name="icons/SweetieLegacy/16-circle-blue.png" />
-          <include name="icons/SweetieLegacy/16-circle-green-add.png" />
           <include name="icons/SweetieLegacy/16-clock.png" />
           <include name="icons/SweetieLegacy/16-em-pencil.png" />
           <include name="icons/SweetieLegacy/16-em-check.png" />
@@ -141,10 +104,11 @@
         </fileset>
 
         <zipgroupfileset refid="classpath.runtime" />
-        <zipgroupfileset dir="${lib.dl}">
-          <include name="org.eclipse.swt.@{swtid}-*.jar" />
+        <zipgroupfileset dir="${lib.main}">
+          <include name="swt-@{platform}*.jar" />
         </zipgroupfileset>
 
+        <fileset file="${version.file}" />
         <fileset file="${logging.file}" />
       </jar>
     </sequential>
@@ -152,114 +116,96 @@
 
   <macrodef name="build.linux">
     <attribute name="platform" />
-    <attribute name="swtid" />
     <sequential>
-      <build.jar platform="@{platform}" swtid="@{swtid}" />
+      <build.jar platform="@{platform}" />
 
-      <mkdir dir="${build.jar}/@{platform}/${rel.name}" />
+      <mkdir dir="${build}/@{platform}/${rel.name}" />
 
-      <mkdir dir="${build.jar}/@{platform}/${rel.name}" />
-      <move file="${build.jar}/@{platform}/tvrenamer.jar" todir="${build.jar}/@{platform}/${rel.name}" />
-      <copy file="${etc}/run-scripts/run-linux.sh" todir="${build.jar}/@{platform}/${rel.name}" />
-      <copy file="LICENSE.txt" todir="${build.jar}/@{platform}/${rel.name}" />
+      <mkdir dir="${build}/@{platform}/${rel.name}" />
+      <move file="${build}/@{platform}/tvrenamer.jar" todir="${build}/@{platform}/${rel.name}" />
+      <copy file="${etc}/run-scripts/run-linux.sh" todir="${build}/@{platform}/${rel.name}" />
+      <copy file="LICENSE" todir="${build}/@{platform}/${rel.name}" />
 
-      <zip destfile="${build.jar}/@{platform}/${rel.name}/${rel.name}-@{platform}.zip">
-        <zipfileset dir="${build.jar}/@{platform}" filemode="755" />
+      <zip destfile="${build}/@{platform}/${rel.name}/${rel.name}-@{platform}.zip">
+        <zipfileset dir="${build}/@{platform}" filemode="755" />
       </zip>
-      <copy file="${build.jar}/@{platform}/${rel.name}/${rel.name}-@{platform}.zip" todir="${dist}" />
+      <copy file="${build}/@{platform}/${rel.name}/${rel.name}-@{platform}.zip" todir="${dist}" />
+
+      <delete dir="${build}/@{platform}/" failonerror="false" />
     </sequential>
   </macrodef>
 
-  <!-- Your environment variable JAVA_HOME must point to Java 8 or 10 SDK -->
   <macrodef name="build.osx">
     <attribute name="platform" />
-    <attribute name="swtid" />
     <sequential>
-      <build.jar platform="@{platform}" swtid="@{swtid}" />
+      <build.jar platform="@{platform}" />
 
-      <copy file="${res}/icons/tvrenamer.icns" tofile="${iconfile}" />
+      <bundleapp
+        jvmrequired="1.8"
+        jrepreferred="true"
+        outputdirectory="${build}/@{platform}"
+        name="${rel.name}"
+        displayname="${rel.name}"
+        identifier="org.tvrenamer"
+        version="${version}"
+        icon="${res}/icons/tvrenamer.icns"
+        mainclassname="${jar.mainClass}">
+        <classpath file="${build}/@{platform}/tvrenamer.jar" />
+        <option value="-XstartOnFirstThread" />
+      </bundleapp>
 
-      <taskdef resource="com/sun/javafx/tools/ant/antlib.xml"
-               uri="javafx:com.sun.javafx.tools.ant"
-               classpath=".:${env.JAVA_HOME}/lib/ant-javafx.jar"/>
-
-      <fx:deploy verbose="true"
-                 embedjnlp="false"
-                 outdir="${build.bundle}/@{platform}"
-                 outfile="${ant.project.name}"
-                 nativeBundles="image">
-
-        <fx:info title="${ant.project.name}"
-                 vendor="${vendor}"
-                 copyright="Copyright (c) 2018 ${vendor}"
-                 description="A GUI utility to rename TV episodes from TV listings"/>
-
-        <fx:application name="${ant.project.name}"
-                        version="${version}"
-                        mainClass="${jar.mainClass}"/>
-
-        <fx:platform>
-          <fx:jvmarg value="-XstartOnFirstThread" />
-        </fx:platform>
-
-        <fx:resources>
-          <fx:fileset dir="${build.jar}/@{platform}" includes="tvrenamer.jar" />
-        </fx:resources>
-
-      </fx:deploy>
-      <zip destfile="${dist}/${rel.name}-@{platform}.zip">
-        <zipfileset dir="${build.bundle}/@{platform}/bundles" filemode="755" />
+      <delete file="${build}/@{platform}/tvrenamer.jar" />
+      <zip destfile="${build}/@{platform}/${rel.name}-@{platform}.zip">
+        <zipfileset dir="${build}/@{platform}" filemode="755" />
       </zip>
+      <copy file="${build}/@{platform}/${rel.name}-@{platform}.zip" todir="${dist}" />
+
+      <delete dir="${build}/@{platform}/" failonerror="false" />
     </sequential>
   </macrodef>
 
   <macrodef name="build.win">
     <attribute name="platform" />
-    <attribute name="swtid" />
     <sequential>
-      <!-- Copy, rename launch4j.properties.template and enter the launch4j location. -->
-      <fail unless="launch4j.path"
-            message="You must set the 'launch4j.path' property in launch4j.properties." />
+      <fail unless="launch4j.path" message="You must set the 'launch4j.path' property in launch4j.properties. Copy, rename launch4j.properties.template and enter the launch4j location" />
 
-      <build.jar platform="@{platform}" swtid="@{swtid}" />
+      <build.jar platform="@{platform}" />
       <!-- Create the .exe with launch4j, but first you must uncomment the ant task import above -->
       <launch4j>
         <config headerType="gui"
                 outfile="${dist}/${rel.name}-@{platform}.exe"
                 dontWrapJar="false"
-                jar="${build.jar}/@{platform}/tvrenamer.jar"
+                jar="${build}/@{platform}/tvrenamer.jar"
                 icon="${res}\icons\oldschool-tv-icon.ico"
                 chdir=".">
           <jre minVersion="1.8.0" />
         </config>
       </launch4j>
+
+      <delete dir="${build}/@{platform}/" failonerror="false" />
     </sequential>
   </macrodef>
 
-  <target name="dist.win" depends="clean"
-          description="build release for Windows">
-    <build.win platform="win32" swtid="win32.win32.x86" />
-    <build.win platform="win64" swtid="win32.win32.x86_64" />
+
+  <target name="dist.win" depends="clean">
+    <build.win platform="win32" />
+    <build.win platform="win64" />
   </target>
 
-  <target name="dist.linux" depends="clean"
-          description="build release for Linux">
-    <build.linux platform="gtk32" swtid="gtk.linux.x86" />
-    <build.linux platform="gtk64" swtid="gtk.linux.x86_64" />
+  <target name="dist.linux" depends="clean">
+    <build.linux platform="gtk32" />
+    <build.linux platform="gtk64" />
   </target>
 
-  <target name="dist.osx" depends="clean"
-          description="build release for OS X">
-    <build.osx platform="osx32" swtid="cocoa.macosx" />
-    <build.osx platform="osx64" swtid="cocoa.macosx.x86_64" />
+  <target name="dist.osx" depends="clean">
+    <build.osx platform="osx32" />
+    <build.osx platform="osx64" />
   </target>
 
-  <target name="dist.all" depends="init, resolve, dist.win, dist.linux, dist.osx"
-          description="build release for all platforms" />
+  <target name="dist.all" depends="clean, dist.win, dist.linux, dist.osx" />
 
-  <target name="javadoc" description="generate Javadoc">
-    <javadoc destdir="${jdoc}/api"
-             noqualifier="all"
+  <target name="javadoc">
+    <javadoc destdir="docs/api"
              author="true"
              version="true"
              use="true"
@@ -267,17 +213,19 @@
              classpathref="classpath"
              windowtitle="TVRenamer Documentation">
 
-      <packageset dir="${src.main}/java" defaultexcludes="yes">
+      <packageset dir="src/main" defaultexcludes="yes">
         <include name="org/tvrenamer/**"/>
       </packageset>
 
       <doctitle><![CDATA[<h1>TVRenamer</h1>]]></doctitle>
-      <bottom><![CDATA[<i>Copyright &#169; 2018 ${vendor}. All Rights Reserved.</i>]]></bottom>
+      <bottom><![CDATA[<i>Copyright &#169; 2017 TVRenamer.org. All Rights Reserved.</i>]]></bottom>
       <link href="http://docs.oracle.com/javase/8/docs/api/"/>
     </javadoc>
   </target>
 
+
   <target name="init-checkstyle">
+    <ivy:retrieve/>
     <path id="checkstyle.lib.path">
       <fileset dir="${lib.dl}">
         <include name="checkstyle-7.1.1.jar" />
@@ -301,47 +249,33 @@
     </checkstyle>
   </target>
 
-  <target name="findbugs" depends="compile.test, checkstyle" description="Run findbugs on the code">
+  <target name="findbugs" depends="compile" description="Run findbugs on the code">
+    <ivy:retrieve/>
     <ivy:cachepath pathid="findbugs.classpath" conf="findbugs"/>
     <taskdef name="findbugs"
              classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
              classpathref="findbugs.classpath"/>
     <findbugs output="html"
               reportLevel="low"
-              excludeFilter="${etc}/exclude.xml"
-              outputFile="${build.test}/fbugs.html" >
-      <auxClasspath refid="classpath"/>
-      <auxClasspath refid="classpath.test"/>
+              outputFile="${build}/fbugs.html" >
       <classpath refid="findbugs.classpath"/>
-      <class location="${build.test}"/>
+      <class location="${build}"/>
     </findbugs>
   </target>
 
-  <target name="clean" description="delete build artifacts">
+  <target name="clean">
     <delete includeemptydirs="true" failonerror="false">
-      <fileset dir="${build.main}" includes="**/*" />
-      <fileset dir="${build.test}" includes="**/*" />
+      <fileset dir="${build}" includes="**/*" />
       <fileset dir="${dist}" includes="**/*" />
     </delete>
   </target>
 
-  <target name="allclean" depends="clean"
-           description="delete all generated or downloaded files">
-    <delete dir="${build}" />
-    <delete dir="${dist}" />
-    <delete dir="${jdoc}" />
-    <delete dir="${lib.dl}" />
-    <delete file="${iconfile}" />
-  </target>
-
   <target name="usage">
     <echo message="Usage: ant dist.{win, linux, osx, all}" />
-    <echo message="  Run 'ant -p' to see other targets" />
+    <echo message="       tests" />
   </target>
 
-  <!-- "jtest": could stand for "java test" or "just test" :-) -->
-  <!-- Run the tests without all the preparation; do not use directly unless you are sure. -->
-  <target name="jtest" depends="compile.test">
+  <target name="test" depends="clean, compile.test">
     <junit haltonerror="true" haltonfailure="true" printsummary="true" fork="no" forkmode="once">
       <formatter type="plain" usefile="false" />
 
@@ -352,9 +286,5 @@
       </batchtest>
     </junit>
   </target>
-
-  <!-- "test": run the tests with proper preparation. -->
-  <target name="test" depends="clean, resolve, jtest"
-          description="run and report on jUnit tests" />
 
 </project>
