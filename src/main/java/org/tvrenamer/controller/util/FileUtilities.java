@@ -2,12 +2,12 @@ package org.tvrenamer.controller.util;
 
 import org.tvrenamer.model.ProgressObserver;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -211,35 +211,28 @@ public class FileUtilities {
     }
 
     /**
-     * areSameDisk -- returns true if two Paths exist on the same FileStore.
+     * areSameDisk -- returns true if two paths exist on the same disk.
      *
      * The intended usage is to find out if "moving" a file can be done with
-     * a simple rename, or if the bits must be copied to a new disk.  In this
-     * case, pass in the source file and the destination _folder_, making sure
-     * to create the destination folder first if it doesn't exist.  (Or, pass
-     * in its parent, or parent's parent, etc.)
+     * a simple rename, or if the bits must be copied to a new disk.
      *
-     * @param pathA - an existing path
-     * @param pathB - a different existing path
-     * @return true if both Paths exist and are located on the same FileStore
+     * @param pathA - the name of a path
+     * @param pathB - the name of a different path
+     * @return true if both paths exist and are located on the same disk
      *
      */
-    public static boolean areSameDisk(Path pathA, Path pathB) {
-        if (Files.notExists(pathA)) {
-            logger.warning("areSameDisk: path " + pathA + " does not exist.");
-            return false;
+    public static boolean areSameDisk(String pathA, String pathB) {
+        File[] roots = File.listRoots();
+        if (roots.length < 2) {
+            return true;
         }
-        if (Files.notExists(pathB)) {
-            logger.warning("areSameDisk: path " + pathB + " does not exist.");
-            return false;
+        for (File root : roots) {
+            String rootPath = root.getAbsolutePath();
+            if (pathA.startsWith(rootPath)) {
+                return pathB.startsWith(rootPath);
+            }
         }
-        try {
-            FileStore fsA = Files.getFileStore(pathA);
-            return fsA.equals(Files.getFileStore(pathB));
-        } catch (IOException ioe) {
-            logger.log(Level.WARNING, "IOException trying to get file stores.", ioe);
-            return false;
-        }
+        return false;
     }
 
     /**
@@ -322,9 +315,13 @@ public class FileUtilities {
      *
      * Based on a version originally implemented in jEdit 4.3pre9
      */
-    public static boolean copyWithUpdates(final Path source, final Path dest,
-                                          final ProgressObserver observer)
+    public static boolean moveFile(final File sourceFile,
+                                   final File destFile,
+                                   final ProgressObserver observer,
+                                   final boolean ignored)
     {
+        Path source = sourceFile.toPath();
+        Path dest = destFile.toPath();
         boolean ok = false;
         try (OutputStream fos = Files.newOutputStream(dest);
              InputStream fis = Files.newInputStream(source))
@@ -355,7 +352,9 @@ public class FileUtilities {
             logger.log(Level.WARNING, errMsg, ioe);
         }
 
-        if (!ok) {
+        if (ok) {
+            deleteFile(source);
+        } else {
             logger.warning("failed to move " + source);
         }
         return ok;

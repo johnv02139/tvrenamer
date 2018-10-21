@@ -1,23 +1,33 @@
 #!/bin/bash
 
 # run-mingw.sh -- quick and dirty (albeit heavily-commented) script to run
-#  the TVRenamer app without "launch4j" or any similar functionality.
+#  the ShowFinder app without "launch4j" or any similar functionality.
 
 # This will optionally run "ant compile", which builds a bunch of class
 # files in the "out" directory.  (If you don't enable that option, we
 # assume it's because you've already run ant.)
 
-# This script is written specifically for "git bash" for Windows, which is
-# based on mingw32.
+# I wrote this to be run from "git bash" for Windows, which is mingw32.
+# It has specific functionality to use Windows paths, and to choose the
+# right SWT jarfile.  To run on a different platform, the script would
+# need to be edited slightly.  To try to make sure you do that, it actually
+# doesn't run on any other platforms.  But again, trivial to change that.
 
-# There are other scripts in this directory for other platforms.  If anyone
-# wants to run on a platform which currently lacks a script, edit one of
-# the scripts, and make it work!
+# This script automatically redirects stdout into a hard-coded location.
+# It would be very easy to edit the script if you don't like that.
+
+# If anyone wants to run anywhere else, make it work
 if [ "$MSYSTEM" != "MINGW32" ]
 then
   echo "Script only tested on MinGW 6.1 and 6.2.  Edit it for your platform."
   exit 1
 fi
+
+# local libraries -- hard-coded and checked in
+loclibs="jedit-4.3.2-IOUtilities.jar"
+
+# libraries -- hard-coded.  The first one is platform-specific.
+dllibs="swt-win64-4.3.jar commons-codec-1.4.jar xstream-1.4.9.jar xmlpull-1.1.3.1.jar xpp3_min-1.1.4c.jar"
 
 # Other Windows Bourne shells, like Cygwin, provide specific functionality
 # for going between Unix-style and Windows-style paths.  I don't find any
@@ -29,98 +39,63 @@ windowsize ()
   echo $1 | sed 's,^/\([a-zA-Z]\)/,\1:/,'
 }
 
-# To go in the other direction, we do need to change the slashes.
-unixize ()
-{
-  echo $1 | sed 's,^\([a-zA-Z]\):,/\1,' | tr '\\' '/'
-}
-
-# libraries -- hard-coded.  The first one is platform-specific.
-libs="org.eclipse.swt.win32.win32.x86_64-4.3.jar commons-codec-1.4.jar xstream-1.4.9.jar xmlpull-1.1.3.1.jar xpp3_min-1.1.4c.jar okhttp-3.8.0.jar okio-1.13.0.jar"
-
 usage ()
 {
+  echo "Error: unrecognized argument $1"
   echo "$0 [ -build ]"
   exit 3
 }
 
-dobuild=0
+# The script should be runnable from anywhere.  Stash the current location
+# to come back to it.
+startdir=`pwd`
 
-# Make sure we weren't given too many arguments
-if [ -n "$2" ]
-then
-  echo "Error: too many arguments"
-  usage
-fi
+# Figure out where the script lives.  That tells us the project's root directory.
+proj=`dirname $0`
+cd ${proj}/../..
+pdir=`pwd`
+proj=`windowsize $pdir`
+dllibloc=${pdir}/lib
 
-# Parse the argument if there is one
+for lib in ${dllibs}
+do
+  if [ ! -f ${dllibloc}/${lib} ]
+  then
+    ant resolve
+  fi
+done
+
 if [ -n "$1" ]
 then
   if [ "$1" = "-build" ]
   then
     shift
-    dobuild=1
+    if [ -n "$1" ]
+    then
+      usage $1
+    fi
+    ant compile || exit 2
   else
-    echo "Error: unrecognized argument $1"
-    usage
+    usage $1
   fi
 fi
 
-# If the configuration is in the older style, transform it.
-# This actually is also done by the UserPreferences class, but simpler to
-# take care of it here, beforehand.
-userhome=${HOME}
-if [ -n "${USERPROFILE}" ]
-then
-  userhome=`unixize ${USERPROFILE}`
-fi
+# Return to where we started
+cd $startdir
 
-if [ ! -d ${userhome}/.tvrenamer ]
-then
-  if [ -f ${userhome}/.tvrenamer ]
-  then
-    /bin/mv ${userhome}/.tvrenamer ${userhome}/prefs.xml
-    /bin/mkdir ${userhome}/.tvrenamer
-    /bin/mv ${userhome}/prefs.xml ${userhome}/.tvrenamer/prefs.xml
-  fi
-fi
+# Library files are checked in here
+loclibdir=${pdir}/jars/main
 
-# The script should be runnable from anywhere.  But the JVM needs to be
-# launched from the top level of the project directory.  (Otherwise it
-# doesn't find the necessary resources.  This could presumably be fixed,
-# but it doesn't seem worth the trouble.  It's easy enough to just cd
-# before launching the Java process.
-#
-# Stash the current directory in case we need to come back to it.
-startdir=${PWD}
-
-# Figure out where the script lives.  We "know" where it is relative to
-# the project root, so we can get to the project root by starting at
-# the script.
-proj=`dirname $0`
-cd ${proj}/../..
-pdir=${PWD}
-
-# Now we're in the project's top level directory.  We can run ant, if
-# so requested.
-if [ "${dobuild}" = "1" ]
-then
-  echo "building"
-  shift
-  ant compile || exit 2
-fi
-
-# Could return to where we started, but then resources are not found
-# cd $startdir
-
-# Library files are downloaded here
-ivydir=${pdir}/lib
-
-CLASSPATH=`windowsize ${pdir}/out/main`
-for lib in ${libs}
+CLASSPATH=${proj}/out
+for lib in ${loclibs}
 do
-  CLASSPATH=${CLASSPATH}';'`windowsize ${ivydir}/${lib}`
+  CLASSPATH=${CLASSPATH}';'`windowsize ${loclibdir}/${lib}`
+done
+for lib in ${dllibs}
+do
+  CLASSPATH=${CLASSPATH}';'`windowsize ${dllibloc}/${lib}`
 done
 export CLASSPATH
 
-java org.tvrenamer.controller.Launcher $*
+java -Djava.util.logging.config.file=etc/logging.properties org.tvrenamer.controller.Launcher
+# java org.tvrenamer.controller.Launcher

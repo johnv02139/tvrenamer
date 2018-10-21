@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 public class GlobalOverrides {
-    private static final Logger logger = Logger.getLogger(GlobalOverrides.class.getName());
+    private static Logger logger = Logger.getLogger(GlobalOverrides.class.getName());
 
     private static final GlobalOverrides INSTANCE = load();
 
-    private final Map<String, String> showNames;
+    private Map<String, String> showNames;
 
     private GlobalOverrides() {
         showNames = new HashMap<>();
@@ -27,8 +27,8 @@ public class GlobalOverrides {
         GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE);
 
         if (overrides != null) {
-            logger.fine("Successfully read overrides from: " + OVERRIDES_FILE.toAbsolutePath());
-            logger.fine("Successfully read overrides: " + overrides.toString());
+            logger.finer("Sucessfully read overrides from: " + OVERRIDES_FILE.getAbsolutePath());
+            logger.info("Sucessfully read overrides: " + overrides.toString());
         } else {
             overrides = new GlobalOverrides();
             store(overrides);
@@ -37,9 +37,9 @@ public class GlobalOverrides {
         return overrides;
     }
 
-    private static void store(GlobalOverrides overrides) {
+    public static void store(GlobalOverrides overrides) {
         GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE);
-        logger.fine("Successfully saved/updated overrides");
+        logger.fine("Sucessfully saved/updated overrides");
     }
 
     public String getShowName(String showName) {

@@ -1,11 +1,9 @@
 package org.tvrenamer.model;
 
 public enum UserPreference {
+    PROXY,
     REPLACEMENT_MASK,
-    MOVE_SELECTED,
-    RENAME_SELECTED,
-    REMOVE_EMPTY,
-    DELETE_ROWS,
+    MOVE_ENABLED,
     DEST_DIR,
     SEASON_PREFIX,
     LEADING_ZERO,
@@ -14,6 +12,5 @@ public enum UserPreference {
 
     // Since these are only meaningful at startup, they probably should not be watched
     UPDATE_CHECK,
-    @SuppressWarnings("unused")
     PRELOAD_FOLDER
 }

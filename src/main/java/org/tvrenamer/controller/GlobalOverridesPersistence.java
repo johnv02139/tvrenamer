@@ -5,15 +5,16 @@ import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider
 import org.tvrenamer.model.GlobalOverrides;
 
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class GlobalOverridesPersistence {
-    private static final Logger logger = Logger.getLogger(GlobalOverridesPersistence.class.getName());
+    private static Logger logger = Logger.getLogger(GlobalOverridesPersistence.class.getName());
 
     // Use reflection provider so the default constructor is called, thus calling the superclass constructor
     private static final XStream xstream = new XStream(new PureJavaReflectionProvider());
@@ -25,45 +26,50 @@ public class GlobalOverridesPersistence {
     /**
      * Save the overrides object to the file.
      *
-     * @param overrides
+     * @param prefs
      *            the overrides object to save
-     * @param path
-     *            the path to save it to
+     * @param file
+     *            the file to save it to
      */
-    @SuppressWarnings("SameParameterValue")
-    public static void persist(GlobalOverrides overrides, Path path) {
+    public static void persist(GlobalOverrides overrides, File file) {
         String xml = xstream.toXML(overrides);
+        BufferedWriter writer = null;
 
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+        try {
+            writer = new BufferedWriter(new FileWriter(file));
             writer.write(xml);
 
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Exception occurred when writing overrides file", e);
+            logger.log(Level.SEVERE, "Exception occured when writing overrides file", e);
+        } finally {
+            try {
+                if (writer != null) {
+                    writer.close();
+                }
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Exception occured when closing overrides file", e);
+            }
         }
     }
 
     /**
-     * Load the overrides from path.
+     * Load the overrides from file.
      *
-     * @param path
-     *            the path to read
+     * @param file
+     *            the file to read
      * @return the populated overrides object
      */
-    @SuppressWarnings("SameParameterValue")
-    public static GlobalOverrides retrieve(Path path) {
-        if (Files.exists(path)) {
-            try (InputStream in = Files.newInputStream(path)) {
-                return (GlobalOverrides) xstream.fromXML(in);
-            } catch (IllegalArgumentException | UnsupportedOperationException
-                     | IOException  | SecurityException e)
-            {
-                logger.log(Level.SEVERE, "Exception reading overrides file '"
-                           + path.toAbsolutePath().toString(), e);
-                logger.info("assuming no overrides");
-            }
+    public static GlobalOverrides retrieve(File file) {
+        // Instantiate the object so the Observable superclass is called corrected
+        GlobalOverrides overrides = null;
+
+        try {
+            overrides = (GlobalOverrides) xstream.fromXML(new FileInputStream(file));
+        } catch (FileNotFoundException e) {
+            // If file doesn't exist, assume defaults
+            return null;
         }
 
-        // If file doesn't exist, assume defaults
-        return null;
+        return overrides;
     }
 }

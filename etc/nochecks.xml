@@ -5,15 +5,47 @@
     "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
-    <suppress files="src/test/java/org/tvrenamer/controller/FilenameParserTest.java" checks="JavadocMethod"/>
-    <suppress files="src/test/java/org/tvrenamer/controller/MoveTest.java" checks="JavadocMethod"/>
-    <suppress files="src/test/java/org/tvrenamer/controller/TheTVDBProviderTest.java" checks="JavadocMethod"/>
-    <suppress files="src/test/java/org/tvrenamer/model/EpisodeTestData.java" checks="JavadocMethod"/>
-    <suppress files="src/test/java/org/tvrenamer/model/FileEpisodeTest.java" checks="JavadocMethod"/>
-    <suppress files="src/test/java/org/tvrenamer/controller/util/StringUtilsTest.java" checks="JavadocMethod"/>
-    <suppress files="src/test/java/org/tvrenamer/controller/util/FileUtilsTest.java" checks="JavadocMethod"/>
     <suppress files="src/test/java/org/tvrenamer/controller/TestMain.java" checks=".*"/>
 
-    <suppress files="src/main/java/org/tvrenamer/model/GlobalOverrides.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/view/CocoaUIEnhancer.java" checks="Indentation"/>
+    <suppress files="src/main/java/org/tvrenamer/view/CocoaUIEnhancer.java" checks="ParenPad"/>
+    <suppress files="src/main/java/org/tvrenamer/view/CocoaUIEnhancer.java" checks="LineLength"/>
+
+    <suppress files="src/main/java/org/tvrenamer/controller/FileMover.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/controller/GlobalOverridesPersistence.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/controller/HttpConnectionHandler.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/controller/TheTVDBProvider.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/controller/util/FileUtilities.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/controller/util/StringUtils.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/util/XPathUtilities.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/FileEpisode.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/GlobalOverrides.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/ProxySettings.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/Season.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/Show.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/ShowStore.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/TVRenamerIOException.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/UserPreferences.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/util/CryptographyUtils.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/view/AboutDialog.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/view/FileCopyMonitor.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/view/PreferencesDialog.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/view/ProgressBarUpdater.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/view/ResultsTable.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/view/UIStarter.java" checks="JavadocMethod"/>
+
+    <suppress files="src/test/java/org/tvrenamer/controller/FilenameParserTest.java" checks="JavadocMethod"/>
+    <suppress files="src/test/java/org/tvrenamer/controller/FilenameRegexTest.java" checks="JavadocMethod"/>
+    <suppress files="src/test/java/org/tvrenamer/controller/TheTVDBProviderTest.java" checks="JavadocMethod"/>
+    <suppress files="src/test/java/org/tvrenamer/controller/util/FileUtilsTest.java" checks="JavadocMethod"/>
+    <suppress files="src/test/java/org/tvrenamer/controller/util/StringUtilsTest.java" checks="JavadocMethod"/>
+    <suppress files="src/test/java/org/tvrenamer/model/FileEpisodeTest.java" checks="JavadocMethod"/>
+    <suppress files="src/test/java/org/tvrenamer/model/util/CryptographyUtilsTest.java" checks="JavadocMethod"/>
+
+    <suppress files="src/main/java/org/tvrenamer/model/FileEpisode.java" checks="Indentation"/>
+
+    <suppress files="src/main/java/org/tvrenamer/model/FileEpisode.java" checks="LineLength"/>
+    <suppress files="src/main/java/org/tvrenamer/view/PreferencesDialog.java" checks="LineLength"/>
+
+    <suppress files="src/test/java/org/tvrenamer/controller/FilenameParserTest.java" checks="LineLength"/>
 </suppressions>
