@@ -71,16 +71,4 @@ public class EpisodeInfo {
         dvdSeason = builder.dvdSeason;
         dvdEpisodeNumber = builder.dvdEpisodeNumber;
     }
-
-    /**
-     * Standard object method to represent this EpisodeInfo as a String.
-     *
-     * @return string which describes the placement information of this EpisodeInfo
-     */
-    @Override
-    public String toString() {
-        return "dvd season " + dvdSeason + ", dvd episode " + dvdEpisodeNumber
-            + ", " + episodeName + "; season " + seasonNumber + ", episode "
-            + episodeNumber;
-    }
 }

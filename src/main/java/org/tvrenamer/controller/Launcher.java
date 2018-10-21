@@ -11,7 +11,8 @@ import java.util.logging.LogManager;
 
 class Launcher {
 
-    static void initializeLogger() {
+    // Static initalisation block
+    static {
         // Find logging.properties file inside jar
         try (InputStream loggingConfigStream
              = Launcher.class.getResourceAsStream(LOGGING_PROPERTIES))
@@ -45,7 +46,6 @@ class Launcher {
      *    not actually processed, at this time
      */
     public static void main(String[] args) {
-        initializeLogger();
         UIStarter ui = new UIStarter();
         int status = ui.run();
         tvRenamerThreadShutdown();

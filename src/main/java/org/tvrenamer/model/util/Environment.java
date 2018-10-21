@@ -11,8 +11,10 @@ public class Environment {
     private static final Logger logger = Logger.getLogger(Environment.class.getName());
 
     public static final String USER_HOME = System.getProperty("user.home");
+    public static final String USER_DIR = System.getProperty("user.dir");
+    @SuppressWarnings("WeakerAccess")
+    public static final String OS_NAME = System.getProperty("os.name");
     public static final String TMP_DIR_NAME = System.getProperty("java.io.tmpdir");
-    private static final String OS_NAME = System.getProperty("os.name");
 
     private enum OSType {
         WINDOWS,
@@ -20,18 +22,20 @@ public class Environment {
         MAC
     }
 
-    private static OSType chooseOSType() {
-        if (OS_NAME.contains("Mac")) {
+    @SuppressWarnings("SameParameterValue")
+    private static OSType chooseOSType(String jvmSays) {
+        if (jvmSays.contains("Mac")) {
             return OSType.MAC;
         }
-        if (OS_NAME.contains("Windows")) {
+        if (jvmSays.contains("Windows")) {
             return OSType.WINDOWS;
         }
         return OSType.LINUX;
     }
 
-    private static final OSType JVM_OS_TYPE = chooseOSType();
+    private static final OSType JVM_OS_TYPE = chooseOSType(OS_NAME);
     public static final boolean IS_MAC_OSX = (JVM_OS_TYPE == OSType.MAC);
+    @SuppressWarnings("unused")
     public static final boolean IS_WINDOWS = (JVM_OS_TYPE == OSType.WINDOWS);
     @SuppressWarnings("unused")
     public static final boolean IS_UN_X = (JVM_OS_TYPE == OSType.LINUX);
@@ -47,7 +51,7 @@ public class Environment {
         InputStream versionStream = Environment.class.getResourceAsStream("/tvrenamer.version");
         // Dev env
         if (versionStream == null) {
-            versionStream = Environment.class.getResourceAsStream("/src/main/resources/tvrenamer.version");
+            versionStream = Environment.class.getResourceAsStream("/src/main/tvrenamer.version");
         }
 
         int bytesRead = -1;

@@ -6,8 +6,6 @@ import org.tvrenamer.controller.TheTVDBProvider;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.logging.Logger;
 
 /**
@@ -58,7 +56,7 @@ import java.util.logging.Logger;
  * Show objects obviously contain the actual show name.  So we have:<ul>
  *
  *  <li>(1) -&gt;(2)  makeQueryString</li>
- *  <li>(2) -&gt;(3a) ShowStore.mapStringToShow</li>
+ *  <li>(2) -&gt;(3a) ShowStore.getShow</li>
  *  <li>(3a) -&gt;(3) Show.getName</li>
  *  <li>(3) -&gt;(4)  sanitiseTitle</li>
  *  <li>(4) -&gt;(5)  makeDotTitle</li></ul><p>
@@ -94,7 +92,7 @@ import java.util.logging.Logger;
  * does not necessarily help us much in doing the (2) -&gt;(3a) mapping.<p>
  *
  * What we might want to do in the future is make it potentially a many-to-many relation,
- * and say that calling mapStringToShow() does not necessarily pin down the exact series the file
+ * and say that calling getShow() does not necessarily pin down the exact series the file
  * refers to.  We might be able to figure it out later, based on additional information.
  * For example, if we're looking at "The Office, Season 8", we know it has to be the US
  * version, because the UK version didn't do that many seasons.  Or, if the actual episode
@@ -120,38 +118,6 @@ public class ShowStore {
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     /**
-     * Submits the task to download the information about the ShowName.
-     *
-     * Makes sure that the task is successfully submitted, and provides the
-     * ShowName with an alternate path if anything goes wrong with the task.
-     *
-     * @param showName
-     *    an object containing the part of the filename that is presumed to name
-     *    the show, as well as the version of that string we can give the provider
-     * @param showFetcher
-     *    the task that will download the information
-     */
-    private static void submitDownloadTask(final ShowName showName,
-                                           final Callable<Boolean> showFetcher)
-    {
-        Future<Boolean> result = null;
-        FailedShow failure = null;
-        try {
-            result = threadPool.submit(showFetcher);
-        } catch (RejectedExecutionException | NullPointerException e) {
-            logger.warning("unable to submit download task (" + showName + ") for execution");
-            failure = showName.getFailedShow(new TVRenamerIOException(e.getMessage()));
-        }
-        if ((result == null) && (failure == null)) {
-            logger.warning("not downloading " + showName);
-            failure = showName.getFailedShow(null);
-        }
-        if (failure != null) {
-            showName.nameNotFound(failure);
-        }
-    }
-
-    /**
      * <p>
      * Download the show details if required, otherwise notify listener.
      * </p>
@@ -169,39 +135,39 @@ public class ShowStore {
      * @param listener
      *            the listener to notify or register
      */
-    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-    public static void mapStringToShow(String filenameShow, ShowInformationListener listener) {
+    public static void getShow(String filenameShow, ShowInformationListener listener) {
         if (listener == null) {
             logger.warning("cannot look up show without a listener");
             return;
         }
-        ShowName showName = ShowName.mapShowName(filenameShow);
-        ShowOption showOption = showName.getMatchedShow();
+        ShowName showName = ShowName.lookupShowName(filenameShow);
+        Show show = showName.getMatchedShow();
 
-        if (showOption == null) {
-            boolean needsDownload;
+        if (show == null) {
             // Since "show" is null, we know we haven't downloaded the options for
             // this filenameShow yet; that is, we know we haven't FINISHED doing so.
             // But we might have started.  If the showName already has one or more
             // listeners, that means the download is already underway.
             synchronized (showName) {
-                needsDownload = showName.needsQuery();
+                boolean needsDownload = !showName.hasListeners();
                 // We add this listener whether or not the download has been started.
-                showName.addShowInformationListener(listener);
+                showName.addListener(listener);
+                // Now we start a download only if we need to.
+                if (needsDownload) {
+                    downloadShow(showName);
+                }
             }
-            // Now we start a download only if we need to.
-            if (needsDownload) {
-                downloadShow(showName);
-            }
-            // If we've already downloaded the show, we don't need to involve the
+        } else {
+            // Since we've already downloaded the show, we don't need to involve the
             // ShowName at all.  We invoke the listener's callback immediately and
             // directly.  If, in the future, we expand ShowInformationListener so
             // that there is more information to be sent later, we'd want to edit
-            // the following clauses to add the listener.
-        } else if (showOption.isFailedShow()) {
-            listener.downloadFailed(showOption.asFailedShow());
-        } else {
-            listener.downloadSucceeded(showOption.getShowInstance());
+            // this to add the listener.
+            if (show instanceof LocalShow) {
+                listener.downloadFailed(show);
+            } else {
+                listener.downloaded(show);
+            }
         }
     }
 
@@ -227,26 +193,23 @@ public class ShowStore {
      */
     private static void downloadShow(final ShowName showName) {
         Callable<Boolean> showFetcher = () -> {
-            ShowOption showOption;
+            Show thisShow;
             try {
                 TheTVDBProvider.getShowOptions(showName);
-                showOption = showName.selectShowOption();
-            } catch (DiscontinuedApiException e) {
-                showName.apiDiscontinued();
-                return false;
+                thisShow = showName.selectShowOption();
             } catch (TVRenamerIOException e) {
-                showOption = showName.getFailedShow(e);
+                thisShow = showName.getFailedShow(e);
             }
 
-            logger.fine("Show options for '" + showOption.getName() + "' downloaded");
-            if (showOption.isFailedShow()) {
-                showName.nameNotFound(showOption.asFailedShow());
+            logger.fine("Show options for '" + thisShow.getName() + "' downloaded");
+            if (thisShow instanceof FailedShow) {
+                showName.nameNotFound(thisShow);
             } else {
-                showName.nameResolved(showOption.getShowInstance());
+                showName.nameResolved(thisShow);
             }
             return true;
         };
-        submitDownloadTask(showName, showFetcher);
+        threadPool.submit(showFetcher);
     }
 
     public static void cleanUp() {
@@ -258,7 +221,7 @@ public class ShowStore {
      * by the show name.<p>
      *
      * Added this distinct method to enable unit testing.  Unlike the "real" method
-     * (<code>mapStringToShow</code>), this does not spawn a thread, connect to the internet,
+     * (<code>getShow</code>), this does not spawn a thread, connect to the internet,
      * or use listeners in any way.  This is just accessing the data store.
      *
      * @param  filenameShow
@@ -269,11 +232,11 @@ public class ShowStore {
      *            the {@link Show}
      */
     static Show getOrAddShow(String filenameShow, String actualName) {
-        ShowName showName = ShowName.mapShowName(filenameShow);
-        ShowOption showOption = showName.getMatchedShow();
-        if (showOption == null) {
-            return new Show(filenameShow, actualName);
+        ShowName showName = ShowName.lookupShowName(filenameShow);
+        Show show = showName.getMatchedShow();
+        if (show == null) {
+            show = showName.getLocalShow(actualName);
         }
-        return showOption.getShowInstance();
+        return show;
     }
 }
