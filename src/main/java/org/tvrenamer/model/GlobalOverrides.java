@@ -1,22 +1,28 @@
 package org.tvrenamer.model;
 
-import static org.tvrenamer.model.util.Constants.*;
-
-import org.tvrenamer.controller.GlobalOverridesPersistence;
-
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.tvrenamer.controller.GlobalOverridesPersistence;
+import org.tvrenamer.model.util.Constants;
+
 public class GlobalOverrides {
-    private static final Logger logger = Logger.getLogger(GlobalOverrides.class.getName());
+    private static Logger logger = Logger.getLogger(UserPreferences.class.getName());
 
-    private static final GlobalOverrides INSTANCE = load();
+    public static File overridesFile = new File(System.getProperty("user.home") + File.separatorChar
+        + Constants.OVERRIDES_FILE);
 
-    private final Map<String, String> showNames;
+    private final static GlobalOverrides INSTANCE = load();
+
+    private Map<String, String> showNames;
 
     private GlobalOverrides() {
-        showNames = new HashMap<>();
+        showNames = new HashMap<String, String>();
+        showNames.put("Archer (2009)", "Archer");
+        showNames.put("The Newsroom (2012)", "The Newsroom");
+        showNames.put("House of Cards (2013)", "House of Cards");
     }
 
     public static GlobalOverrides getInstance() {
@@ -24,11 +30,11 @@ public class GlobalOverrides {
     }
 
     private static GlobalOverrides load() {
-        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(OVERRIDES_FILE);
+        GlobalOverrides overrides = GlobalOverridesPersistence.retrieve(overridesFile);
 
         if (overrides != null) {
-            logger.fine("Successfully read overrides from: " + OVERRIDES_FILE.toAbsolutePath());
-            logger.fine("Successfully read overrides: " + overrides.toString());
+            logger.finer("Sucessfully read overrides from: " + overridesFile.getAbsolutePath());
+            logger.info("Sucessfully read overrides: " + overrides.toString());
         } else {
             overrides = new GlobalOverrides();
             store(overrides);
@@ -37,9 +43,9 @@ public class GlobalOverrides {
         return overrides;
     }
 
-    private static void store(GlobalOverrides overrides) {
-        GlobalOverridesPersistence.persist(overrides, OVERRIDES_FILE);
-        logger.fine("Successfully saved/updated overrides");
+    public static void store(GlobalOverrides overrides) {
+        GlobalOverridesPersistence.persist(overrides, overridesFile);
+        logger.fine("Sucessfully saved/updated overrides");
     }
 
     public String getShowName(String showName) {

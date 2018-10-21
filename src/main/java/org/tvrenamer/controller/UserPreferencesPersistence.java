@@ -1,72 +1,75 @@
 package org.tvrenamer.controller;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
-
-import org.tvrenamer.model.UserPreferences;
-
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Observable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.tvrenamer.model.UserPreferences;
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
+
 public class UserPreferencesPersistence {
-    private static final Logger logger = Logger.getLogger(UserPreferencesPersistence.class.getName());
+    private static Logger logger = Logger.getLogger(UserPreferencesPersistence.class.getName());
 
     // Use reflection provider so the default constructor is called, thus calling the superclass constructor
-    // Instantiate the object so the Observable superclass is called corrected
     private static final XStream xstream = new XStream(new PureJavaReflectionProvider());
 
     static {
         xstream.alias("preferences", UserPreferences.class);
-        xstream.aliasField("moveEnabled", UserPreferences.class, "moveSelected");
-        xstream.aliasField("renameEnabled", UserPreferences.class, "renameSelected");
         // Make the fields of Observable transient
         xstream.omitField(Observable.class, "obs");
         xstream.omitField(Observable.class, "changed");
     }
 
     /**
-     * Save the preferences object to the path.
+     * Save the preferences object to the file.
      * @param prefs the preferences object to save
-     * @param path the path to save it to
+     * @param file the file to save it to
      */
-    @SuppressWarnings("SameParameterValue")
-    public static void persist(UserPreferences prefs, Path path) {
+    public static void persist(UserPreferences prefs, File file) {
         String xml = xstream.toXML(prefs);
+        BufferedWriter writer = null;
 
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+        try {
+            writer = new BufferedWriter(new FileWriter(file));
             writer.write(xml);
-        } catch (IOException | UnsupportedOperationException | SecurityException e) {
-            logger.log(Level.SEVERE, "Exception occurred when writing preferences file", e);
+
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Exception occoured when writing preferences file", e);
+        } finally {
+            try {
+                if (writer != null) {
+                    writer.close();
+                }
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Exception occoured when closing preferences file", e);
+            }
         }
     }
 
     /**
-     * Load the preferences from path.
-     * @param path the path to read
+     * Load the preferences from file.
+     * @param file the file to read
      * @return the populated preferences object
      */
-    @SuppressWarnings("SameParameterValue")
-    public static UserPreferences retrieve(Path path) {
-        if (Files.exists(path)) {
-            try (InputStream in = Files.newInputStream(path)) {
-                return (UserPreferences) xstream.fromXML(in);
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Exception reading preferences file '"
-                           + path.toAbsolutePath().toString(), e);
-                logger.info("assuming default preferences");
-            }
-        } else {
+    public static UserPreferences retrieve(File file) {
+        // Instantiate the object so the Observable superclass is called corrected
+        UserPreferences preferences = null;
+
+        try {
+            preferences = (UserPreferences) xstream.fromXML(new FileInputStream(file));
+        } catch (FileNotFoundException e) {
             // If file doesn't exist, assume defaults
-            logger.fine("Preferences file '" + path.toAbsolutePath().toString()
-                        + "' does not exist - assuming defaults");
+            logger.log(Level.FINER, "Preferences file '" + file.getAbsolutePath() + "' does not exist - assuming defaults");
+            preferences = UserPreferences.getInstance();
         }
 
-        return null;
+        return preferences;
     }
 }

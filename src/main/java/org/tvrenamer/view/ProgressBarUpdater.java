@@ -1,84 +1,50 @@
 package org.tvrenamer.view;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.ProgressBar;
-import org.eclipse.swt.widgets.TaskItem;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
-import org.tvrenamer.model.ProgressUpdater;
+import org.tvrenamer.controller.UpdateCompleteHandler;
 
-public class ProgressBarUpdater implements ProgressUpdater {
+public class ProgressBarUpdater implements Runnable {
+    private static Logger logger = Logger.getLogger(ProgressBarUpdater.class.getName());
 
-    private final ResultsTable ui;
-    private final Display display;
-    private final TaskItem taskItem;
-    private final ProgressBar progressBar;
-    private final int barSize;
+    private final int totalNumFiles;
+    private final Queue<Future<Boolean>> futures;
 
-    /**
-     * Constructs a ProgressBarUpdater for the given ResultsTable.
-     *
-     * @param ui
-     *    the ResultsTable that will use this ProgressBarUpdater
-     */
-    public ProgressBarUpdater(ResultsTable ui) {
-        this.ui = ui;
-        this.display = ui.getDisplay();
-        this.taskItem = ui.getTaskItem();
-        this.progressBar = ui.getProgressBar();
-        this.barSize = progressBar.getMaximum();
+    private final UpdateCompleteHandler updateCompleteHandler;
 
-        if (taskItem != null) {
-            taskItem.setProgressState(SWT.NORMAL);
-            taskItem.setOverlayImage(ItemState.RENAMING.getIcon());
-        }
+    private final ProgressProxy proxy;
+
+    public ProgressBarUpdater(ProgressProxy proxy, int total, Queue<Future<Boolean>> futures,
+        UpdateCompleteHandler updateComplete) {
+        this.proxy = proxy;
+        this.totalNumFiles = total;
+        this.futures = futures;
+        this.updateCompleteHandler = updateComplete;
     }
 
-    /**
-     * Cleans up the progress bar and the task item
-     *
-     */
     @Override
-    public void finish() {
-        display.asyncExec(() -> {
-            if (progressBar != null) {
-                progressBar.setSelection(0);
-            }
-            if (taskItem != null) {
-                taskItem.setOverlayImage(null);
-                taskItem.setProgressState(SWT.DEFAULT);
-            }
-            ui.finishAllMoves();
-        });
-    }
+    public void run() {
+        while (true) {
+            final int size = futures.size();
+            proxy.setProgress((float) (totalNumFiles - size) / totalNumFiles);
 
-    /**
-     * Updates the progress bar and the task item
-     *
-     * @param totalNumFiles
-     *            the total number of files to be moved during the duration
-     *            of this progress bar
-     * @param nRemaining
-     *            the number of files left to be moved
-     */
-    @Override
-    public void setProgress(final int totalNumFiles, final int nRemaining) {
-        if (display.isDisposed()) {
-            return;
-        }
-
-        final float progress = (float) (totalNumFiles - nRemaining) / totalNumFiles;
-        display.asyncExec(() -> {
-            if (progressBar.isDisposed()) {
+            if (size == 0) {
+                this.updateCompleteHandler.onUpdateComplete();
                 return;
             }
-            progressBar.setSelection(Math.round(progress * barSize));
-            if (taskItem != null) {
-                if (taskItem.isDisposed()) {
-                    return;
-                }
-                taskItem.setProgress(Math.round(progress * 100));
+
+            try {
+                Future<Boolean> future = futures.remove();
+                logger.info("future returned: " + future.get());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
-        });
+        }
     }
+
 }

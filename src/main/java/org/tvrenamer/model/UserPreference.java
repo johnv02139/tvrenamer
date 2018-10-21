@@ -1,19 +1,34 @@
-package org.tvrenamer.model;
+package org.tvrenamer.controller;
 
-public enum UserPreference {
-    REPLACEMENT_MASK,
-    MOVE_SELECTED,
-    RENAME_SELECTED,
-    REMOVE_EMPTY,
-    DELETE_ROWS,
-    DEST_DIR,
-    SEASON_PREFIX,
-    LEADING_ZERO,
-    ADD_SUBDIRS,
-    IGNORE_REGEX,
+/**
+ * Represents a change event of user preferences
+ * @author Dave Harris
+ */
+public class UserPreferencesChangeEvent {
+    /** The preference field that has changed */
+    private String preference;
+    /** The new value of the preference */
+    private Object newValue;
 
-    // Since these are only meaningful at startup, they probably should not be watched
-    UPDATE_CHECK,
-    @SuppressWarnings("unused")
-    PRELOAD_FOLDER
+    public UserPreferencesChangeEvent(String preference, Object newValue) {
+        this.preference = preference;
+        this.newValue = newValue;
+    }
+
+    public String getPreference() {
+        return preference;
+    }
+    public void setPreference(String preference) {
+        this.preference = preference;
+    }
+    public Object getNewValue() {
+        return newValue;
+    }
+    public void setNewValue(Object newValue) {
+        this.newValue = newValue;
+    }
+    @Override
+    public String toString() {
+        return "UserPreferencesChangeEvent [preference=" + preference + ", newValue=" + newValue + "]";
+    }
 }

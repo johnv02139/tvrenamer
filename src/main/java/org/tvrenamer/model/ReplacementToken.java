@@ -1,9 +1,7 @@
 package org.tvrenamer.model;
 
 public enum ReplacementToken {
-    // Note, the 'token' (ie. %s) format must match the
-    // PreferencesDialog.REPLACEMENT_OPTIONS_LIST_ENTRY_REGEX
-    // so the dnd works correctly
+    // Note, the 'token' (ie. %s) format must match the PreferencesDialog.REPLACEMENT_OPTIONS_LIST_ENTRY_REGEX so the dnd works correctly
 
     SHOW_NAME("%S", "Show Name"),
     SEASON_NUM("%s", "Season Number"),
@@ -21,10 +19,10 @@ public enum ReplacementToken {
     DATE_DAY_NUM("%d", "Day num"),
     DATE_DAY_NUMLZ("%0d", "Day num (with leading 0s)");
 
-    private final String token;
-    private final String description;
+    private String token;
+    private String description;
 
-    ReplacementToken(String token, String description) {
+    private ReplacementToken(String token, String description) {
         this.token = token;
         this.description = description;
     }
@@ -32,6 +30,7 @@ public enum ReplacementToken {
     public String getToken() {
         return token;
     }
+
 
     /**
      * @return text to display, currently %token, %description
