@@ -11,9 +11,9 @@ import java.text.NumberFormat;
 public class FileCopyMonitor implements ProgressObserver {
     private final NumberFormat format = NumberFormat.getPercentInstance();
 
-    private final ResultsTable ui;
+    private final UIStarter ui;
     private final TableItem item;
-    private final Display display;
+    private Display display = null;
     private Label label = null;
     private long maximum;
     private int loopCount = 0;
@@ -21,26 +21,28 @@ public class FileCopyMonitor implements ProgressObserver {
     /**
      * Creates the monitor, with the label and the display.
      *
-     * @param ui - the ResultsTable instance
+     * @param ui - the UIStarter instance
      * @param item - the TableItem to monitor
      */
-    public FileCopyMonitor(ResultsTable ui, TableItem item) {
+    public FileCopyMonitor(UIStarter ui, TableItem item) {
         this.ui = ui;
         this.item = item;
-        display = ui.getDisplay();
         format.setMaximumFractionDigits(1);
     }
 
     /**
-     * Set the maximum value.
+     * Update the maximum value.
      *
-     * @param max the new maximum value
+     * @param value the new maximum value
      */
     @Override
-    public void initializeProgress(final long max) {
-        display.syncExec(() -> label = ui.getProgressLabel(item));
+    public void initialize(final long max) {
+        display = ui.getDisplay();
+        display.syncExec(() -> {
+            label = ui.getProgressLabel(item);
+        });
         maximum = max;
-        setProgressValue(0);
+        setValue(0);
     }
 
     /**
@@ -49,7 +51,7 @@ public class FileCopyMonitor implements ProgressObserver {
      * @param value the new value
      */
     @Override
-    public void setProgressValue(final long value) {
+    public void setValue(final long value) {
         if (loopCount++ % 500 == 0) {
             display.asyncExec(() -> {
                 if (label.isDisposed()) {
@@ -66,7 +68,7 @@ public class FileCopyMonitor implements ProgressObserver {
      * @param status the new status label
      */
     @Override
-    public void setProgressStatus(final String status) {
+    public void setStatus(final String status) {
         display.asyncExec(() -> {
             if (label.isDisposed()) {
                 return;
@@ -79,14 +81,15 @@ public class FileCopyMonitor implements ProgressObserver {
      * Dispose of the label.  We need to do this whether the label was used or not.
      */
     @Override
-    public void finishProgress(final boolean succeeded) {
+    public void cleanUp() {
         if (!display.isDisposed()) {
             display.asyncExec(() -> {
-                if ((label != null) && (!label.isDisposed())) {
-                    label.dispose();
+                if (label.isDisposed()) {
+                    return;
                 }
-                ui.finishMove(item, succeeded);
+                label.dispose();
             });
         }
     }
+
 }

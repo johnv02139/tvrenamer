@@ -57,8 +57,7 @@ public class MoveRunner implements Runnable {
                     Boolean success = future.get(timeout, TimeUnit.SECONDS);
                     logger.finer("future returned: " + success);
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    future.cancel(true);
-                    logger.warning("exception executing move: " + e.getClass().getName());
+                    logger.log(Level.WARNING, "exception executing move", e);
                 }
             } else {
                 if (updater != null) {
@@ -230,7 +229,7 @@ public class MoveRunner implements Runnable {
     private static void resolveConflicts(List<FileMover> listOfMoves, String destDir) {
         Map<String, List<FileMover>> basenames = new HashMap<>();
         for (FileMover move : listOfMoves) {
-            getListValue(basenames, move.getDesiredDestName()).add(move);
+            getListValue(basenames, move.getDestBasename()).add(move);
         }
         for (Map.Entry<String, List<FileMover>> entry : basenames.entrySet()) {
             String basename = entry.getKey();

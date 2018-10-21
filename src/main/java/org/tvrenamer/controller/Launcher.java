@@ -8,8 +8,12 @@ import org.tvrenamer.view.UIStarter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 class Launcher {
+    private static final Logger logger = Logger.getLogger(Launcher.class.getName());
+
+    public static final int DID_NOT_RUN = -99;
 
     static void initializeLogger() {
         // Find logging.properties file inside jar
@@ -44,10 +48,24 @@ class Launcher {
      * @param args
      *    not actually processed, at this time
      */
-    public static void main(String[] args) {
-        initializeLogger();
+    public static int launchUi(String[] args) {
         UIStarter ui = new UIStarter();
         int status = ui.run();
+        return status;
+    }
+
+    /**
+     * Run a program; currently hard-coded to launchUi(), but can be expanded.
+     *
+     * @param args
+     *    not actually processed, at this time; passed along
+     */
+    public static void main(String[] args) {
+        initializeLogger();
+        int status = DID_NOT_RUN;
+
+        status = launchUi(args);
+
         tvRenamerThreadShutdown();
         System.exit(status);
     }
