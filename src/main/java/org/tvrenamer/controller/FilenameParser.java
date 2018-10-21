@@ -25,13 +25,13 @@ public class FilenameParser {
 
     private static final String[] REGEX = {
         // this one matches SXXEXX:
-        "(.+?[^a-zA-Z0-9]\\D*?)[sS](\\d\\d*)[eE](\\d\\d*).*",
+        "(.+?[^a-zA-Z0-9]\\D*?)[sS](\\d\\d?)[eE](\\d\\d*).*",
 
         // this one matches Season-XX-Episode-XX:
-        "(.+?[^a-zA-Z0-9]\\D*?)Season[- ](\\d\\d*)[- ]?Episode[- ](\\d\\d*).*",
+        "(.+?[^a-zA-Z0-9]\\D*?)Season[- ](\\d\\d?)[- ]?Episode[- ](\\d\\d*).*",
 
         // this one matches sXX.eXX:
-        "(.+[^a-zA-Z0-9]\\D*?)[sS](\\d\\d*)\\D*?[eE](\\d\\d*).*",
+        "(.+[^a-zA-Z0-9]\\D*?)[sS](\\d\\d?)\\D*?[eE](\\d\\d).*",
 
         // this one matches SSxEE, with an optional leading "S"
         "(.+[^a-zA-Z0-9]\\D*?)[Ss](\\d\\d?)x(\\d\\d\\d?).*",
@@ -78,24 +78,6 @@ public class FilenameParser {
         // singleton
     }
 
-    /**
-     * Parses the filename of the given FileEpisode.<p>
-     *
-     * Gets the path associated with the FileEpisode, and tries to extract the
-     * episode-related information from it.  Uses a hard-coded, ordered list
-     * of common patterns that such filenames tend to follow.  As soon as it
-     * matches one, it:<ol>
-     * <li>starts the process of looking up the show name from the provider,
-     *     which is done in a separate thread</li>
-     * <li>updates the FileEpisode with the found information</li></ol><p>
-     *
-     * This method doesn't return anything, it just updates the FileEpisode.
-     * A caller could check <code>episode.wasParsed()</code> after this returns,
-     * to see if the episode was successfully parsed or not.
-     *
-     * @param episode
-     *   the FileEpisode whose filename we are to try to parse
-     */
     public static void parseFilename(final FileEpisode episode) {
         Path filePath = episode.getPath();
         String withShowName = insertShowNameIfNeeded(filePath);
@@ -104,8 +86,8 @@ public class FilenameParser {
         for (Pattern patt : COMPILED_REGEX) {
             matcher = patt.matcher(strippedName);
             if (matcher.matches()) {
-                String foundName = StringUtils.trimFoundShow(matcher.group(1));
-                ShowName.mapShowName(foundName);
+                String foundName = matcher.group(1);
+                ShowName.lookupShowName(foundName);
 
                 String resolution = "";
                 if (matcher.groupCount() == 4) {

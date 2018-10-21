@@ -3,11 +3,14 @@ package org.tvrenamer.controller;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.controller.util.FileUtilities;
+import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.ProgressObserver;
 import org.tvrenamer.model.UserPreferences;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -16,22 +19,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileMover implements Callable<Boolean> {
-    static final Logger logger = Logger.getLogger(FileMover.class.getName());
-    static final UserPreferences userPrefs = UserPreferences.getInstance();
+    private static final Logger logger = Logger.getLogger(FileMover.class.getName());
 
     private final FileEpisode episode;
     private final Path destRoot;
     private final String destBasename;
     private final String destSuffix;
+    private final UserPreferences userPrefs = UserPreferences.getInstance();
     private ProgressObserver observer = null;
     Integer destIndex = null;
 
-    /**
-     * Constructs a FileMover to move the given episode.
-     *
-     * @param episode
-     *    the FileEpisode we intend to move
-     */
     public FileMover(FileEpisode episode) {
         this.episode = episode;
 
@@ -95,55 +92,11 @@ public class FileMover implements Callable<Boolean> {
     }
 
     /**
-     * Try to clean up, and log errors, after a move attempt has failed.
-     * This is more likely to be useful in the case where the "move" was
-     * actually a copy-and-delete, but it's possible a straightforward
-     * move also could have partially completed before failing.
-     *
-     * @param source
-     *            The source file we had wanted to move.
-     * @param dest
-     *            The destination where we tried to move the file.
-     *
-     */
-    private void failToCopy(final Path source, final Path dest) {
-        if (Files.exists(dest)) {
-            // An incomplete copy was done.  Try to clean it up.
-            FileUtilities.deleteFile(dest);
-            if (Files.exists(dest)) {
-                logger.warning("made incomplete copy of \"" + source
-                               + "\" to \"" + dest
-                               + "\" and could not clean it up");
-                return;
-            }
-        }
-        logger.warning("failed to move " + source);
-        if (Files.notExists(dest)) {
-            Path outDir = userPrefs.getDestinationDirectory();
-            if (outDir != null) {
-                Path parent = dest.getParent();
-                while ((parent != null)
-                       && !FileUtilities.isSameFile(parent, outDir))
-                {
-                    boolean rmdired = FileUtilities.rmdir(parent);
-                    if (rmdired) {
-                        logger.info("removing empty directory " + parent);
-                    } else {
-                        break;
-                    }
-                    parent = parent.getParent();
-                }
-            }
-        }
-    }
-
-    /**
      * Copies the source file to the destination, and deletes the source.
      *
-     * <p>If the destination cannot be created or is a read-only file, the
-     * method returns <code>false</code>.  Otherwise, the contents of the
-     * source are copied to the destination, the source is deleted, and
-     * <code>true</code> is returned.
+     * If the destination cannot be created or is a read-only file, the method returns
+     * <code>false</code>. Otherwise, the contents of the source are copied to the destination,
+     * the source is deleted, and <code>true</code> is returned.
      *
      * @param source
      *            The source file to move.
@@ -151,34 +104,45 @@ public class FileMover implements Callable<Boolean> {
      *            The destination where to move the file.
      * @return true on success, false otherwise.
      *
+     * Based on a version originally implemented in jEdit 4.3pre9
      */
     private boolean copyAndDelete(final Path source, final Path dest) {
-        if (observer != null) {
-            observer.initializeProgress(episode.getFileSize());
+        boolean ok = false;
+        try (OutputStream fos = Files.newOutputStream(dest);
+             InputStream fis = Files.newInputStream(source))
+        {
+            byte[] buffer = new byte[32768];
+            int n;
+            long copied = 0L;
+            while (-1 != (n = fis.read(buffer))) {
+                fos.write(buffer, 0, n);
+                copied += n;
+                if (observer != null) {
+                    observer.setStatus(StringUtils.formatFileSize(copied));
+                    observer.setValue(copied);
+                }
+                if (Thread.interrupted()) {
+                    break;
+                }
+            }
+            if (-1 == n) {
+                ok = true;
+            }
+        } catch (IOException ioe) {
+            ok = false;
+            logger.log(Level.WARNING, "Error moving file " + source + ": " + ioe.getMessage(), ioe);
         }
-        boolean ok = FileUtilities.copyWithUpdates(source, dest, observer);
+
         if (ok) {
+            // TODO: the newly created file will not necessarily have the same attributes as
+            // the original.  In some cases, like ownership, that might actually be desirable
+            // (have the copy be owned by the user running the program).  But there may be
+            // other attributes we should try to adopt.  In any case, requires investigation.
             ok = FileUtilities.deleteFile(source);
         } else {
-            failToCopy(source, dest);
+            logger.warning("failed to move " + source);
         }
         return ok;
-    }
-
-    private boolean finishMove(final Path actualDest) {
-        // TODO: why do we set the file modification time to "now"?  Would like to
-        // at least make this behavior configurable.
-        try {
-            FileTime now = FileTime.fromMillis(System.currentTimeMillis());
-            Files.setLastModifiedTime(actualDest, now);
-        } catch (IOException ioe) {
-            logger.log(Level.WARNING, "Unable to set modification time " + actualDest, ioe);
-            // Well, the file got moved to the right place already.  One could argue
-            // for returning true.  But, true is only if *everything* worked.
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -198,22 +162,36 @@ public class FileMover implements Callable<Boolean> {
      */
     private boolean doActualMove(final Path srcPath, final Path destPath, final boolean tryRename) {
         logger.fine("Going to move\n  '" + srcPath + "'\n  '" + destPath + "'");
-        Path actualDest = destPath;
+        Path actualDest;
         if (tryRename) {
-            actualDest = FileUtilities.renameFile(srcPath, destPath);
-            if (actualDest == null) {
-                logger.severe("Unable to move " + srcPath);
-                failToCopy(srcPath, destPath);
+            try {
+                actualDest = Files.move(srcPath, destPath);
+            } catch (IOException ioe) {
+                logger.log(Level.SEVERE, "Unable to move " + srcPath, ioe);
                 return false;
             }
         } else {
             logger.info("different disks: " + srcPath + " and " + destPath);
+            if (observer != null) {
+                observer.initialize(episode.getFileSize());
+            }
             boolean success = copyAndDelete(srcPath, destPath);
-            if (!success) {
-                return false;
+            if (observer != null) {
+                observer.cleanUp();
+            }
+            // TODO: what about file attributes?  In the case of owner, it might be
+            // desirable to change it, or not.  What about writability?  And the
+            // newer, more system-specific attributes, like "this file was downloaded
+            // from the internet"?
+            if (success) {
+                actualDest = destPath;
+            } else {
+                actualDest = null;
             }
         }
-        episode.setPath(actualDest);
+        if (actualDest != null) {
+            episode.setPath(actualDest);
+        }
         boolean same = destPath.equals(actualDest);
         if (!same) {
             logger.warning("actual destination did not match intended:\n  "
@@ -221,7 +199,19 @@ public class FileMover implements Callable<Boolean> {
             return false;
         }
 
-        return finishMove(actualDest);
+        // TODO: why do we set the file modification time to "now"?  Would like to
+        // at least make this behavior configurable.
+        try {
+            FileTime now = FileTime.fromMillis(System.currentTimeMillis());
+            Files.setLastModifiedTime(actualDest, now);
+        } catch (IOException ioe) {
+            logger.log(Level.WARNING, "Unable to set modification time " + srcPath, ioe);
+            // Well, the file got moved to the right place already.  One could argue
+            // for returning true.  But, true is only if *everything* worked.
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -243,9 +233,6 @@ public class FileMover implements Callable<Boolean> {
 
         episode.setMoving();
         boolean success = doActualMove(realSrc, destPath, tryRename);
-        if (observer != null) {
-            observer.finishProgress(success);
-        }
         if (!success) {
             logger.info("failed to move " + realSrc);
             return false;

@@ -2,7 +2,6 @@ package org.tvrenamer.model;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -88,26 +87,6 @@ class EpisodeOptions {
             .findFirst()
             .orElse(episodeList.get(0))
             .episode;
-    }
-
-    /**
-     * Look up episodes for this season and episode number
-     *
-     * @param preferDvd
-     *           whether the caller prefers the DVD ordering, or over-the-air ordering
-     * @return a list of Episodes that possibly match
-     */
-    public List<Episode> getAll(final boolean preferDvd) {
-        if (episodeList.size() == 0) {
-            return null;
-        }
-
-        return episodeList.stream()
-            .sorted((e1, e2) -> ((e1.isDvd == preferDvd) ? 0 : 1) -
-                    ((e2.isDvd == preferDvd) ? 0 : 1))
-            .map(ep -> ep.episode)
-            .distinct()
-            .collect(Collectors.toList());
     }
 
     /**

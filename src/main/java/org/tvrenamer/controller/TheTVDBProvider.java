@@ -4,7 +4,6 @@ import static org.tvrenamer.controller.util.XPathUtilities.nodeListValue;
 import static org.tvrenamer.controller.util.XPathUtilities.nodeTextValue;
 import static org.tvrenamer.model.util.Constants.*;
 
-import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.DiscontinuedApiException;
 import org.tvrenamer.model.EpisodeInfo;
 import org.tvrenamer.model.Series;
@@ -69,20 +68,20 @@ public class TheTVDBProvider {
     private static final String XPATH_DVD_EPISODE_NUM = "DVD_episodenumber";
     // private static final String XPATH_EPISODE_NUM_ABS = "absolute_number";
 
-    private static String getShowSearchXml(final String queryString)
+    private static String getShowSearchXml(final ShowName showName)
         throws TVRenamerIOException, DiscontinuedApiException
     {
         if (apiIsDeprecated) {
             throw new DiscontinuedApiException();
         }
 
-        String searchURL = BASE_SEARCH_URL + StringUtils.encodeUrlCharacters(queryString);
+        String searchURL = BASE_SEARCH_URL + showName.getQueryString();
 
         logger.fine("About to download search results from " + searchURL);
 
-        String content = new HttpConnectionHandler().downloadUrl(searchURL);
-
-        return StringUtils.encodeSpecialCharacters(content);
+        //noinspection UnnecessaryLocalVariable
+        String searchXmlText = new HttpConnectionHandler().downloadUrl(searchURL);
+        return searchXmlText;
     }
 
     private static String getSeriesListingXml(final Series series)
@@ -97,9 +96,9 @@ public class TheTVDBProvider {
 
         logger.fine("Downloading episode listing from " + seriesURL);
 
-        String content = new HttpConnectionHandler().downloadUrl(seriesURL);
-
-        return StringUtils.encodeSpecialCharacters(content);
+        //noinspection UnnecessaryLocalVariable
+        String listingXmlText = new HttpConnectionHandler().downloadUrl(seriesURL);
+        return listingXmlText;
     }
 
     private static void collectShowOptions(final NodeList shows, final ShowName showName)
@@ -112,7 +111,7 @@ public class TheTVDBProvider {
 
             if (SERIES_NOT_PERMITTED.equals(seriesName)) {
                 logger.warning("ignoring unpermitted option for "
-                               + showName.getExampleFilename());
+                               + showName.getFoundName());
             } else {
                 showName.addShowOption(tvdbId, seriesName);
             }
@@ -148,16 +147,6 @@ public class TheTVDBProvider {
         return false;
     }
 
-    /**
-     * Fetch the show options from the provider, for the given show name.
-     *
-     * @param showName
-     *   the show name to fetch the options for
-     * @throws DiscontinuedApiException if it appears that the API we are using
-     *   is no longer supported
-     * @throws TVRenamerIOException if anything else goes wrong; this could
-     *   include network difficulties or difficulty parsing the XML.
-     */
     public static void getShowOptions(final ShowName showName)
         throws TVRenamerIOException, DiscontinuedApiException
     {
@@ -171,12 +160,12 @@ public class TheTVDBProvider {
 
         String searchXml = "";
         try {
-            searchXml = getShowSearchXml(showName.getQueryString());
+            searchXml = getShowSearchXml(showName);
             InputSource source = new InputSource(new StringReader(searchXml));
             readShowsFromInputSource(bld, source, showName);
         } catch (TVRenamerIOException tve) {
             String msg  = "error parsing XML from " + searchXml + " for series "
-                + showName.getExampleFilename();
+                + showName.getFoundName();
             if (isApiDiscontinuedError(tve)) {
                 throw new DiscontinuedApiException();
             } else {
@@ -235,15 +224,6 @@ public class TheTVDBProvider {
         return episodeList;
     }
 
-    /**
-     * Fetch the episode listings from the provider, for the given Series.
-     *
-     * @param series
-     *   the Series to fetch the episode listings for
-     * @throws TVRenamerIOException if anything goes wrong; this could include
-     *   network difficulties, difficulty parsing the XML, or problems parsing
-     *   data expected to be numeric.
-     */
     public static void getSeriesListing(final Series series)
         throws TVRenamerIOException
     {
@@ -264,7 +244,7 @@ public class TheTVDBProvider {
             logger.log(Level.WARNING, nfe.getMessage(), nfe);
             throw new TVRenamerIOException(ERROR_PARSING_NUMBERS, nfe);
         } catch (IOException ioe) {
-            logger.warning(ioe.getMessage());
+            logger.log(Level.WARNING, ioe.getMessage(), ioe);
             throw new TVRenamerIOException(DOWNLOADING_FAILED_MESSAGE, ioe);
         }
     }

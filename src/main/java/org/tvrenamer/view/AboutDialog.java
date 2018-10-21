@@ -1,12 +1,12 @@
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
+import static org.tvrenamer.view.UIStarter.getDefaultSystemFont;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import org.tvrenamer.controller.UpdateChecker;
 import org.tvrenamer.controller.UrlLauncher;
+import org.tvrenamer.model.SWTMessageBoxType;
 
 import java.util.logging.Logger;
 
@@ -27,13 +28,12 @@ import java.util.logging.Logger;
 final class AboutDialog extends Dialog {
     private static final Logger logger = Logger.getLogger(AboutDialog.class.getName());
 
-    private final UIStarter ui;
     private Shell aboutShell;
 
     /**
      * Static inner class to check if there's an update available
      */
-    private class UpdateNotifier extends SelectionAdapter {
+    private static class UpdateNotifier extends SelectionAdapter {
         /**
          * The link has been clicked.
          *
@@ -45,11 +45,11 @@ final class AboutDialog extends Dialog {
             UpdateChecker.notifyOfUpdate(updateIsAvailable -> {
                 if (updateIsAvailable) {
                     logger.fine(NEW_VERSION_AVAILABLE);
-                    ui.showMessageBox(SWTMessageBoxType.DLG_OK, NEW_VERSION_TITLE,
-                                      NEW_VERSION_AVAILABLE);
+                    UIStarter.showMessageBox(SWTMessageBoxType.OK, NEW_VERSION_TITLE,
+                                           NEW_VERSION_AVAILABLE);
                 } else {
-                    ui.showMessageBox(SWTMessageBoxType.DLG_WARN, NO_NEW_VERSION_TITLE,
-                                      NO_NEW_VERSION_AVAILABLE);
+                    UIStarter.showMessageBox(SWTMessageBoxType.WARNING, NO_NEW_VERSION_TITLE,
+                                           NO_NEW_VERSION_AVAILABLE);
                 }
             });
         }
@@ -58,12 +58,11 @@ final class AboutDialog extends Dialog {
     /**
      * AboutDialog constructor
      *
-     * @param ui
-     *            the parent {@link UIStarter}
+     * @param parent
+     *            the parent {@link Shell}
      */
-    public AboutDialog(final UIStarter ui) {
-        super(ui.shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
-        this.ui = ui;
+    public AboutDialog(Shell parent) {
+        super(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
     }
 
     public void open() {
@@ -110,19 +109,18 @@ final class AboutDialog extends Dialog {
         iconGridData.grabExcessVerticalSpace = false;
         iconGridData.grabExcessHorizontalSpace = false;
         iconLabel.setLayoutData(iconGridData);
-        iconLabel.setImage(UIStarter.readImageFromPath(APPLICATION_ICON_PATH));
+        iconLabel.setImage(UIStarter.readImageFromPath(TVRENAMER_ICON_PATH, TVRENAMER_ICON_DIRECT_PATH));
 
         Label applicationLabel = new Label(aboutShell, SWT.NONE);
-        FontData defaultFont = ui.getDefaultSystemFont();
-        applicationLabel.setFont(new Font(aboutShell.getDisplay(), defaultFont.getName(),
-            defaultFont.getHeight() + 4, SWT.BOLD));
+        applicationLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(),
+            getDefaultSystemFont().getHeight() + 4, SWT.BOLD));
         applicationLabel.setText(APPLICATION_NAME);
         applicationLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         Label versionLabel = new Label(aboutShell, SWT.NONE);
         versionLabel.setFont(new Font(aboutShell.getDisplay(),
-                                      defaultFont.getName(),
-                                      defaultFont.getHeight() + 2,
+                                      getDefaultSystemFont().getName(),
+                                      getDefaultSystemFont().getHeight() + 2,
                                       SWT.BOLD));
 
         versionLabel.setText(VERSION_LABEL);

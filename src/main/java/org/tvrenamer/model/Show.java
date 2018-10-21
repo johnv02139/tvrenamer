@@ -306,36 +306,35 @@ public class Show extends ShowOption {
     }
 
     /**
-     * Look up episodes for the given season and episode of this show.
-     * Returns null if no such episode was found.
+     * Find out whether or not there are seasons associated with this show.
+     * Generally this indicates that the show's listings have been downloaded,
+     * the episodes have been organized into seasons, and the show is ready to go.
      *
-     * @param placement
-     *           the placement of the episode to return
-     * @return the episodes indexed at the given season and episode of this show.
-     *    Null if no such episode was found.
+     * @return a count of how many seasons we have for this Show
      */
-    public List<Episode> getEpisodes(final EpisodePlacement placement) {
-        Season season = seasons.get(placement.season);
-        if (season == null) {
-            logger.warning("no season " + placement.season + " found for show " + name);
-            return null;
-        }
-        List<Episode> rval;
-        synchronized (this) {
-            rval = season.getAll(preferDvd, placement.episode);
-        }
-        return rval;
+    public boolean hasSeasons() {
+        return (seasons.size() > 0);
     }
 
     /**
      * Find out whether or not there are episodes associated with this show.
-     * Generally, if there aren't, this indicates that the show's listings
-     * have not been downloaded and the show is not ready to go.
+     * Generally this indicates that the show's listings have been downloaded
+     * and the show is ready to go.
      *
-     * @return true if this show has no episodes, false if it has any
+     * @return a count of how many episodes we have for this Show
      */
-    public boolean noEpisodes() {
-        return (episodes.size() == 0);
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public boolean hasEpisodes() {
+        return (episodes.size() > 0);
+    }
+
+    /**
+     * Get a count of how many episodes we have for this Show.
+     *
+     * @return a count of how many episodes we have for this Show
+     */
+    public int getEpisodeCount() {
+        return episodes.size();
     }
 
     @Override

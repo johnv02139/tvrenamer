@@ -3,7 +3,7 @@ package org.tvrenamer.controller;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.model.ShowStore;
-import org.tvrenamer.view.UIStarter;
+import org.tvrenamer.view.ResultsTable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +11,7 @@ import java.util.logging.LogManager;
 
 class Launcher {
 
-    static void initializeLogger() {
+    private static void initializeLogger() {
         // Find logging.properties file inside jar
         try (InputStream loggingConfigStream
              = Launcher.class.getResourceAsStream(LOGGING_PROPERTIES))
@@ -46,7 +46,7 @@ class Launcher {
      */
     public static void main(String[] args) {
         initializeLogger();
-        UIStarter ui = new UIStarter();
+        ResultsTable ui = new ResultsTable();
         int status = ui.run();
         tvRenamerThreadShutdown();
         System.exit(status);
