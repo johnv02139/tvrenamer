@@ -1,6 +1,5 @@
 package org.tvrenamer.view;
 
-import static org.tvrenamer.model.ReplacementToken.*;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.eclipse.swt.SWT;
@@ -13,9 +12,12 @@ import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.DropTargetListener;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -134,13 +136,40 @@ class PreferencesDialog extends Dialog {
     private Button recurseFoldersCheckbox;
     private Button rmdirEmptyCheckbox;
     private Button deleteRowsCheckbox;
-    private TabFolder tabFolder;
     private Shell preferencesShell;
 
-    private final Shell parent;
     private final StatusLabel statusLabel;
 
     private String seasonPrefixString;
+
+    /**
+     * PreferencesDialog constructor
+     *
+     * @param parent
+     *            the parent {@link Shell}
+     */
+    public PreferencesDialog(Shell parent) {
+        super(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
+        statusLabel = new StatusLabel();
+    }
+
+    public void open() {
+        // Create the dialog window
+        preferencesShell = new Shell(getParent(), getStyle());
+        preferencesShell.setText(PREFERENCES_LABEL);
+
+        // Add the contents of the dialog window
+        createContents();
+
+        preferencesShell.pack();
+        preferencesShell.open();
+        Display display = getParent().getDisplay();
+        while (!preferencesShell.isDisposed()) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
+    }
 
     private void createContents() {
         GridLayout shellGridLayout = new GridLayout(4, false);
@@ -151,12 +180,12 @@ class PreferencesDialog extends Dialog {
         helpLabel.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, true,
                                              shellGridLayout.numColumns, 1));
 
-        tabFolder = new TabFolder(preferencesShell, getStyle());
+        TabFolder tabFolder = new TabFolder(preferencesShell, getStyle());
         tabFolder.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, true,
                                              shellGridLayout.numColumns, 1));
 
-        createGeneralTab();
-        createRenameTab();
+        createGeneralTab(tabFolder);
+        createRenameTab(tabFolder);
 
         statusLabel.open(preferencesShell, shellGridLayout.numColumns);
 
@@ -361,27 +390,6 @@ class PreferencesDialog extends Dialog {
     }
 
     /*
-     * Makes sure the text entered as season prefix is valid in a pathname.
-     */
-    private void ensureValidPrefixText() {
-        String prefixText = seasonPrefixText.getText();
-
-        // Remove the surrounding double quotes, if present;
-        // any other double quotes should not be removed.
-        String unquoted = StringUtils.unquoteString(prefixText);
-        // The verifier should have prevented any illegal characters from
-        // being entered.  This is just to check.
-        seasonPrefixString = StringUtils.replaceIllegalCharacters(unquoted);
-
-        if (!seasonPrefixString.equals(unquoted)) {
-            // Somehow, illegal characters got through.
-            logger.severe("Illegal characters recognized in season prefix");
-            logger.severe("Instead of \"" + unquoted + "\", will use \""
-                          + seasonPrefixString + "\"");
-        }
-    }
-
-    /*
      * Create the controls that regard the naming of the season prefix folder.
      * The text box gets both a verify listener and a modify listener.
      */
@@ -390,12 +398,34 @@ class PreferencesDialog extends Dialog {
         seasonPrefixString = prefs.getSeasonPrefix();
         seasonPrefixText = createText(StringUtils.makeQuotedString(seasonPrefixString),
                                       generalGroup, true);
-        seasonPrefixText.addVerifyListener(e -> {
-            statusLabel.clear(NO_TEXT_BEFORE_OPENING_QUOTE);
-            statusLabel.clear(NO_TEXT_AFTER_CLOSING_QUOTE);
-            verifySeasonPrefixText(e);
+        seasonPrefixText.addVerifyListener(new VerifyListener() {
+            @Override
+            public void verifyText(VerifyEvent e) {
+                statusLabel.clear(NO_TEXT_BEFORE_OPENING_QUOTE);
+                statusLabel.clear(NO_TEXT_AFTER_CLOSING_QUOTE);
+                verifySeasonPrefixText(e);
+            }
         });
-        seasonPrefixText.addModifyListener(e -> ensureValidPrefixText());
+        seasonPrefixText.addModifyListener(new ModifyListener() {
+            @Override
+            public void modifyText(ModifyEvent e) {
+                String prefixText = seasonPrefixText.getText();
+
+                // Remove the surrounding double quotes, if present;
+                // any other double quotes should not be removed.
+                String unquoted = StringUtils.unquoteString(prefixText);
+                // The verifier should have prevented any illegal characters from
+                // being entered.  This is just to check.
+                seasonPrefixString = StringUtils.replaceIllegalCharacters(unquoted);
+
+                if (!seasonPrefixString.equals(unquoted)) {
+                    // Somehow, illegal characters got through.
+                    logger.severe("Illegal characters recognized in season prefix");
+                    logger.severe("Instead of \"" + unquoted + "\", will use \""
+                                 + seasonPrefixString + "\"");
+                }
+            }
+        });
         seasonPrefixLeadingZeroCheckbox = createCheckbox(SEASON_PREFIX_ZERO_TEXT, SEASON_PREFIX_ZERO_TOOLTIP,
                                                          prefs.isSeasonPrefixLeadingZero(),
                                                          generalGroup, GridData.BEGINNING, 3);
@@ -430,7 +460,7 @@ class PreferencesDialog extends Dialog {
                                                  GridData.BEGINNING, 3);
     }
 
-    private void initializeGeneralControls() {
+    private void initializeGeneralControls(final Composite generalGroup) {
         final boolean moveIsSelected = prefs.isMoveSelected();
         moveSelectedCheckbox.setSelection(moveIsSelected);
         toggleEnableControls(moveIsSelected, destDirText, destDirButton,
@@ -447,7 +477,7 @@ class PreferencesDialog extends Dialog {
         renameSelectedCheckbox.setSelection(renameIsSelected);
     }
 
-    private void createGeneralTab() {
+    private void createGeneralTab(final TabFolder tabFolder) {
         final TabItem item = new TabItem(tabFolder, SWT.NULL);
         item.setText(GENERAL_LABEL);
 
@@ -457,20 +487,12 @@ class PreferencesDialog extends Dialog {
         generalGroup.setToolTipText(GENERAL_TOOLTIP);
 
         populateGeneralTab(generalGroup);
-        initializeGeneralControls();
+        initializeGeneralControls(generalGroup);
 
         item.setControl(generalGroup);
     }
 
-    private void addStringsToList(final List guiList,
-                                  final ReplacementToken... tokens)
-    {
-        for (ReplacementToken token : tokens) {
-            guiList.add(token.toString());
-        }
-    }
-
-    private void createRenameTab() {
+    private void createRenameTab(TabFolder tabFolder) {
         TabItem item = new TabItem(tabFolder, SWT.NULL);
         item.setText(RENAMING_LABEL);
 
@@ -485,12 +507,20 @@ class PreferencesDialog extends Dialog {
         List renameTokensList = new List(replacementGroup, SWT.SINGLE);
         renameTokensList.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER,
                                                     true, true, 2, 1));
-        addStringsToList(renameTokensList,
-                         SHOW_NAME, SEASON_NUM, SEASON_NUM_LEADING_ZERO,
-                         EPISODE_NUM, EPISODE_NUM_LEADING_ZERO,
-                         EPISODE_TITLE, EPISODE_TITLE_NO_SPACES, EPISODE_RESOLUTION,
-                         DATE_DAY_NUM, DATE_DAY_NUMLZ, DATE_MONTH_NUM, DATE_MONTH_NUMLZ,
-                         DATE_YEAR_MIN, DATE_YEAR_FULL);
+        renameTokensList.add(ReplacementToken.SHOW_NAME.toString());
+        renameTokensList.add(ReplacementToken.SEASON_NUM.toString());
+        renameTokensList.add(ReplacementToken.SEASON_NUM_LEADING_ZERO.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_NUM.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_NUM_LEADING_ZERO.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_TITLE.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_TITLE_NO_SPACES.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_RESOLUTION.toString());
+        renameTokensList.add(ReplacementToken.DATE_DAY_NUM.toString());
+        renameTokensList.add(ReplacementToken.DATE_DAY_NUMLZ.toString());
+        renameTokensList.add(ReplacementToken.DATE_MONTH_NUM.toString());
+        renameTokensList.add(ReplacementToken.DATE_MONTH_NUMLZ.toString());
+        renameTokensList.add(ReplacementToken.DATE_YEAR_MIN.toString());
+        renameTokensList.add(ReplacementToken.DATE_YEAR_FULL.toString());
 
         Label episodeTitleLabel = new Label(replacementGroup, SWT.NONE);
         episodeTitleLabel.setText(RENAME_FORMAT_TEXT);
@@ -577,39 +607,5 @@ class PreferencesDialog extends Dialog {
         prefs.setRenameSelected(renameSelectedCheckbox.getSelection());
 
         UserPreferences.store(prefs);
-    }
-
-    /**
-     * Creates and opens the preferences dialog, and runs the event loop.
-     *
-     */
-    public void open() {
-        // Create the dialog window
-        preferencesShell = new Shell(parent, getStyle());
-        preferencesShell.setText(PREFERENCES_LABEL);
-
-        // Add the contents of the dialog window
-        createContents();
-
-        preferencesShell.pack();
-        preferencesShell.open();
-        Display display = parent.getDisplay();
-        while (!preferencesShell.isDisposed()) {
-            if (!display.readAndDispatch()) {
-                display.sleep();
-            }
-        }
-    }
-
-    /**
-     * PreferencesDialog constructor
-     *
-     * @param parent
-     *            the parent {@link Shell}
-     */
-    public PreferencesDialog(final Shell parent) {
-        super(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
-        this.parent = parent;
-        statusLabel = new StatusLabel();
     }
 }

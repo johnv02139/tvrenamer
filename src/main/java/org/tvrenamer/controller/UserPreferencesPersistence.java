@@ -2,7 +2,6 @@ package org.tvrenamer.controller;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
-
 import org.tvrenamer.model.UserPreferences;
 
 import java.io.BufferedWriter;
@@ -56,15 +55,15 @@ public class UserPreferencesPersistence {
         if (Files.exists(path)) {
             try (InputStream in = Files.newInputStream(path)) {
                 return (UserPreferences) xstream.fromXML(in);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "Exception reading preferences file '"
                            + path.toAbsolutePath().toString(), e);
                 logger.info("assuming default preferences");
             }
         } else {
             // If file doesn't exist, assume defaults
-            logger.fine("Preferences file '" + path.toAbsolutePath().toString()
-                        + "' does not exist - assuming defaults");
+            logger.log(Level.FINE, "Preferences file '" + path.toAbsolutePath().toString()
+                       + "' does not exist - assuming defaults");
         }
 
         return null;

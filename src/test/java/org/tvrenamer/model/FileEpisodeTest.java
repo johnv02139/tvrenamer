@@ -112,11 +112,9 @@ public class FileEpisodeTest {
         List<Path> deleteFailures = new ArrayList<>();
         for (Path path : testFiles) {
             Path parent = path.getParent();
-            if (parent != null) {
-                boolean expected = FileUtilities.isSameFile(OUR_TEMP_DIR, parent);
-                if (!expected) {
-                    outsideFailures.add(path);
-                }
+            boolean expected = FileUtilities.isSameFile(OUR_TEMP_DIR, parent);
+            if (!expected) {
+                outsideFailures.add(path);
             }
             logger.fine("Deleting " + path);
             boolean deleted = FileUtilities.deleteFile(path);
@@ -1019,38 +1017,69 @@ public class FileEpisodeTest {
                    .build());
     }
 
-    @BeforeClass
-    public static void setupValues20() {
-        values.add(new EpisodeTestData.Builder()
-                   .filenameShow("House Hunters International")
-                   .properShowName("House Hunters International")
-                   .seasonNumString("103")
-                   .episodeNumString("02")
-                   .filenameSuffix(".mkv")
-                   .episodeResolution("")
-                   .episodeTitle("Copenhagen Dreaming")
-                   .episodeId("5941334")
-                   .replacementMask("%S.S%0sE%0e.%t")
-                   .expectedReplacement("House Hunters International.S103E02.Copenhagen Dreaming")
-                   .build());
+    /**
+     * Here's where all that data in <code>values</code> is turned into something.  Note this
+     * doesn't use a lot of what the real program does; it doesn't fetch anything from the
+     * Internet (or even from a cache), and it doesn't use listeners.  And, of course, it
+     * doesn't use the UI, which is intimately tied to moving files in the real program.
+     * But it does try to simulate the process.
+     *
+     * We start off by making sure our preferences are what we want.  Then we get a Path.
+     * We turn that path into a FileEpisode, which initially is basically just a shell.
+     * We then fill in information based on the filename.  (In the real program, the parser
+     * in FilenameParser is used for this.)
+     *
+     * Then, once we know the part of the filename that we think represents the show name,
+     * we find the actual show name, and create a Show object to represent it.  We store
+     * the mapping between the query string and the Show object in ShowStore.  (In the real
+     * program, we send the query string to the TVDB, it responds with options in XML, which we
+     * parse, choose the best match, and use to create the Show object.)
+     *
+     * Once we have the Show object, we add the episodes.  Here, we're creating a single episode,
+     * but the Show API always expects an array.  (In the real program, we get the episodes by
+     * querying The TVDB with the show ID, and parsing the XML into an array of EpisodeInfo
+     * objects.)  We create a one-element array and stick the EpisodeInfo into it, and add that
+     * to the Show.
+     *
+     * Finally, we set the status of the FileEpisode to tell it we're finished downloading all
+     * the episodes its show needs to know about, which enables getReplacementText to give us
+     * the filename to use.  (If it didn't think we were finished adding episodes, it would
+     * instead return a placeholder text.)
+     *
+     * Then, we're done.  We return the replacement text to the driver method, and let it
+     * do the checking.
+     */
+    private FileEpisode getEpisode(EpisodeTestData data, Path path) {
+        prefs.setRenameReplacementString(data.replacementMask);
+
+        String pathstring = path.toAbsolutePath().toString();
+
+        FileEpisode episode = new FileEpisode(pathstring);
+        episode.setFilenameShow(data.filenameShow);
+        episode.setEpisodePlacement(data.seasonNumString, data.episodeNumString);
+        episode.setFilenameResolution(data.episodeResolution);
+
+        Show show = ShowStore.getOrAddShow(data.filenameShow, data.properShowName);
+        episode.setEpisodeShow(show);
+
+        EpisodeInfo info = new EpisodeInfo.Builder()
+            .episodeId(data.episodeId)
+            .seasonNumber(data.seasonNumString)
+            .episodeNumber(data.episodeNumString)
+            .episodeName(data.episodeTitle)
+            .build();
+        show.addOneEpisode(info);
+        show.indexEpisodesBySeason();
+        episode.listingsComplete();
+
+        return episode;
     }
 
     /**
      * This is, officially, the Test that checks all the EpisodeTestData, though really it's just
      * a driver method.  All the real work goes on in <code>getReplacementBasename</code>, above.
      *
-     * Here's where all that data in <code>values</code> is turned into something.  Note this
-     * doesn't use a lot of what the real program does; it doesn't fetch anything from the
-     * Internet (or even from a cache), and it doesn't use listeners.  And, of course, it doesn't
-     * use the UI, which is intimately tied to moving files in the real program.  But it does try
-     * to simulate the process.
-     *
-     * We start off by making sure our preferences are what we want, because the replacement
-     * mask is part of the test data.  Then we get use the EpisodeTestData to create and
-     * fill in all the data for a FileEpisode.  (In the real program, the parser
-     * in FilenameParser is used for this.)
-     *
-     * This is the method where the expected and actual values are compared.
+     * This is the method where the expected and actual values are compared, though.
      */
     @Test
     public void testGetReplacementText() {
@@ -1060,11 +1089,10 @@ public class FileEpisodeTest {
         for (EpisodeTestData data : values) {
             try {
                 Path path = OUR_TEMP_DIR.resolve(data.inputFilename);
+                Files.createFile(path);
                 testFiles.add(path);
 
-                prefs.setRenameReplacementString(data.replacementMask);
-
-                FileEpisode episode = data.createFileEpisode(OUR_TEMP_DIR);
+                FileEpisode episode = getEpisode(data, path);
                 assertEquals("suffix fail on " + data.inputFilename,
                              data.filenameSuffix, episode.getFilenameSuffix());
                 assertEquals("test which " + data.documentation,
@@ -1085,7 +1113,7 @@ public class FileEpisodeTest {
      * Try to basically do an <code>/bin/rm -rf</code> on our temp directory.
      */
     @After
-    public void cleanUp() {
+    public void cleanUp() throws Exception {
         if (Files.exists(OUR_TEMP_DIR)) {
             logger.warning("trying to clean up " + OUR_TEMP_DIR);
             try {

@@ -141,9 +141,7 @@ public class TheTVDBProviderTest {
      *               what we expect to get back about it
      * @param foundTitle the value that was found for the episode title
      */
-    private static void assertEpisodeTitle(final EpisodeTestData epdata,
-                                           final String foundTitle)
-    {
+    private void assertEpisodeTitle(final EpisodeTestData epdata, final String foundTitle) {
         final String expectedTitle = epdata.episodeTitle;
         if (!expectedTitle.equals(foundTitle)) {
             fail("expected title of season " + epdata.seasonNum + ", episode " + epdata.episodeNum
@@ -165,7 +163,7 @@ public class TheTVDBProviderTest {
      * @return the title of the given episode of the show returned by the provider, or null
      *         if we didn't get an episode title
      */
-    private static String testSeriesNameAndEpisode(final EpisodeTestData epdata, boolean doCheck)
+    private String testSeriesNameAndEpisode(final EpisodeTestData epdata, boolean doCheck)
         throws Exception
     {
         final String actualName = epdata.properShowName;
@@ -173,7 +171,7 @@ public class TheTVDBProviderTest {
         if (queryString == null) {
             queryString = actualName;
         }
-        final ShowName showName = ShowName.mapShowName(queryString);
+        final ShowName showName = ShowName.lookupShowName(queryString);
         ShowOption best = showName.getMatchedShow();
 
         if (best == null) {
@@ -184,18 +182,18 @@ public class TheTVDBProviderTest {
             } catch (Exception e) {
                 fail("exception getting show options for " + queryString);
             }
-            assertTrue("got no options on showName <[" + showName.getExampleFilename()
+            assertTrue("got no options on showName <[" + showName.getFoundName()
                        + "]> (from input <[" + queryString + "]>)",
                        showName.hasShowOptions());
 
             best = showName.selectShowOption();
         }
-        assertEquals("resolved show name <[" + showName.getExampleFilename() + "]> to wrong series;",
+        assertEquals("resolved show name <[" + showName.getFoundName() + "]> to wrong series;",
                      actualName, best.getName());
 
         Show show = best.getShowInstance();
         assertTrue("expected valid Series (<[" + epdata.properShowName + "]>) for \""
-                   + showName.getExampleFilename() + "\" but got <[" + show + "]>",
+                   + showName.getFoundName() + "\" but got <[" + show + "]>",
                    show.isValidSeries());
         Series series = show.asSeries();
         assertEquals("got wrong series ID for <[" + actualName + "]>;",
@@ -204,7 +202,7 @@ public class TheTVDBProviderTest {
         if (epdata.preferDvd != null) {
             series.setPreferDvd(epdata.preferDvd);
         }
-        if (series.noEpisodes()) {
+        if (!series.hasEpisodes()) {
             TheTVDBProvider.getSeriesListing(series);
         }
 
@@ -233,9 +231,7 @@ public class TheTVDBProviderTest {
      * @param epdata contains all the relevant information about the episode to look up, and
      *               what we expect to get back about it
      */
-    private static void testSeriesNameAndEpisodeTitle(final EpisodeTestData epdata)
-        throws Exception
-    {
+    private void testSeriesNameAndEpisodeTitle(final EpisodeTestData epdata) throws Exception {
         testSeriesNameAndEpisode(epdata, true);
     }
 
@@ -1128,17 +1124,16 @@ public class TheTVDBProviderTest {
      * Look up the query string with the provider and return the Show based on the
      * information returned.
      *
-     * @param testInput
-     *    an EpisodeTestData containing all the values we need to look up
-     *    a Show (or an Episode)
-     * @return a Show based on the queryString of the testInput, or null
+     * @param queryString
+     *    the text to send to the provider to get the Show
+     * @param properShowName
+     *    the exact title of the series we expect to get back; used for error-checking
+     * @return a Show based on the queryString, or null
      */
-    private static Show testQueryShow(final EpisodeTestData testInput) {
-        final String queryString = testInput.queryString;
-        final String properShowName = testInput.properShowName;
+    private Show testQueryShow(final String queryString, final String properShowName) {
         try {
             final CompletableFuture<ShowOption> futureShow = new CompletableFuture<>();
-            ShowStore.mapStringToShow(queryString, new ShowDownloader(futureShow));
+            ShowStore.getShow(queryString, new ShowDownloader(futureShow));
             ShowOption gotShow = futureShow.get(4, TimeUnit.SECONDS);
             if (API_DISCONTINUED_NAME.equals(gotShow.getName())) {
                 fail("API apparently discontinued parsing " + queryString);
@@ -1168,106 +1163,53 @@ public class TheTVDBProviderTest {
         }
     }
 
-    private static String timeoutExceptionMessage(final EpisodeTestData testInput,
-                                                  final TimeoutException e)
-    {
-        final String queryString = testInput.queryString;
-        final int seasonNum = testInput.seasonNum;
-        final int episodeNum = testInput.episodeNum;
-
-        String failMsg = "timeout trying to query for " + queryString
-            + ", season " + seasonNum + ", episode " + episodeNum;
-        String exceptionMessage = e.getMessage();
-        if (exceptionMessage != null) {
-            failMsg += exceptionMessage;
-        } else {
-            failMsg += "(no message)";
-        }
-        return failMsg;
-    }
-
-    private static String genericExceptionMessage(final EpisodeTestData testInput,
-                                                  final Exception e)
-    {
-        final String queryString = testInput.queryString;
-        final int seasonNum = testInput.seasonNum;
-        final int episodeNum = testInput.episodeNum;
-
-        String failMsg = "failure trying to query for " + queryString
-            + ", season " + seasonNum + ", episode " + episodeNum
-            + e.getClass().getName() + " ";
-        String exceptionMessage = e.getMessage();
-        if (exceptionMessage != null) {
-            failMsg += exceptionMessage;
-        } else {
-            failMsg += "(possibly timeout?)";
-        }
-        return failMsg;
-    }
-
-    private static void assertGotShow(final Show show,
-                                      final EpisodeTestData testInput)
-    {
-        assertNotNull("got null value from testQueryShow on <["
-                      + testInput.queryString + "]>",
-                      show);
-    }
-
-    private static void assertValidSeries(final Show show,
-                                          final EpisodeTestData testInput)
-    {
-        assertTrue("expected valid Series (<[" + testInput.properShowName
-                   + "]>) for \"" + testInput.queryString
-                   + "\" but got <[" + show + "]>",
-                   show.isValidSeries());
-    }
-
-    private static CompletableFuture<String> createListingsFuture(final Series series,
-                                                                  final EpisodeTestData testInput)
-    {
-        final EpisodePlacement placement = new EpisodePlacement(testInput.seasonNum,
-                                                                testInput.episodeNum);
-        final CompletableFuture<String> future = new CompletableFuture<>();
-        series.addListingsListener(new ListingsDownloader(series, placement, future));
-
-        return future;
-    }
-
-    /**
-     * Run testQueryShow to validate we get the expected show from the given
-     * queryString, and then look up the listings to verify we get the expected
-     * episode.  Does not return a value or throw an exception.  Just fails the
-     * calling test if anything is not as expected.
-     *
-     * @param testInput
-     *    an EpisodeTestData containing all the values we need to look up
-     *    an episode
-     */
-    private static void testGetEpisodeDataTitle(final EpisodeTestData testInput) {
-        try {
-            final Show show = testQueryShow(testInput);
-            assertGotShow(show, testInput);
-            assertValidSeries(show, testInput);
-            if (testInput.preferDvd != null) {
-                show.setPreferDvd(testInput.preferDvd);
-            }
-
-            final CompletableFuture<String> future = createListingsFuture(show.asSeries(),
-                                                                          testInput);
-            String got = future.get(30, TimeUnit.SECONDS);
-            assertEpisodeTitle(testInput, got);
-        } catch (TimeoutException e) {
-            fail(timeoutExceptionMessage(testInput, e));
-        } catch (Exception e) {
-            fail(genericExceptionMessage(testInput, e));
-        }
-    }
-
     @Test
     public void testGetEpisodeTitle() {
         for (EpisodeTestData testInput : values) {
             if (testInput.episodeTitle != null) {
-                testGetEpisodeDataTitle(testInput);
+                final String queryString = testInput.queryString;
+                final int seasonNum = testInput.seasonNum;
+                final int episodeNum = testInput.episodeNum;
+                final EpisodePlacement placement = new EpisodePlacement(seasonNum, episodeNum);
+                try {
+                    final Show show = testQueryShow(queryString, testInput.properShowName);
+                    assertNotNull("got null value from testQueryShow on <["
+                                  + queryString + "]>",
+                                  show);
+                    assertTrue("expected valid Series (<[" + testInput.properShowName
+                               + "]>) for \"" + queryString + "\" but got <[" + show + "]>",
+                               show.isValidSeries());
+                    if (testInput.preferDvd != null) {
+                        show.setPreferDvd(testInput.preferDvd);
+                    }
+
+                    final CompletableFuture<String> future = new CompletableFuture<>();
+                    Series series = show.asSeries();
+                    series.addListingsListener(new ListingsDownloader(series, placement, future));
+                    String got = future.get(30, TimeUnit.SECONDS);
+                    assertEpisodeTitle(testInput, got);
+                } catch (TimeoutException e) {
+                    String failMsg = "timeout trying to query for " + queryString
+                        + ", season " + seasonNum + ", episode " + episodeNum;
+                    String exceptionMessage = e.getMessage();
+                    if (exceptionMessage != null) {
+                        failMsg += exceptionMessage;
+                    } else {
+                        failMsg += "(no message)";
+                    }
+                    fail(failMsg);
+                } catch (Exception e) {
+                    String failMsg = "failure trying to query for " + queryString
+                        + ", season " + seasonNum + ", episode " + episodeNum
+                        + e.getClass().getName() + " ";
+                    String exceptionMessage = e.getMessage();
+                    if (exceptionMessage != null) {
+                        failMsg += exceptionMessage;
+                    } else {
+                        failMsg += "(possibly timeout?)";
+                    }
+                    fail(failMsg);
+                }
             }
         }
     }

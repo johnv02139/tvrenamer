@@ -1,15 +1,11 @@
 package org.tvrenamer.controller.util;
 
-import org.tvrenamer.model.ProgressObserver;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,165 +45,11 @@ public class FileUtilities {
         }
         try {
             Files.delete(file);
-        } catch (AccessDeniedException ade) {
-            logger.warning("Could not delete file \"" + file
-                           + "\"; access denied");
-            return false;
         } catch (IOException ioe) {
             logger.log(Level.WARNING, "Error deleting file " + file, ioe);
             return false;
         }
         return Files.notExists(file);
-    }
-
-    /**
-     * Try to figure out the state of the world after a call to Files.move
-     * did not succeed, nor did it completely fail.
-     *
-     * <p>Note, java.nio.file.Files.move() is defined to return the destination.
-     * Is it possible that the file could be moved, but to a different
-     * destination than was requested?  Nothing in the Javadoc suggests that it
-     * could.
-     *
-     * <p>As far as I can tell, the best reason for Files.move to return a Path,
-     * rather than a boolean "success" value, is to simplify the user's code
-     * when the destination is passed in as an expression, so that instead of:
-     * <pre>
-     * <code>
-     *    Path destFile = destDir.resolve(basename + suffix)
-     *    boolean success = Files.move(src, destFile);
-     *    if (success) {
-     *      // do something with destFile
-     * </code>
-     * </pre>
-     * ... you can do:
-     * <pre>
-     * <code>
-     *    Path destFile = Files.move(src, destDir.resolve(basename + suffix));
-     *    if (destFile != null) {
-     *      // do something with destFile
-     * </code>
-     * </pre>
-     *
-     * <p>Nevertheless, I don't know that for 100% certain.  The specification
-     * implies a hypothetical possibility that the file might be moved, but to a
-     * location different from target.  Particularly since the whole point of
-     * this program is to move files, I want to try to be as careful as we can
-     * possibly be to not lose (track of) any files.
-     *
-     * @param srcFile
-     *    the file we wanted to rename
-     * @param destFile
-     *    the destination we wanted file to be renamed to
-     * @param actualDest
-     *    the value that Files.move() returned to us
-     * @return
-     *    presumably null, but could return a Path if, somehow, the source file
-     *    appears to have been moved despite the apparent failure
-     */
-    private static Path unexpectedMoveResult(final Path srcFile, final Path destFile,
-                                             final Path actualDest)
-    {
-        if (Files.exists(srcFile)) {
-            // This implies that the original file was not touched.  Java may have
-            // done an incomplete copy.
-            if (Files.exists(destFile)) {
-                logger.warning("may have done an incomplete copy of " + srcFile
-                               + " to " + destFile);
-            }
-            if (Files.exists(actualDest)) {
-                logger.warning("may have done an incomplete copy of " + srcFile
-                               + " to " + actualDest);
-            }
-            return null;
-        }
-        // If we get here, the file is gone, but it was not moved to the
-        // location we asked for.  Hopefully, this is impossible, but I'm
-        // not 100% sure that it 100% is.
-        if (Files.exists(destFile)) {
-            // The destination didn't exist before, and now it does.
-            // Seems like success?
-            logger.warning(srcFile.toString() + " is gone and " + destFile
-                           + " exists, so rename seemed successful");
-            logger.warning("Nevertheless, something went wrong.");
-            return null;
-        }
-        if (actualDest == null) {
-            // Again, likely completely impossible.  No idea what it would mean.
-            logger.warning("Panic!  No idea what happened to " + srcFile);
-            return null;
-        }
-        if (Files.exists(actualDest)) {
-            // This indicates the srcFile was moved to a location that is not
-            // the same file as the requested destFile.
-            // Maybe this happens if destFile was actually a directory?
-            logger.warning("somehow moved file to different destination: " + actualDest);
-        }
-        logger.info("craziest possible outcome");
-        logger.info("src file gone, dest file not there, result of move call "
-                    + "not null, but also not there.  Fubar.");
-        return null;
-    }
-
-    /**
-     * Rename the given file to the given destination.  If the file is renamed,
-     * returns the new Path.  If the file could not be renamed, returns null.
-     *
-     * <p>The destination must be a non-existent path, intended to be the file
-     * that the srcFile is renamed to.  This method does not support the use
-     * case where you tell us what directory you want the file moved into; you
-     * are expected to provide the path, explicitly including the destination
-     * file name (even if it's identical to the source file name).
-     *
-     * <p>The purpose of this method, as opposed to just calling Files.move()
-     * directly, is to detect specific problems and communicate them via
-     * logging.  It is a wrapper around Files.move().
-     *
-     * <p>If an unexpected result occurs, calls {@link unexpectedMoveResult}.
-     *
-     * @param srcFile
-     *    the file to be renamed
-     * @param destFile
-     *    the destination for the file to be renamed to; should not exist
-     *    (either as a file or a directory)
-     * @return
-     *    the new destination if the file was renamed; null if it was not
-     */
-    public static Path renameFile(final Path srcFile, final Path destFile) {
-        if (Files.notExists(srcFile)) {
-            logger.warning("cannot rename file, does not exist: " + srcFile);
-            return null;
-        }
-        if (Files.exists(destFile)) {
-            if (Files.isDirectory(destFile)) {
-                logger.warning("renameFile does not take a directory; "
-                               + "supply the entire path");
-            } else {
-                logger.warning("will not overwrite existing file: " + destFile);
-            }
-            return null;
-        }
-        Path actualDest = null;
-        try {
-            actualDest = Files.move(srcFile, destFile);
-            if (Files.isSameFile(destFile, actualDest)) {
-                return destFile;
-            }
-        } catch (AccessDeniedException ade) {
-            logger.warning("Could not rename file \"" + srcFile
-                           + "\"; access denied");
-        } catch (IOException ioe) {
-            logger.log(Level.WARNING, "Error renaming file " + srcFile, ioe);
-        }
-        // If we got here, things did not go as expected.  Try to make sense
-        // of the state of the world.
-        if (Files.exists(srcFile) && Files.notExists(destFile)) {
-            // Looks like we did nothing.
-            return null;
-        }
-        // If we get here, something really weird happened.  Handle it in
-        // a separate method.
-        return unexpectedMoveResult(srcFile, destFile, actualDest);
     }
 
     /**
@@ -243,25 +85,20 @@ public class FileUtilities {
     }
 
     /**
-     * Return true if the given arguments refer to the same actual, existing file on
-     * the file system.  On file systems that support symbolic links, two Paths could
+     * Return true if the given arguments refer to the same actual file on the
+     * file system.  On file systems that support symbolic links, two Paths could
      * be the same file even if their locations appear completely different.
      *
      * @param path1
-     *    first Path to compare; it is expected that this Path exists
+     *    first Path to compare
      * @param path2
-     *    second Path to compare; this may or may not exist
+     *    second Path to compare
      * @return
-     *    true if the paths refer to the same file, false if they don't;
-     *    logs an exception if one occurs while trying to check, including
-     *    if path1 does not exist; but does not log one if path2 doesn't
+     *    true if the paths refer to the same file, false if they don't
      */
+    @SuppressWarnings("SameParameterValue")
     public static boolean isSameFile(final Path path1, final Path path2) {
         try {
-            //noinspection SimplifiableIfStatement
-            if (Files.notExists(path2)) {
-                return false;
-            }
             return Files.isSameFile(path1, path2);
         } catch (IOException ioe) {
             logger.log(Level.WARNING, "exception checking files "
@@ -294,72 +131,6 @@ public class FileUtilities {
         return Files.exists(dir);
     }
 
-    /**
-     * Copies the source file to the destination, providing progress updates.
-     *
-     * <p>If the destination cannot be created or is a read-only file, the
-     * method returns <code>false</code>.  Otherwise, the contents of the source
-     * are copied to the destination, and <code>true</code> is returned.
-     *
-     * <p>TODO: the newly created file will not necessarily have the same
-     * attributes as the original.  In some cases, like ownership, that might
-     * actually be desirable (have the copy be owned by the user running the
-     * program), and also might be impossible to change even if the user does
-     * prefer to maintain the original owner.  But there may be other attributes
-     * we should try to adopt.  What about writability?  And the other, somewhat
-     * newer system-specific attributes: the ones accessible via "chattr" on
-     * Linux, "chflags" on OS X?  What about NTFS file streams, and ACLs?  A
-     * file copy created just copying the content into a brand new file can
-     * behave significantly differently from the original.
-     *
-     * @param source
-     *            The source file to move.
-     * @param dest
-     *            The destination where to move the file.
-     * @param observer
-     *            The observer to notify, if any.  May be null.
-     * @return true on success, false otherwise.
-     *
-     * Based on a version originally implemented in jEdit 4.3pre9
-     */
-    public static boolean copyWithUpdates(final Path source, final Path dest,
-                                          final ProgressObserver observer)
-    {
-        boolean ok = false;
-        try (OutputStream fos = Files.newOutputStream(dest);
-             InputStream fis = Files.newInputStream(source))
-        {
-            byte[] buffer = new byte[32768];
-            int n;
-            long copied = 0L;
-            while (-1 != (n = fis.read(buffer))) {
-                fos.write(buffer, 0, n);
-                copied += n;
-                if (observer != null) {
-                    observer.setProgressStatus(StringUtils.formatFileSize(copied));
-                    observer.setProgressValue(copied);
-                }
-                if (Thread.interrupted()) {
-                    break;
-                }
-            }
-            if (-1 == n) {
-                ok = true;
-            }
-        } catch (IOException ioe) {
-            ok = false;
-            String errMsg = "Error moving file " + source;
-            if (ioe.getMessage() != null) {
-                errMsg += ": " + ioe.getMessage();
-            }
-            logger.log(Level.WARNING, errMsg, ioe);
-        }
-
-        if (!ok) {
-            logger.warning("failed to move " + source);
-        }
-        return ok;
-    }
 
     /**
      * Given a Path, if the Path exists, returns it.  If not, but its parent
@@ -371,9 +142,6 @@ public class FileUtilities {
      *   that exists
      */
     public static Path existingAncestor(final Path checkPath) {
-        if (checkPath == null) {
-            return null;
-        }
         Path root = checkPath.getRoot();
         Path existent = checkPath;
         while (Files.notExists(existent)) {
@@ -384,12 +152,22 @@ public class FileUtilities {
                 return null;
             }
             existent = existent.getParent();
-            if (existent == null) {
-                return null;
-            }
         }
 
         return existent;
+    }
+
+    /**
+     * Given a String representing a path, if the path exists, returns it.
+     * If not, but its parent exists, returns that, etc.  That is, returns
+     * the closest ancestor (including itself) that exists.
+     *
+     * @param pathName the path to check for the closest existing ancestor
+     * @return the longest path, from the root dir towards the given path,
+     *   that exists
+     */
+    public static Path existingAncestor(final String pathName) {
+        return existingAncestor(Paths.get(pathName));
     }
 
     /**
@@ -407,11 +185,11 @@ public class FileUtilities {
     }
 
     /**
-     * Takes a Path which is a directory that the user wants to write into.
+     * Takes the name of a Path which is a directory that the user wants to write into.
      *
-     * @param path
-     *    the path that the caller will want to write into
-     * @return true if the given Path is a writable directory, or if it
+     * @param destDirName
+     *    the name (a String) of the Path that the caller will want to write into
+     * @return true if the given String names a writable directory, or if it
      *    presumably could be created as such; false otherwise.
      *
      *    As an example, if the value is /Users/me/Files/Videos/TV, and no such
@@ -422,8 +200,8 @@ public class FileUtilities {
      *    or is not writable, then we know we cannot create the target, and so we
      *    return false.
      */
-    public static boolean checkForCreatableDirectory(final Path path) {
-        return isWritableDirectory(existingAncestor(path));
+    public static boolean checkForCreatableDirectory(final String destDirName) {
+        return isWritableDirectory(existingAncestor(destDirName));
     }
 
     /**

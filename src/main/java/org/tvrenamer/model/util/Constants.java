@@ -2,6 +2,7 @@ package org.tvrenamer.model.util;
 
 import org.tvrenamer.controller.util.StringUtils;
 
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -33,6 +34,8 @@ import java.util.Set;
  */
 public class Constants {
 
+    public static final Charset TVR_CHARSET = Charset.forName("UTF-8");
+
     public static final String APPLICATION_NAME = "TVRenamer";
     public static final String ABOUT_LABEL = "About " + APPLICATION_NAME;
     public static final String TVRENAMER_DESCRIPTION = APPLICATION_NAME
@@ -59,13 +62,14 @@ public class Constants {
     public static final String SOURCE_CODE_LINK = "Source Code";
 
     public static final String XML_SUFFIX = ".xml";
-    public static final String ICON_PARENT_DIRECTORY = "src/main/resources";
+    public static final String ICON_PARENT_DIRECTORY = "res";
     public static final String APPLICATION_ICON_PATH = "/icons/tvrenamer.png";
+    public static final String TVRENAMER_ICON_DIRECT_PATH =
+        ICON_PARENT_DIRECTORY + APPLICATION_ICON_PATH;
     public static final String SUBLINK_PATH = "/icons/SweetieLegacy/";
     public static final String LOGGING_PROPERTIES = "/logging.properties";
     public static final String DEVELOPER_DEFAULT_OVERRIDES_FILENAME = "etc/default-overrides.xml";
 
-    @SuppressWarnings("SameParameterValue")
     private static String charsToSpaceString(final Set<Character> chars) {
         StringBuilder str = new StringBuilder(2 * chars.size());
         for (Character c : chars) {
@@ -86,7 +90,7 @@ public class Constants {
     public static final String RENAME_LABEL = "Rename Checked";
     public static final String JUST_MOVE_LABEL = "Move Checked";
     public static final String RENAME_AND_MOVE = "Rename && Move Checked";
-    public static final String CHECKBOX_HEADER = String.valueOf((char) 0x2705);
+    public static final String CHECKBOX_HEADER = "Active";
     public static final String SOURCE_HEADER = "Current File";
     public static final String MOVE_HEADER = "Proposed File Path";
     public static final String RENAME_HEADER = "Proposed File Name";
@@ -157,7 +161,7 @@ public class Constants {
         + "to take some action.";
     public static final String UNKNOWN_EXCEPTION = "An error occurred, please check "
         + "the console output to see any errors:";
-    private static final String ILLEGAL_CHARS_INTRO = "The following characters cannot be "
+    public static final String ILLEGAL_CHARS_INTRO = "The following characters cannot be "
         + "used in file paths:";
     public static final String ILLEGAL_CHARACTERS_WARNING = ILLEGAL_CHARS_INTRO
         + charsToSpaceString(StringUtils.ILLEGAL_CHARACTERS);
@@ -192,7 +196,6 @@ public class Constants {
     public static final String EPISODE_NOT_FOUND = "Could not get episode for show";
     public static final String BROKEN_PLACEHOLDER_FILENAME = "Unable to find show information";
     public static final String DOWNLOADING_FAILED = "Downloading show listings failed";
-    public static final String TIMEOUT_DOWNLOADING = "Timed out trying to look up";
     public static final String BAD_PARSE_MESSAGE = "Did not extract show name from filename";
     public static final String DOWNLOADING_FAILED_MESSAGE = DOWNLOADING_FAILED
         + ".  Check internet connection";
@@ -208,6 +211,7 @@ public class Constants {
     private static final String PREFERENCES_FILENAME = "prefs.xml";
     private static final String OVERRIDES_FILENAME = "overrides.xml";
 
+    public static final Path WORKING_DIRECTORY = Paths.get(Environment.USER_DIR);
     public static final Path TMP_DIR = Paths.get(Environment.TMP_DIR_NAME);
 
     private static final Path USER_HOME_DIR = Paths.get(Environment.USER_HOME);

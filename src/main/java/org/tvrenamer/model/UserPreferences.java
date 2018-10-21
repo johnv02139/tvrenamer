@@ -21,7 +21,6 @@ public class UserPreferences extends Observable {
     private static final UserPreferences INSTANCE = load();
 
     private final String preloadFolder;
-    private transient Path destDirPath;
     private String destDir;
     private String seasonPrefix;
     private boolean seasonPrefixLeadingZero;
@@ -46,8 +45,7 @@ public class UserPreferences extends Observable {
         super();
 
         preloadFolder = null;
-        destDirPath = DEFAULT_DESTINATION_DIRECTORY;
-        destDir = destDirPath.toString();
+        destDir = DEFAULT_DESTINATION_DIRECTORY.toString();
         seasonPrefix = DEFAULT_SEASON_PREFIX;
         seasonPrefixLeadingZero = false;
         moveSelected = false;
@@ -114,7 +112,6 @@ public class UserPreferences extends Observable {
      *
      * @param prefs the instance to export to XML
      */
-    @SuppressWarnings("SameParameterValue")
     public static void store(UserPreferences prefs) {
         UserPreferencesPersistence.persist(prefs, PREFERENCES_FILE);
         logger.fine("Successfully saved/updated preferences");
@@ -184,7 +181,6 @@ public class UserPreferences extends Observable {
         UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE);
 
         if (prefs != null) {
-            prefs.destDirPath = Paths.get(prefs.destDir);
             prefs.buildIgnoredKeywordsString();
             logger.finer("Successfully read preferences from: " + PREFERENCES_FILE.toAbsolutePath());
             logger.fine("Successfully read preferences: " + prefs.toString());
@@ -243,7 +239,7 @@ public class UserPreferences extends Observable {
             return true;
         }
 
-        boolean canCreate = FileUtilities.checkForCreatableDirectory(destDirPath);
+        boolean canCreate = FileUtilities.checkForCreatableDirectory(destDir);
         destDirProblem = !canCreate;
 
         if (destDirProblem) {
@@ -265,7 +261,6 @@ public class UserPreferences extends Observable {
         // then compare?  Also, what happens if ensureDestDir fails?
         if (valuesAreDifferent(destDir, dir)) {
             destDir = dir;
-            destDirPath = Paths.get(destDir);
 
             preferenceChanged(UserPreference.DEST_DIR);
         }
@@ -286,20 +281,6 @@ public class UserPreferences extends Observable {
         // show this text greyed out, but it still needs to know what it
         // is, in order to disable it.
         return destDir;
-    }
-
-    /**
-     * Gets the directory that files should be moved into; if "move" is
-     * disabled, returns null.
-     *
-     * @return the directory if move is enabled, null if not.
-     */
-    public Path getDestinationDirectory() {
-        if (moveSelected) {
-            return destDirPath;
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -461,6 +442,7 @@ public class UserPreferences extends Observable {
      * the user preferences from XML.  When the keywords are modified by the user via the preferences
      * dialog, we maintain the actual string the user entered.
      *
+     * @return a string containing the list of ignored keywords, separated by commas
      */
     private void buildIgnoredKeywordsString() {
         StringBuilder ignoreWords = new StringBuilder();

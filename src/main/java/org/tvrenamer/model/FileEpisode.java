@@ -7,7 +7,6 @@
 
 package org.tvrenamer.model;
 
-import static org.tvrenamer.model.ReplacementToken.*;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.controller.FilenameParser;
@@ -86,6 +85,7 @@ public class FileEpisode {
         FAIL_TO_MOVE
     }
 
+    private static final String FILE_SEPARATOR_STRING = java.io.File.separator;
     private static final long NO_FILE_SIZE = -1L;
 
     // Allow titles long enough to include this one:
@@ -106,6 +106,8 @@ public class FileEpisode {
     // of the show, and which we use to query the provider.  Note that the actual show name
     // that we get back from the provider will likely differ from what we have here.
     private String filenameShow = "";
+    private String filenameSeason = "";
+    private String filenameEpisode = "";
     private String filenameResolution = "";
 
     // These integers are meant to represent the indices into the Show's catalog that "we"
@@ -160,15 +162,8 @@ public class FileEpisode {
     // rename it to destinationFolder + baseForRename + filenameSuffix.
     private String baseForRename = null;
 
-    /**
-     * Standard constructor for a FileEpisode; takes a Path.<p>
-     *
-     * Initially we create the FileEpisode with nothing more than the path.
-     * Other information will flow in.
-     *
-     * @param p
-     *   the Path of the file this FileEpisode represents
-     */
+    // Initially we create the FileEpisode with nothing more than the path.
+    // Other information will flow in.
     public FileEpisode(Path p) {
         if (p == null) {
             logger.severe(FILE_EPISODE_NEEDS_PATH);
@@ -187,14 +182,7 @@ public class FileEpisode {
         FilenameParser.parseFilename(this);
     }
 
-    /**
-     * Test constructor to make a FileEpisode from a String.<p>
-     *
-     * This constructor is intended for use only by the test framework.
-     *
-     * @param filename
-     *    a String representing a path to a file (which doesn't need to exist).
-     */
+    // Create FileEpisode with String; only for testing
     public FileEpisode(String filename) {
         if (filename == null) {
             logger.severe(FILE_EPISODE_NEEDS_PATH);
@@ -220,29 +208,21 @@ public class FileEpisode {
         this.filenameShow = filenameShow;
     }
 
+    public String getFilenameSeason() {
+        return filenameSeason;
+    }
+
+    public String getFilenameEpisode() {
+        return filenameEpisode;
+    }
+
     public EpisodePlacement getEpisodePlacement() {
         return placement;
     }
 
-    /**
-     * Sets the {@link EpisodePlacement}.<p>
-     *
-     * A given episode occurs within a particular season.  To identify the episode,
-     * we need to find, from the filename, the season in which it aired, and where
-     * it aired within that season.  We combine these two pieces of information into
-     * an class we call the "EpisodePlacement".
-     *
-     * This method expects to receive the exact substrings we extracted from the
-     * filename, parses them, creates an EpisodePlacement, and stores it within
-     * this FileEpisode.
-     *
-     * @param filenameSeason
-     *   the substring of the filename that indicates the episode's season
-     * @param filenameEpisode
-     *   the substring of the filename that indicates the episode's ordering within
-     *   the season
-     */
     public void setEpisodePlacement(String filenameSeason, String filenameEpisode) {
+        this.filenameSeason = filenameSeason;
+        this.filenameEpisode = filenameEpisode;
         int seasonNum = Show.NO_SEASON;
         int episodeNum = Show.NO_EPISODE;
         try {
@@ -258,32 +238,10 @@ public class FileEpisode {
         placement = new EpisodePlacement(seasonNum, episodeNum);
     }
 
-    /**
-     * Gets the screen resolution found in the filename.<p>
-     *
-     * The filename may indicate a screen resolution (i.e., number of pixels) of the
-     * video file.  This method has nothing to do with how the filename was "resolved";
-     * that's just an unfortunate ambiguity.  This is just about having found substrings
-     * like "720p" or "1080i".
-     *
-     * @return
-     *   the substring of the filename that indicated a screen resolution
-     */
     public String getFilenameResolution() {
         return filenameResolution;
     }
 
-    /**
-     * Sets the screen resolution found in the filename.<p>
-     *
-     * The filename may indicate a screen resolution (i.e., number of pixels) of the
-     * video file.  This method has nothing to do with "resolving" the filename;
-     * that's just an unfortunate ambiguity.  This is just about finding substrings
-     * like "720p" or "1080i".
-     *
-     * @param filenameResolution
-     *   the substring of the filename that indicates a screen resolution
-     */
     public void setFilenameResolution(String filenameResolution) {
         if (filenameResolution == null) {
             this.filenameResolution = "";
@@ -319,27 +277,6 @@ public class FileEpisode {
         }
     }
 
-    /**
-     * Sets the Path for the file that this FileEpisode refers to.<p>
-     *
-     * The path is originally set in the constructor.  A given FileEpisode is meant to
-     * refer to a given file; they should not be reused.  This method should not be
-     * called to try to get a FileEpisode to now refer to an unrelated file.<p>
-     *
-     * However, the point of this program is to move files, and, depending on the user
-     * preference settings, the item may remain in the table after it's been moved.
-     * We want to keep everything up to date, so when, at the user's request, we do
-     * move a file, we want to update the model so that it now knows where it is.<p>
-     *
-     * It is illegal to try to set the path to a filename that does not have the same
-     * file suffix as the original.  The idea is that the original file was moved/renamed,
-     * and that should never require changing the file suffix.  If you're trying to re-use
-     * a FileEpisode for a Path with a different file extension, you're likely doing the
-     * wrong thing.
-     *
-     * @param p
-     *    the new Path of the file that this FileEpisode was created to refer to
-     */
     public void setPath(Path p) {
         if (p == null) {
             logger.severe(FILE_EPISODE_NEEDS_PATH);
@@ -373,26 +310,6 @@ public class FileEpisode {
         return (parseStatus == ParseStatus.PARSED);
     }
 
-    /**
-     * Returns the number of options found for this FileEpisode.<p>
-     *
-     * This may be:<ul>
-     * <li>0, because<ul>
-     *    <li>we could not parse the filename</li>
-     *    <li>we have not (yet) obtained enough information from the provider</li>
-     *    <li>the "ignore files" setting says to ignore this item</li>
-     *    <li>the episode was simply not found within the listings we downloaded</li>
-     *    </ul>
-     * <li>1, meaning we found an exact episode that this maps to</li>
-     * <li>2, presumably meaning that the given placement (season X, episode Y)
-     *    maps to different episodes depending on whether you assume the over-the-air
-     *    ordering, or the DVD ordering</li>
-     * <li>(theoretically) more than 2, for some unforeseen reason that the listings
-     *    we downloaded contains multiple hits for the given placement</li>
-     * </ul>
-     *
-     * @return the number of options found for this FileEpisode
-     */
     public synchronized int optionCount() {
         if (seriesStatus != SeriesStatus.GOT_LISTINGS) {
             return 0;
@@ -409,84 +326,28 @@ public class FileEpisode {
         return replacementOptions.size();
     }
 
-    /**
-     * Update this object to know that its path has been parsed successfully.
-     *
-     * This causes it to update its replacementText to notify the user as such.
-     *
-     */
     public void setParsed() {
         parseStatus = ParseStatus.PARSED;
         replacementText = ADDED_PLACEHOLDER_FILENAME;
     }
 
-    /**
-     * Update this object to know that its path has failed to parse.
-     *
-     * This causes it to update its replacementText to notify the user as such.
-     *
-     */
     public void setFailToParse() {
         parseStatus = ParseStatus.BAD_PARSE;
         replacementText = BAD_PARSE_MESSAGE;
     }
 
-    /**
-     * Update this object to know that we are unable to look up its show,
-     * apparently because the provider we're using has changed its API.
-     *
-     * (More technically, this means we got a "not found" when we tried to
-     * make the REST call.)
-     *
-     * This causes it to update its replacementText to notify the user as such.
-     *
-     */
-    public void setApiDiscontinued() {
-        parseStatus = ParseStatus.PARSED;
-        seriesStatus = SeriesStatus.UNFOUND;
-        replacementText = DOWNLOADING_FAILED;
-    }
-
-    /**
-     * Update this object to know that we have begun the process of moving
-     * its file.
-     *
-     * This information really is not currently used.
-     *
-     */
     public void setMoving() {
         fileStatus = FileStatus.MOVING;
     }
 
-    /**
-     * Update this object to know that we have finished the process of moving
-     * its file.
-     *
-     * This information really is not currently used.
-     *
-     */
     public void setRenamed() {
         fileStatus = FileStatus.RENAMED;
     }
 
-    /**
-     * Update this object to know that we have tried to move its file, but
-     * were unable to do so.
-     *
-     * This information really is not currently used.
-     *
-     */
     public void setFailToMove() {
         fileStatus = FileStatus.FAIL_TO_MOVE;
     }
 
-    /**
-     * Update this object to know that we tried to move its file, but the
-     * file apparently no longer exists in the original location.
-     *
-     * This information really is not currently used.
-     *
-     */
     public void setDoesNotExist() {
         fileStatus = FileStatus.NO_FILE;
     }
@@ -508,15 +369,9 @@ public class FileEpisode {
 
     private String getNoShowPlaceholder() {
         ShowName showName = ShowName.lookupShowName(filenameShow);
+        String queryString = showName.getQueryString();
         return BROKEN_PLACEHOLDER_FILENAME + " for \""
-            + showName.getQueryString()
-            + "\"";
-    }
-
-    private String getTimeoutPlaceholder() {
-        ShowName showName = ShowName.lookupShowName(filenameShow);
-        return TIMEOUT_DOWNLOADING + " \""
-            + showName.getQueryString()
+            + StringUtils.decodeSpecialCharacters(queryString)
             + "\"";
     }
 
@@ -545,23 +400,6 @@ public class FileEpisode {
     }
 
     /**
-     * Confirm the actualShow of this object to be null, and set the replacement text
-     * to inform the user of what appears to have gone wrong.
-     *
-     * @param failedShow
-     *    the FailedShow object that represents the failure
-     */
-    public void setFailedShow(FailedShow failedShow) {
-        actualShow = null;
-        seriesStatus = SeriesStatus.UNFOUND;
-        if (failedShow.isTimeout()) {
-            replacementText = getTimeoutPlaceholder();
-        } else {
-            replacementText = getNoShowPlaceholder();
-        }
-    }
-
-    /**
      *
      * @return the number of episode options to offer the user
      */
@@ -574,7 +412,7 @@ public class FileEpisode {
             return 0;
         }
 
-        if (actualShow.noEpisodes()) {
+        if (!actualShow.hasEpisodes()) {
             seriesStatus = SeriesStatus.NO_LISTINGS;
             replacementText = getNoListingsPlaceholder();
             return 0;
@@ -623,49 +461,55 @@ public class FileEpisode {
     }
 
     /**
-     * Returns the directory to which the file should be moved.<p>
+     * Return the name of the directory to which the file should be moved.
      *
+     * We try to make sure that a term means the same thing throughout the program.
+     * The "destination directory" is the *top-level* directory that the user has
+     * specified we should move all the files into.  But the files don't necessarily
+     * go directly into the "destination directory".  They will go into a sub-directory
+     * naming the show and possibly the season.  That final directory is what we refer
+     * to as the "move-to directory".
+     *
+     * @return the name of the directory into which this file (the Path encapsulated
+     *         within this FileEpisode) should be moved
+     */
+    private String getMoveToDirectory() {
+        String destPath = userPrefs.getDestinationDirectoryName();
+        if (actualShow == null) {
+            logger.warning("error: should not get move-to directory, do not have show!");
+        } else {
+            String dirname = actualShow.getDirName();
+            destPath = destPath + FILE_SEPARATOR_STRING + dirname;
+
+            // Now we might append the "season" directory, if the user requested it in
+            // the preferences.  But, only if we actually *have* season information.
+            if (placement.season > Show.NO_SEASON) {
+                String seasonPrefix = userPrefs.getSeasonPrefix();
+                // Defect #50: Only add the 'season #' folder if set,
+                // otherwise put files in showname root
+                if (StringUtils.isNotBlank(seasonPrefix)) {
+                    String seasonString = userPrefs.isSeasonPrefixLeadingZero()
+                        ? StringUtils.zeroPadTwoDigits(placement.season)
+                        : String.valueOf(placement.season);
+                    destPath = destPath + FILE_SEPARATOR_STRING + seasonPrefix + seasonString;
+                }
+            } else {
+                logger.fine("maybe should not get move-to directory, do not have season");
+            }
+        }
+        return destPath;
+    }
+
+    /**
      * @return the new Path into which this file would be moved, based on the information
      *         we've gathered, and the user's preferences
      */
     public Path getMoveToPath() {
-        Path destPath = userPrefs.getDestinationDirectory();
-        if (destPath == null) {
-            return pathObj.toAbsolutePath().getParent();
+        if (userPrefs.isMoveSelected()) {
+            return Paths.get(getMoveToDirectory());
         } else {
-            if (actualShow == null) {
-                logger.warning("error: should not get move-to directory, do not have show!");
-            } else {
-                destPath = destPath.resolve(actualShow.getDirName());
-
-                // Now we might append the "season" directory, if the user requested it in
-                // the preferences.  But, only if we actually *have* season information.
-                if (placement.season > Show.NO_SEASON) {
-                    String seasonPrefix = userPrefs.getSeasonPrefix();
-                    // Defect #50: Only add the 'season #' folder if set,
-                    // otherwise put files in showname root
-                    if (StringUtils.isNotBlank(seasonPrefix)) {
-                        String seasonString = userPrefs.isSeasonPrefixLeadingZero()
-                            ? StringUtils.zeroPadTwoDigits(placement.season)
-                            : String.valueOf(placement.season);
-                        destPath = destPath.resolve(seasonPrefix + seasonString);
-                    }
-                } else {
-                    logger.fine("maybe should not get move-to directory, do not have season");
-                }
-            }
-            return destPath;
+            return pathObj.toAbsolutePath().getParent();
         }
-    }
-
-    /**
-     * Returns the name of the file to which the file should be moved.<p>
-     *
-     */
-    private String getMoveToFile(final String filename) {
-        Path destPath = getMoveToPath();
-        Path dest = destPath.resolve(filename);
-        return dest.toString();
     }
 
     private static String formatDate(final LocalDate date, final String format) {
@@ -673,31 +517,10 @@ public class FileEpisode {
         return dateFormat.format(date);
     }
 
-    /**
-     * Replace the control strings in the replacement template, with the episode information.
-     *
-     * This method is static to make it obvious that it doesn't rely on any instance variables;
-     * since it also does not modify any class variables, it is a pure function, and safe to
-     * call from any context.
-     *
-     * @param replacementTemplate
-     *     the template provided by the user via the preferences dialog
-     * @param actualShow
-     *     the TV show that we have determined matches this FileEpisode
-     * @param actualEpisode
-     *     the episode that we, possibly with help from the user, have determined matches
-     * @param placement
-     *     the season number and episode number information we obtained from the filename
-     * @param resolution
-     *     the screen resolution (e.g., "720p", etc.) we obtained from the filename
-     * @return the template string with the episode information replacing the control strings
-     */
-    @SuppressWarnings("WeakerAccess")
-    static String plugInInformation(final String replacementTemplate,
-                                    final Show actualShow, final Episode actualEpisode,
-                                    final EpisodePlacement placement, final String resolution)
+    private static String plugInInformation(final String replacementTemplate, final String showName,
+                                            final EpisodePlacement placement, final Episode actualEpisode,
+                                            final String resolution)
     {
-        final String showName = actualShow.getName();
         String episodeTitle = actualEpisode.getTitle();
         int len = episodeTitle.length();
         if (len > MAX_TITLE_LENGTH) {
@@ -705,21 +528,21 @@ public class FileEpisode {
             episodeTitle = episodeTitle.substring(0, MAX_TITLE_LENGTH);
         }
         String newFilename = replacementTemplate
-            .replaceAll(SEASON_NUM.getToken(),
+            .replaceAll(ReplacementToken.SEASON_NUM.getToken(),
                         String.valueOf(placement.season))
-            .replaceAll(SEASON_NUM_LEADING_ZERO.getToken(),
+            .replaceAll(ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken(),
                         StringUtils.zeroPadTwoDigits(placement.season))
-            .replaceAll(EPISODE_NUM.getToken(),
+            .replaceAll(ReplacementToken.EPISODE_NUM.getToken(),
                         StringUtils.formatDigits(placement.episode))
-            .replaceAll(EPISODE_NUM_LEADING_ZERO.getToken(),
+            .replaceAll(ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken(),
                         StringUtils.zeroPadThreeDigits(placement.episode))
-            .replaceAll(SHOW_NAME.getToken(),
+            .replaceAll(ReplacementToken.SHOW_NAME.getToken(),
                         Matcher.quoteReplacement(showName))
-            .replaceAll(EPISODE_TITLE.getToken(),
+            .replaceAll(ReplacementToken.EPISODE_TITLE.getToken(),
                         Matcher.quoteReplacement(episodeTitle))
-            .replaceAll(EPISODE_TITLE_NO_SPACES.getToken(),
+            .replaceAll(ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken(),
                         Matcher.quoteReplacement(StringUtils.makeDotTitle(episodeTitle)))
-            .replaceAll(EPISODE_RESOLUTION.getToken(),
+            .replaceAll(ReplacementToken.EPISODE_RESOLUTION.getToken(),
                         resolution);
 
         // Date and times
@@ -727,82 +550,36 @@ public class FileEpisode {
         if (airDate == null) {
             logger.log(Level.WARNING, "Episode air date not found for " + showName
                        + ", " + placement + ", \"" + episodeTitle + "\"");
+            newFilename = newFilename
+                .replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(), "")
+                .replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(), "")
+                .replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(), "")
+                .replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(), "")
+                .replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(), "")
+                .replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(), "");
+        } else {
+            newFilename = newFilename
+                .replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(),
+                            formatDate(airDate, "d"))
+                .replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(),
+                            formatDate(airDate, "dd"))
+                .replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(),
+                            formatDate(airDate, "M"))
+                .replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(),
+                            formatDate(airDate, "MM"))
+                .replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(),
+                            formatDate(airDate, "yyyy"))
+                .replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
+                            formatDate(airDate, "yy"));
         }
-        // If the airDate is null, we warn (above) but we go ahead and do the substitution anyway;
-        // if the date is null, we need to replace the control strings with the empty string.
-        newFilename = plugInAirDate(airDate, newFilename);
 
         return StringUtils.sanitiseTitle(newFilename);
     }
 
-    private static String removeTokens(final String orig, final ReplacementToken... tokens) {
-        String removed = orig;
-
-        for (ReplacementToken token : tokens) {
-            removed = removed.replaceAll(token.getToken(), "");
-        }
-        return removed;
-    }
-
     /**
-     * Replace the date control strings in the template, with the episode air date information.
-     * May be called with null if the episode in question doesn't have air date information.
-     *
-     * This method is static to make it obvious that it doesn't rely on any instance variables;
-     * since it also does not modify any class variables, it is a pure function, and safe to
-     * call from any context.
-     *
-     * @param airDate
-     *     the date information we obtained from the episode; may be null
-     * @param template
-     *     the replacement template provided by the user via the preferences dialog; may be
-     *     partially filled in already, of course.
-     * @return the template string with the air date information replacing the control strings
-     */
-    @SuppressWarnings("WeakerAccess")
-    static String plugInAirDate(final LocalDate airDate, final String template) {
-        // Date and times
-        if (airDate == null) {
-            return removeTokens(template,
-                                DATE_DAY_NUM, DATE_DAY_NUMLZ,
-                                DATE_MONTH_NUM, DATE_MONTH_NUMLZ,
-                                DATE_YEAR_FULL, DATE_YEAR_MIN);
-        } else {
-            return template
-                .replaceAll(DATE_DAY_NUM.getToken(),
-                            formatDate(airDate, "d"))
-                .replaceAll(DATE_DAY_NUMLZ.getToken(),
-                            formatDate(airDate, "dd"))
-                .replaceAll(DATE_MONTH_NUM.getToken(),
-                            formatDate(airDate, "M"))
-                .replaceAll(DATE_MONTH_NUMLZ.getToken(),
-                            formatDate(airDate, "MM"))
-                .replaceAll(DATE_YEAR_FULL.getToken(),
-                            formatDate(airDate, "yyyy"))
-                .replaceAll(DATE_YEAR_MIN.getToken(),
-                            formatDate(airDate, "yy"));
-        }
-    }
-
-    /**
-     * Calculates the destination basename for this FileEpisode.<p>
-     *
-     * Ultimately, the destination for where we move a file to has four parts:<ol>
-     *  <li>the destination directory -- specified by the user in the preferences</li>
-     *  <li>an optional subdirectory -- templates specified by the user in the
-     *        preferences, and filled in by getMoveToFile()</li>
-     *  <li>the basename of the file, which is what this method constructs</li>
-     *  <li>the file suffix, which is determined by the original filename, and
-     *        not changeable</li></ol><p>
-     *
-     * To get the basename, we use the template provided by the user in the
-     * preferences, and plug in the information we found about the actual show
-     * and the actual episode.  We may have found more than one matching episode;
-     * the argument to this method tells us which option to use.
      *
      * @param n
      *    the episode option to get the basename of
-     * @return the basename to use for the replacement file
      */
     String getRenamedBasename(final int n) {
         if (!userPrefs.isRenameSelected()) {
@@ -822,9 +599,8 @@ public class FileEpisode {
             return originalBasename;
         }
 
-        return plugInInformation(userPrefs.getRenameReplacementString(),
-                                 actualShow, actualEpisodes.get(n),
-                                 placement, filenameResolution);
+        return plugInInformation(userPrefs.getRenameReplacementString(), actualShow.getName(),
+                                 placement, actualEpisodes.get(n), filenameResolution);
     }
 
     /**
@@ -856,22 +632,6 @@ public class FileEpisode {
         return chosenEpisode;
     }
 
-    /**
-     * Retrieves the "basename" for the proposed destination for this file.<p>
-     *
-     * The "basename" is what you get when you take a file path, remove the directory,
-     * and remove the file suffix.<p>
-     *
-     * The user has the option of "moving" the file to a different directory, but not
-     * renaming it.  When that option is selected, the destination basename is simply
-     * the original basename.<p>
-     *
-     * When rename is enabled, to get the destination basename, we use the template
-     * provided by the user in  the preferences, and plug in the information we found
-     * about the actual show and the actual episode.
-     *
-     * @return the "basename" of the proposed destination for this file
-     */
     public String getDestinationBasename() {
         if (userPrefs.isRenameSelected()) {
             if (baseForRename == null) {
@@ -902,13 +662,14 @@ public class FileEpisode {
                 }
 
                 if (userPrefs.isMoveSelected()) {
-                    replacementOptions.add(getMoveToFile(newBasename + filenameSuffix));
+                    replacementOptions.add(getMoveToDirectory() + FILE_SEPARATOR_STRING
+                                           + newBasename + filenameSuffix);
                 } else {
                     replacementOptions.add(newBasename + filenameSuffix);
                 }
             }
         } else if (userPrefs.isMoveSelected()) {
-            replacementOptions.add(getMoveToFile(fileNameString));
+            replacementOptions.add(getMoveToDirectory() + FILE_SEPARATOR_STRING + fileNameString);
         } else {
             // This setting doesn't make any sense, but we haven't bothered to
             // disallow it yet.

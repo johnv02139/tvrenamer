@@ -19,8 +19,8 @@ import java.util.logging.Logger;
  *   <li>"the.office.s06e20.mkv"</li>
  *   <li>"the.office.us.s08e11.avi"</li></ul><p>
  *
- * These would produce "filenameShow" values of "The Office", "The Office", "the.office",
- * and "the.office.us", respectively.  The first two are identical, and therefore will map
+ * These would produce "filenameShow" values of "The Office ", "The Office ", "the.office.",
+ * and "the.office.us", respectively.  The first two are the same, and therefore will map
  * to the same ShowName object.<p>
  *
  * From the filenameShow, we create a query string, which normalizes the case and punctuation.
@@ -160,32 +160,6 @@ public class ShowName {
      * Get the ShowName object for the given String.  If one was already created,
      * it is returned, and if not, one will be created, stored, and returned.
      *
-     * Note, the functionality here is identical to {@link #lookupShowName}.  The only
-     * implementation difference is the error message.  But callers should know which
-     * one they want.
-     *
-     * @param filenameShow
-     *            the name of the show as it appears in the filename
-     * @return the ShowName object for that filenameShow
-     */
-    public static ShowName mapShowName(String filenameShow) {
-        ShowName showName = SHOW_NAMES.get(filenameShow);
-        if (showName == null) {
-            showName = new ShowName(filenameShow);
-            SHOW_NAMES.put(filenameShow, showName);
-        }
-        return showName;
-    }
-
-    /**
-     * Get the ShowName object for the given String, under the assumption that such
-     * a mapping already exists.  If no mapping is found, one will be created, stored,
-     * and returned, but an error message will also be generated.
-     *
-     * Note, the functionality here is identical to {@link #mapShowName}.  The only
-     * implementation difference is the error message.  But callers should know which
-     * one they want.
-     *
      * @param filenameShow
      *            the name of the show as it appears in the filename
      * @return the ShowName object for that filenameShow
@@ -195,8 +169,6 @@ public class ShowName {
         if (showName == null) {
             showName = new ShowName(filenameShow);
             SHOW_NAMES.put(filenameShow, showName);
-            logger.severe("could not get show name for " + filenameShow
-                          + ", so created one instead");
         }
         return showName;
     }
@@ -221,26 +193,21 @@ public class ShowName {
      * @param listener
      *            the listener registering interest
      */
-    void addShowInformationListener(final ShowInformationListener listener) {
+    public void addListener(ShowInformationListener listener) {
         synchronized (queryString) {
             queryString.addListener(listener);
         }
     }
 
     /**
-     * Determine if this ShowName needs to be queried.
+     * Determine if this ShowName's query string has any listeners yet
      *
-     * If the answer is "yes", we add a listener and query immediately,
-     * in a synchronized block.  Therefore, that becomes how we determine
-     * the answer: if this ShowName already has a listener, that means
-     * its download is already underway.
-     *
-     * @return false if this ShowName's query string already has a listener;
-     *     true if not
+     * @return true if this ShowName's query string already has a listener;
+     *     false if not
      */
-    boolean needsQuery() {
+    public boolean hasListeners() {
         synchronized (queryString) {
-            return !queryString.hasListeners();
+            return queryString.hasListeners();
         }
     }
 
@@ -370,15 +337,12 @@ public class ShowName {
     }
 
     /**
-     * Get this ShowName's "example filename".<p>
+     * Get this ShowName's "foundName" attribute.
      *
-     * The "example filename" is an exact substring of the filename that caused
-     * this ShowName to be created; specifically, it's the part of the filename
-     * that we believe represents the show.
-     *
-     * @return the example filename
+     * @return foundName
+     *            the name of the show as it appears in the filename
      */
-    public String getExampleFilename() {
+    public String getFoundName() {
         return foundName;
     }
 

@@ -1,7 +1,6 @@
 package org.tvrenamer.model;
 
 import org.tvrenamer.controller.AddEpisodeListener;
-import org.tvrenamer.controller.util.FileUtilities;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -29,6 +28,20 @@ public class EpisodeDb implements Observer {
         prefs.addObserver(this);
     }
 
+    public void put(String key, FileEpisode value) {
+        if (value == null) {
+            logger.info("cannot put null value into EpisodeDb!!!");
+            return;
+        }
+
+        if (key == null) {
+            logger.warning("cannot put null key into EpisodeDb!!!");
+            return;
+        }
+
+        episodes.put(key, value);
+    }
+
     private String ignorableReason(String fileName) {
         for (String ignoreKeyword : ignoreKeywords) {
             if (fileName.contains(ignoreKeyword)) {
@@ -47,25 +60,19 @@ public class EpisodeDb implements Observer {
             // not much use.  TODO: make better use of it.
             logger.warning("Couldn't parse file: " + pathname);
         }
-        episodes.put(pathname, episode);
+        put(pathname, episode);
         return episode;
     }
 
-    /**
-     * Remove the given key from the Episode database
-     *
-     * This is called when the user removes a row from the table.  It's possible
-     * (even if unlikely) that the user might delete the entry, only to re-add
-     * it later.  And this works fine.  But it does cause us to recreate the
-     * FileEpisode from scratch.  It might be nice to put removed episodes
-     * "aside" somewhere that we could still find them, but just know they're
-     * not actively in the table.
-     *
-     * @param key
-     *    the key to remove from the Episode database
-     */
-    public void remove(String key) {
-        episodes.remove(key);
+    public FileEpisode remove(String key) {
+        // This is called when the user removes a row from the table.
+        // It's possible (even if unlikely) that the user might delete
+        // the entry, only to re-add it later.  And this works fine.
+        // But it does cause us to recreate the FileEpisode from scratch.
+        // It might be nice to put removed episodes "aside" somewhere that
+        // we could still find them, but just know they're not actively
+        // in the table.
+        return episodes.remove(key);
     }
 
     public FileEpisode get(String key) {
@@ -86,66 +93,6 @@ public class EpisodeDb implements Observer {
             logger.finer("could not access file; treating as hidden: " + path);
         }
         return isVisible;
-    }
-
-    /**
-     * Get the current location -- and, therefore, the database key -- for the
-     * file that has been referred to by the given key.
-     *
-     * That is, we know where the file USED TO be.  It may still be there; it may
-     * have moved.  Tell the caller where it is now, which is also how to retrieve
-     * its FileEpisode object.
-     *
-     * @param key
-     *     a String, representing a path to the last known location of the file,
-     *     to look up and check
-     * @return the current location, if the file still exists; null if the file
-     *     is no longer valid
-     *
-     * The method might change the internal database, if it detects the file has
-     * been moved.  That means, the key given will no longer be valid when the
-     * method returns.  The return value does not explicitly give an indication
-     * of whether or not that's true.  Callers must simply use the returned value
-     * as the key after this function returns, or must do a comparison with the
-     * previous key to see if it's still valid.
-     *
-     */
-    public String currentLocationOf(final String key) {
-        if (key == null) {
-            return null;
-        }
-        FileEpisode ep = episodes.get(key);
-        if (ep == null) {
-            return null;
-        }
-        Path currentLocation = ep.getPath();
-        if (fileIsVisible(currentLocation) && Files.isRegularFile(currentLocation)) {
-            // OK, the file is good!  But that could be true even if
-            // it were moved.  Now try to see if it's been moved, or if
-            // it's still where we think it is.
-            String direct = currentLocation.toString();
-            if (key.equals(direct)) {
-                return key;
-            }
-            // Even if the strings don't match directly, we're not going
-            // to change anything if they both refer to the same file.
-            // Though, maybe we should?  TODO
-            Path keyPath = Paths.get(key);
-            if (FileUtilities.isSameFile(currentLocation, keyPath)) {
-                return key;
-            }
-            // The file has been moved.  We update our database, and inform the
-            // caller of the new key.
-            episodes.remove(key);
-            episodes.put(direct, ep);
-            return direct;
-        } else {
-            // The file has disappeared out from under us (or, bizarrely, been replaced
-            // by a directory?  Anything is possible...).  Remove it from the db and let
-            // the caller know by returning null.
-            episodes.remove(key);
-            return null;
-        }
     }
 
     private void addFileToQueue(final Queue<FileEpisode> contents,
@@ -291,7 +238,9 @@ public class EpisodeDb implements Observer {
                 for (FileEpisode ep : episodes.values()) {
                     ep.setIgnoreReason(ignorableReason(ep.getFilepath()));
                 }
-                listeners.forEach(AddEpisodeListener::refreshDestinations);
+                for (AddEpisodeListener listener : listeners) {
+                    listener.refreshAll();
+                }
             }
         }
     }

@@ -11,7 +11,7 @@ import java.util.logging.LogManager;
 
 class Launcher {
 
-    static void initializeLogger() {
+    private static void initializeLogger() {
         // Find logging.properties file inside jar
         try (InputStream loggingConfigStream
              = Launcher.class.getResourceAsStream(LOGGING_PROPERTIES))
