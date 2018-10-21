@@ -16,9 +16,6 @@ then
   exit 1
 fi
 
-# local libraries -- hard-coded and checked in
-loclibs="jedit-4.3.2-IOUtilities.jar"
-
 # libraries -- hard-coded.  The first one is platform-specific.
 libs="org.eclipse.swt.gtk.linux.x86_64-4.3.jar commons-codec-1.4.jar xstream-1.4.9.jar xmlpull-1.1.3.1.jar xpp3_min-1.1.4c.jar"
 
@@ -93,17 +90,10 @@ fi
 # Could return to where we started, but then resources are not found
 # cd $startdir
 
-# Library files are checked in here
-loclibdir=${pdir}/jars/main
-
 # Library files are downloaded here
 ivydir=${pdir}/lib
 
 CLASSPATH=${pdir}/out
-for lib in ${loclibs}
-do
-  CLASSPATH=${CLASSPATH}':'${loclibdir}/${lib}
-done
 for lib in ${libs}
 do
   CLASSPATH=${CLASSPATH}':'${ivydir}/${lib}

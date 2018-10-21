@@ -4,12 +4,11 @@ import static org.tvrenamer.controller.util.XPathUtilities.nodeListValue;
 import static org.tvrenamer.controller.util.XPathUtilities.nodeTextValue;
 
 import org.tvrenamer.controller.util.StringUtils;
+import org.tvrenamer.model.GenericException;
 import org.tvrenamer.model.Season;
 import org.tvrenamer.model.Show;
-import org.tvrenamer.model.TVRenamerIOException;
 import org.tvrenamer.model.util.Constants;
 
-import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -25,10 +24,11 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,8 +41,11 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 public class TheTVDBProvider {
+    public static final String IMDB_BASE_URL = "http://www.imdb.com/title/";
+
     private static final String ERROR_PARSING_XML = "Error parsing XML";
-    private static final String ERROR_DOWNLOADING_SHOW_INFORMATION = "Error downloading show information. Check internet or proxy settings";
+    private static final String ERROR_DOWNLOADING_SHOW_INFORMATION =
+            "Error downloading show information. Check internet or proxy settings";
 
     private static Logger logger = Logger.getLogger(TheTVDBProvider.class.getName());
 
@@ -63,7 +66,7 @@ public class TheTVDBProvider {
 
     private static final String XPATH_DVD_EPISODE_NUM = "DVD_episodenumber";
 
-    private static final String EPISODE_DATE_FORMAT = "yyyy-MM-dd";
+    private static final DateFormat EPISODE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     // Caching
     // This implements a very rudimentary file cache.  Files in the cache never expire.
@@ -72,10 +75,8 @@ public class TheTVDBProvider {
     // out there that could be integrated to provide this functionality, so it's not
     // worth spending much time on, but it also seemed quicker to whip something up on
     // my own than to search for and learn how to use a third-party package.
-    //
-    // For users, the caching may not even matter.  They'd probably run TVRenamer very
-    // infrequently, and when they did re-run it, they'd usually want to have the listings
-    // refreshed.  But for developing, it's both slower for me, and more of a strain on
+
+    // Particularly for developing, it's both slower for me, and more of a strain on
     // TheTVDb.com, to actually fetch the XML from the web every time.
     //
     // Additionally, as a developer, it's actually nice to have the XML there to look at.
@@ -89,7 +90,7 @@ public class TheTVDBProvider {
             try {
                 Files.createDirectories(TvDbCache);
             } catch (IOException ioe) {
-                logger.info("exception trying to create cache");
+                logger.fine("exception trying to create cache");
             }
         }
     }
@@ -100,7 +101,7 @@ public class TheTVDBProvider {
             pw.print(xmlText);
             return cachePath;
         } catch (Exception e) {
-            logger.info("caught exception caching xml: " + e);
+            logger.fine("caught exception caching xml: " + e);
         }
         return null;
     }
@@ -114,7 +115,7 @@ public class TheTVDBProvider {
     }
 
     private static File getShowSearchXml(String showName)
-        throws TVRenamerIOException
+        throws GenericException
     {
         Path cachePath = seriesOptionsCachePath(showName);
         if (Files.exists(cachePath)) {
@@ -122,14 +123,14 @@ public class TheTVDBProvider {
         }
         String searchURL = BASE_SEARCH_URL + StringUtils.encodeSpecialCharacters(showName);
 
-        logger.info("About to download search results from " + searchURL);
+        logger.fine("About to download search results from " + searchURL);
 
         String searchXml = new HttpConnectionHandler().downloadUrl(searchURL);
         return cacheXml(cachePath, searchXml);
     }
 
     private static File getShowListingXml(Show show)
-        throws TVRenamerIOException
+        throws GenericException
     {
         Path cachePath = episodeListingsCachePath(show);
         if (Files.exists(cachePath)) {
@@ -137,7 +138,7 @@ public class TheTVDBProvider {
         }
         String showURL = BASE_LIST_URL + show.getId() + BASE_LIST_FILENAME;
 
-        logger.info("Downloading episode listing from " + showURL);
+        logger.fine("Downloading episode listing from " + showURL);
 
         String listingXml = new HttpConnectionHandler().downloadUrl(showURL);
         return cacheXml(cachePath, listingXml);
@@ -150,17 +151,19 @@ public class TheTVDBProvider {
 
         for (int i = 0; i < shows.getLength(); i++) {
             Node eNode = shows.item(i);
+            String imdbId = nodeTextValue(XPATH_IMDB, eNode, xpath);
             options.add(new Show(nodeTextValue(XPATH_SHOWID, eNode, xpath),
                                  nodeTextValue(XPATH_NAME, eNode, xpath),
-                                 nodeTextValue(XPATH_IMDB, eNode, xpath)));
+                                 (imdbId == null) ? "" : IMDB_BASE_URL + imdbId));
         }
 
         return options;
     }
 
     public static List<Show> getShowOptions(String showName)
-        throws TVRenamerIOException
+        throws GenericException
     {
+        // logger.fine("looking for options for " + showName);
         try {
             File searchXml = getShowSearchXml(showName);
 
@@ -174,10 +177,14 @@ public class TheTVDBProvider {
 
         } catch (ConnectException | UnknownHostException e) {
             logger.log(Level.WARNING, e.getMessage(), e);
-            throw new TVRenamerIOException(ERROR_DOWNLOADING_SHOW_INFORMATION, e);
-        } catch (ParserConfigurationException | XPathExpressionException | SAXException | IOException e) {
+            throw new GenericException(ERROR_DOWNLOADING_SHOW_INFORMATION, e);
+        } catch (ParserConfigurationException
+                | XPathExpressionException
+                | SAXException
+                | IOException e)
+        {
             logger.log(Level.WARNING, e.getMessage(), e);
-            throw new TVRenamerIOException(ERROR_PARSING_XML, e);
+            throw new GenericException(ERROR_PARSING_XML, e);
         }
     }
 
@@ -185,7 +192,7 @@ public class TheTVDBProvider {
         int seasonNum = Integer.parseInt(seasonId);
         Season season = show.getSeason(seasonNum);
         if (season == null) {
-            season = new Season(show, seasonNum);
+            season = new Season(seasonNum);
             show.setSeason(seasonNum, season);
         }
         return season;
@@ -209,54 +216,49 @@ public class TheTVDBProvider {
     private static Integer getEpisodeNumber(Node eNode, XPath xpath)
         throws XPathExpressionException
     {
-        Integer epNum = getEpisodeNumberFromNode(XPATH_DVD_EPISODE_NUM, eNode, xpath);
+        // TODO: prefer XPATH_DVD_EPISODE_NUM, but do that as a separate commit
+        Integer epNum = getEpisodeNumberFromNode(XPATH_EPISODE_NUM, eNode, xpath);
         if (epNum != null) {
             return epNum;
         }
-        return getEpisodeNumberFromNode(XPATH_EPISODE_NUM, eNode, xpath);
+        return getEpisodeNumberFromNode(XPATH_DVD_EPISODE_NUM, eNode, xpath);
     }
 
-    private static LocalDate getEpisodeDate(Node eNode, XPath xpath, DateTimeFormatter dateFormatter)
+    private static Date getEpisodeDate(Node eNode, XPath xpath)
         throws XPathExpressionException
     {
         String airdate = nodeTextValue(XPATH_AIRDATE, eNode, xpath);
-        if (StringUtils.isBlank(airdate)) {
-            return null;
-        }
         try {
-            return (LocalDate) dateFormatter.parse(airdate, LocalDate::from);
-        } catch (DateTimeParseException e) {
+            return EPISODE_DATE_FORMAT.parse(airdate);
+        } catch (ParseException e) {
             return null;
         }
     }
 
-    private static void addEpisodeToSeason(Node eNode, Show show, XPath xpath,
-                                           DateTimeFormatter dateFormatter)
+    private static void addEpisodeToSeason(Node eNode, Show show, XPath xpath)
+        throws XPathExpressionException
     {
-        try {
-            Integer epNum = getEpisodeNumber(eNode, xpath);
-            if (epNum == null) {
-                logger.info("ignoring episode with no epnum: " + eNode);
-                return;
-            }
-
-            String seasonNumString = nodeTextValue(XPATH_SEASON_NUM, eNode, xpath);
-            String episodeName = nodeTextValue(XPATH_EPISODE_NAME, eNode, xpath);
-            logger.finer("[" + seasonNumString + "x" + epNum + "] " + episodeName);
-
-            LocalDate date = getEpisodeDate(eNode, xpath, dateFormatter);
-
-            Season season = showSeason(show, seasonNumString);
-            season.addEpisode(epNum, episodeName, date);
-        } catch (Exception e) {
-            logger.warning("exception parsing episode of " + show);
-            logger.warning(e.toString());
+        Integer epNum = getEpisodeNumber(eNode, xpath);
+        if (epNum == null) {
+            logger.fine("ignoring episode with no epnum: " + eNode);
+            return;
         }
+        // logger.fine("processing episode " + epNum);
+
+        String seasonNumString = nodeTextValue(XPATH_SEASON_NUM, eNode, xpath);
+        String episodeName = nodeTextValue(XPATH_EPISODE_NAME, eNode, xpath);
+        // logger.fine(show.getName() + ": [" + seasonNumString + "x" + epNum + "] " + episodeName);
+
+        Date date = getEpisodeDate(eNode, xpath);
+
+        Season season = showSeason(show, seasonNumString);
+        season.addEpisode(epNum, episodeName, date);
     }
 
     public static void getShowListing(Show show)
-        throws TVRenamerIOException
+        throws GenericException
     {
+        // logger.fine("looking for listings for " + show.getName());
         try {
             File showXml = getShowListingXml(show);
 
@@ -266,13 +268,16 @@ public class TheTVDBProvider {
             XPath xpath = XPathFactory.newInstance().newXPath();
 
             NodeList episodes = nodeListValue(XPATH_EPISODE_LIST, doc, xpath);
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(EPISODE_DATE_FORMAT);
             for (int i = 0; i < episodes.getLength(); i++) {
-                addEpisodeToSeason(episodes.item(i), show, xpath, dateFormatter);
+                addEpisodeToSeason(episodes.item(i), show, xpath);
             }
-        } catch (ParserConfigurationException | XPathExpressionException | SAXException | IOException | NumberFormatException | DOMException e) {
+        } catch (ParserConfigurationException
+                | XPathExpressionException
+                | SAXException
+                | IOException e)
+        {
             logger.log(Level.WARNING, e.getMessage(), e);
-            throw new TVRenamerIOException(ERROR_PARSING_XML, e);
+            throw new GenericException(ERROR_PARSING_XML, e);
         }
     }
 }

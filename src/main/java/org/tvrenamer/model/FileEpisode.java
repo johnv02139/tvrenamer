@@ -1,68 +1,140 @@
-// FileEpisode - represents a file on disk which is presumed to contain a single
-//   episode of a TV show.
-//
-// This is a very mutable class.  It is initially created with just a filename,
-// and then information comes streaming in.
-//
-
 package org.tvrenamer.model;
 
-import org.tvrenamer.controller.util.StringUtils;
+import org.eclipse.swt.widgets.TableItem;
+import org.tvrenamer.controller.EpisodeInformationListener;
+import org.tvrenamer.controller.ShowInformationListener;
 
 import java.io.File;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.logging.Level;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 
-public class FileEpisode {
+public class FileEpisode implements ShowInformationListener {
     private static Logger logger = Logger.getLogger(FileEpisode.class.getName());
 
-    private static final String ADDED_PLACEHOLDER_FILENAME = "Downloading ...";
-    private static final String BROKEN_PLACEHOLDER_FILENAME = "Unable to download show information";
-    private static final int NO_INFORMATION = -1;
+    public static final int NO_SEASON = -1;
+    public static final int NO_EPISODE = -1;
 
+    private static final String DATEDAY_NUM = ReplacementToken.DATE_DAY_NUM.getToken();
+    private static final String DATEDAY_NLZ = ReplacementToken.DATE_DAY_NUMLZ.getToken();
+    private static final String DATEMON_NUM = ReplacementToken.DATE_MONTH_NUM.getToken();
+    private static final String DATEMON_NLZ = ReplacementToken.DATE_MONTH_NUMLZ.getToken();
+    private static final String DATE_YR_FUL = ReplacementToken.DATE_YEAR_FULL.getToken();
+    private static final String DATE_YR_MIN = ReplacementToken.DATE_YEAR_MIN.getToken();
+    private static final String EPISODE_NUM = ReplacementToken.EPISODE_NUM.getToken();
+    private static final String ENUM_LEADZR = ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken();
+    private static final String EPISD_TITLE = ReplacementToken.EPISODE_TITLE.getToken();
+    private static final String EP_TIT_NOSP = ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken();
+    private static final String SEAS_NUMBER = ReplacementToken.SEASON_NUM.getToken();
+    private static final String SNUM_LEADZR = ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken();
+    private static final String SERIES_NAME = ReplacementToken.SHOW_NAME.getToken();
+
+    // "filename" instance vars -- these are the results of parsing the filename.
+    // The "filenameShow" is the precise string from the filename, that we think
+    // corresponds to the name of the TV series.  We use these data to look up
+    // information about the show, and the information we find may differ from
+    // what the filename actually represents.
+    private String filenameShow;
+    private final int filenameSeason;
+    private final int filenameEpisode;
+    private final String filenameSuffix;
+
+    // The "fileObj" is the java.io.File object representing the file that this
+    // object is concerned with.  Note that it is non-final, as the FileMover
+    // class may change the file associated with this episode.  After all, the
+    // whole point here is to rename files.  Nevertheless, not sure that detail
+    // makes sense, particularly given that the three "filename" instance variables,
+    // above, are final.  After a move, the variables are not necessarily coordinated
+    // with each other.
+    //
+    // A better approach might be to have this object also be final, and when a file
+    // is moved, we actually create a new FileEpisode object for it, and replace the
+    // old FileEpisode in the EpisodeDb and in the TableItem, and then drop the old
+    // FileEpisode.  TODO?
     private File fileObj;
-    private EpisodeInfo status;
 
-    // These four fields reflect the information derived from the filename.  In particular,
-    // filenameShow is based on the part of the filename we "guessed" represented the name
-    // of the show, and which we use to query the provider.  Note that the actual show name
-    // that we get back from the provider will likely differ from what we have here.
-    private String filenameShow = "";
-    private int filenameSeason = NO_INFORMATION;
-    private int filenameEpisode = NO_INFORMATION;
-    private String filenameResolution = "";
-    private String queryString = "";
+    // The state of this object, not the state of the actual TV episode.  This is
+    // about how far we've processed the filename.
+    private EpisodeInfo episodeStatus;
+    private Deque<Show> shows;
+
+    // We currently keep a link to the item in the view that represents this object.
+    // It might be better to just have the view object subscribe to the episode, or
+    // possibly to the map entry in the EpisodeDb, but this is simple for now.
+    private TableItem viewItem = null;
+
+    private Deque<EpisodeInformationListener> listeners = new ArrayDeque<>();
 
     // This class actually figures out the proposed new name for the file, so we need
     // a link to the user preferences to know how the user wants the file renamed.
     private UserPreferences userPrefs = UserPreferences.getInstance();
 
-    public static String getExtension(File file) {
-        String filename = file.getName();
-        int dot = filename.lastIndexOf('.');
-        if (dot >= 0) {
-            return filename.substring(dot);
-        }
-        return "";
+    public FileEpisode(String filenameShow,
+                       int filenameSeason,
+                       int filenameEpisode,
+                       String filenameSuffix,
+                       File fileObj)
+    {
+        this.filenameShow = filenameShow;
+        this.filenameSeason = filenameSeason;
+        this.filenameEpisode = filenameEpisode;
+        this.filenameSuffix = filenameSuffix;
+        this.fileObj = fileObj;
+        episodeStatus = EpisodeInfo.ADDED;
     }
 
-    // Initially we create the FileEpisode with nothing more than the filename.
-    // Other information will flow in.
-    public FileEpisode(String filename) {
-        this(new File(filename));
+    // Obviously any code could call this constructor, but by convention we assume
+    // that if this version is called, it means we tried to parse the filename and
+    // failed to do so.  That's why we set the status to NOPARSE.
+    public FileEpisode(String filenameSuffix, File fileObj) {
+        this.filenameShow = "";
+        this.filenameSeason = NO_SEASON;
+        this.filenameEpisode = NO_EPISODE;
+        this.filenameSuffix = filenameSuffix;
+        this.fileObj = fileObj;
+        episodeStatus = EpisodeInfo.NOPARSE;
     }
 
-    public FileEpisode(File f) {
-        fileObj = f;
-        status = EpisodeInfo.NOPARSE;
+    public void listen(EpisodeInformationListener o) {
+        listeners.push(o);
+    }
+
+    public boolean wasNotParsed() {
+        return (episodeStatus == EpisodeInfo.NOPARSE);
+    }
+
+    public boolean wasParsed() {
+        return (episodeStatus != EpisodeInfo.NOPARSE);
+    }
+
+    public String getFilenameShow() {
+        return filenameShow;
+    }
+
+    public void setFilenameShow(String filenameShow) {
+        this.filenameShow = filenameShow;
+    }
+
+    public int getFilenameSeason() {
+        return filenameSeason;
+    }
+
+    public int getFilenameEpisode() {
+        return filenameEpisode;
+    }
+
+    public String getFilenameSuffix() {
+        return filenameSuffix;
     }
 
     public File getFile() {
         return fileObj;
+    }
+
+    public String getFilename() {
+        return fileObj.getPath();
     }
 
     public void setFile(File fileObj) {
@@ -70,172 +142,128 @@ public class FileEpisode {
     }
 
     public EpisodeInfo getStatus() {
-        return status;
+        return episodeStatus;
     }
 
     public void setStatus(EpisodeInfo newStatus) {
-        status = newStatus;
+        logger.fine("setting status");
+        episodeStatus = newStatus;
+        for (EpisodeInformationListener l : listeners) {
+            logger.fine("updating listener " + l);
+            l.onEpisodeUpdate(this);
+        }
     }
 
-    public void setFilenameShow(String filenameShow) {
-        this.filenameShow = filenameShow;
-        queryString = StringUtils.replacePunctuation(filenameShow).toLowerCase();
+    public Deque<Show> getShows() {
+        return shows;
     }
 
-    public int getFilenameSeason() {
-        return filenameSeason;
-    }
-
-    public void setFilenameSeason(int filenameSeason) {
-        this.filenameSeason = filenameSeason;
-    }
-
-    public int getFilenameEpisode() {
-        return filenameEpisode;
-    }
-
-    public void setFilenameEpisode(int filenameEpisode) {
-        this.filenameEpisode = filenameEpisode;
-    }
-
-    public String getFilenameResolution() {
-        return filenameResolution;
-    }
-
-    public void setFilenameResolution(String filenameResolution) {
-        if (filenameResolution == null) {
-            this.filenameResolution = "";
+    public void setShows(List<Show> newShows) {
+        logger.fine("setting shows");
+        boolean fails = false;
+        this.shows = new ArrayDeque<Show>();
+        if ((newShows == null) || (newShows.size() == 0)) {
+            fails = true;
         } else {
-            this.filenameResolution = filenameResolution;
-        }
-    }
-
-    public String getQueryString() {
-        return queryString;
-    }
-
-    private File getDestinationDirectory() {
-        String show = ShowStore.mapStringToShow(queryString).getName();
-        String destPath = userPrefs.getDestinationDirectory().getAbsolutePath() + File.separatorChar;
-        destPath = destPath + StringUtils.sanitiseTitle(show) + File.separatorChar;
-
-        // Defect #50: Only add the 'season #' folder if set, otherwise put files in showname root
-        if (StringUtils.isNotBlank(userPrefs.getSeasonPrefix())) {
-            destPath = destPath + userPrefs.getSeasonPrefix() + (userPrefs.isSeasonPrefixLeadingZero() && filenameSeason < 9 ? "0" : "") + filenameSeason + File.separatorChar;
-        }
-        return new File(destPath);
-    }
-
-    public String getNewFilename() {
-        switch (status) {
-            case ADDED: {
-                return ADDED_PLACEHOLDER_FILENAME;
-            }
-            case DOWNLOADED:
-            case RENAMED: {
-                String showName = "";
-                String seasonNum = "";
-                String titleString = "";
-                LocalDate airDate = null;
-
-                try {
-                    Show show = ShowStore.mapStringToShow(queryString);
-                    showName = show.getName();
-
-                    Season season = show.getSeason(filenameSeason);
-                    if (season == null) {
-                        seasonNum = String.valueOf(filenameSeason);
-                        logger.log(Level.SEVERE, "Season #" + filenameSeason + " not found for show '" + filenameShow + "'");
-                    } else {
-                        seasonNum = String.valueOf(season.getNumber());
-
-                        try {
-                            titleString = season.getTitle(filenameEpisode);
-                            airDate = season.getAirDate(filenameEpisode);
-                            if (airDate == null) {
-                                logger.log(Level.WARNING, "Episode air date not found for '" + toString() + "'");
-                            }
-                        } catch (EpisodeNotFoundException e) {
-                            logger.log(Level.SEVERE, "Episode not found for '" + toString() + "'", e);
-                        }
-                    }
-                } catch (ShowNotFoundException e) {
-                    showName = filenameShow;
-                    logger.log(Level.SEVERE, "Show not found for '" + toString() + "'", e);
+            for (Show s : newShows) {
+                this.shows.addLast(s);
+                if (s instanceof FailedShow) {
+                    fails = true;
                 }
-
-                String newFilename = userPrefs.getRenameReplacementString();
-
-                // Ensure that all special characters in the replacement are quoted
-                showName = Matcher.quoteReplacement(showName);
-                showName = GlobalOverrides.getInstance().getShowName(showName);
-                titleString = Matcher.quoteReplacement(titleString);
-
-                // Make whatever modifications are required
-                String episodeNumberString = new DecimalFormat("##0").format(filenameEpisode);
-                String episodeNumberWithLeadingZeros = new DecimalFormat("#00").format(filenameEpisode);
-                String episodeTitleNoSpaces = titleString.replaceAll(" ", ".");
-                String seasonNumberWithLeadingZero = new DecimalFormat("00").format(filenameSeason);
-
-                newFilename = newFilename.replaceAll(ReplacementToken.SHOW_NAME.getToken(), showName);
-                newFilename = newFilename.replaceAll(ReplacementToken.SEASON_NUM.getToken(), seasonNum);
-                newFilename = newFilename.replaceAll(ReplacementToken.SEASON_NUM_LEADING_ZERO.getToken(),
-                                                     seasonNumberWithLeadingZero);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_NUM.getToken(), episodeNumberString);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_NUM_LEADING_ZERO.getToken(),
-                                                     episodeNumberWithLeadingZeros);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_TITLE.getToken(), titleString);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_TITLE_NO_SPACES.getToken(),
-                                                     episodeTitleNoSpaces);
-                newFilename = newFilename.replaceAll(ReplacementToken.EPISODE_RESOLUTION.getToken(),
-                                                     filenameResolution);
-
-                // Date and times
-                if (airDate != null) {
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUM.getToken(),
-                                                         formatDate(airDate, "d"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_DAY_NUMLZ.getToken(),
-                                                         formatDate(airDate, "dd"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUM.getToken(),
-                                                         formatDate(airDate, "M"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_MONTH_NUMLZ.getToken(),
-                                                         formatDate(airDate, "MM"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_FULL.getToken(),
-                                                         formatDate(airDate, "yyyy"));
-                    newFilename = newFilename.replaceAll(ReplacementToken.DATE_YEAR_MIN.getToken(),
-                                                         formatDate(airDate, "yy"));
-                }
-
-                String resultingFilename = newFilename.concat(getExtension(fileObj));
-                return StringUtils.sanitiseTitle(resultingFilename);
             }
-            case NOPARSE:
-            case BROKEN:
-            default:
-                return BROKEN_PLACEHOLDER_FILENAME;
+        }
+
+        logger.fine("going to set status");
+        if (fails) {
+            setStatus(EpisodeInfo.BROKEN);
+        } else {
+            setStatus(EpisodeInfo.DOWNLOADED);
         }
     }
 
-    private String formatDate(LocalDate date, String format) {
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern(format);
-        return dateFormat.format(date);
+    @Override
+    public void downloadComplete(List<Show> shows) {
+        setShows(shows);
     }
 
-    /**
-     * @return the new full file path (for table display) using {@link #getNewFilename()} and the destination directory
-     */
-    public String getNewFilePath() {
-        String filename = getNewFilename();
+    // It would be nice to call this on our own.  But if we do, we have
+    // a potential race condition where the UI gets an initial version of
+    // the episode, then the episode gets its lookup information, and *then*
+    // the UI registers as a listener.
 
-        if (userPrefs.isMoveEnabled()) {
-            return getDestinationDirectory().getAbsolutePath().concat(File.separator).concat(filename);
+    // One approach would be that registering as a listener automatically gets
+    // you an immediate publish, but most of the time, that would be
+    // unnecessary.  A more efficient approach would be to automatically call
+    // lookupShow after the listener is added, knowing that, in reality, each
+    // episode will have exactly one listener.  But that's a little too magical.
+
+    // I prefer the pedantic approach of having the UI explicitly tell us when
+    // it's all set, and we should go look up the data.
+
+    // There's another approach that would do an immediate publish if and only
+    // if the data is different from what the listener already knows about, but
+    // that will have to wait.
+    public void lookupShow() {
+        ShowStore.mapStringToShows(filenameShow, this);
+    }
+
+    public TableItem getTableItem() {
+        return viewItem;
+    }
+
+    public void setTableItem(TableItem newViewItem) {
+        if (newViewItem != null) {
+            if (viewItem != null) {
+                logger.fine("changing table item for episode! " + this);
+            }
+            Object data = newViewItem.getData();
+            if ((data != null) && (data instanceof FileEpisode)) {
+                if (this == (FileEpisode) data) {
+                    // logger.fine("setting back link from episode to item!!");
+                } else {
+                    logger.fine("setting table item which points to a different episode! " + this);
+                }
+            } else {
+                logger.fine("setting table item which doesn't point back to me! " + this);
+            }
         }
-        return filename;
+        viewItem = newViewItem;
+    }
+
+    public String getOfficialShowName(Show show) {
+        // Ensure that all special characters in the replacement are quoted
+        String officialShowName = show.getName();
+        officialShowName = Matcher.quoteReplacement(officialShowName);
+        officialShowName = GlobalOverrides.getInstance().getShowName(officialShowName);
+
+        return officialShowName;
+    }
+
+    public String getShowId(String officialShowName) {
+        if ((shows == null) || (officialShowName == null)) {
+            logger.fine("null info for getShowId");
+            return "";
+        }
+        for (Show s : shows) {
+            if (officialShowName.equals(s.getName())) {
+                logger.fine("match for getShowId! " + s);
+                return s.getId();
+            }
+        }
+        logger.fine("no match for getShowId");
+        return "";
     }
 
     @Override
     public String toString() {
-        return "FileEpisode { title:" + filenameShow + ", season:" + filenameSeason + ", episode:" + filenameEpisode
-            + ", file:" + fileObj.getName() + " }";
+        return "FileEpisode { title:"
+                + filenameShow
+                + ", season:"
+                + filenameSeason
+                + ", episode:"
+                + filenameEpisode
+                + ", file:"
+                + fileObj.getName()
+                + " }";
     }
 }

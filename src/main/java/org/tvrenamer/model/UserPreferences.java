@@ -9,7 +9,6 @@ import org.tvrenamer.view.UIStarter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -18,14 +17,13 @@ import java.util.logging.Logger;
 public class UserPreferences extends Observable {
     private static Logger logger = Logger.getLogger(UserPreferences.class.getName());
 
-    private File destDir;
+    private File doneDir;
     private File preloadFolder;
     private String seasonPrefix;
     private boolean seasonPrefixLeadingZero;
     private boolean moveEnabled;
     private String renameReplacementMask;
     private ProxySettings proxy;
-    private boolean checkForUpdates;
     private boolean recursivelyAddFolders;
     private List<String> ignoreKeywords;
 
@@ -37,14 +35,13 @@ public class UserPreferences extends Observable {
     private UserPreferences() {
         super();
 
-        this.destDir = DEFAULT_DESTINATION_DIRECTORY;
+        this.doneDir = DEFAULT_DESTINATION_DIRECTORY;
         this.preloadFolder = null;
         this.seasonPrefix = DEFAULT_SEASON_PREFIX;
         this.seasonPrefixLeadingZero = false;
         this.moveEnabled = false;
         this.renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
         this.proxy = new ProxySettings();
-        this.checkForUpdates = true;
         this.recursivelyAddFolders = true;
         this.ignoreKeywords = new ArrayList<>();
         this.ignoreKeywords.add("sample");
@@ -99,20 +96,6 @@ public class UserPreferences extends Observable {
         }
         if (OVERRIDES_FILE_LEGACY.exists()) {
             OVERRIDES_FILE_LEGACY.renameTo(OVERRIDES_FILE);
-        } else if (!OVERRIDES_FILE.exists()) {
-            // Previously the GlobalOverrides class was hard-coded to write some
-            // overrides to the file.  I don't think that's right, but to try to
-            // preserve the default behavior, if the user doesn't have any other
-            // overrides file, we'll try to copy one from the source code into
-            // place.  If it doesn't work, so be it.
-            File defOver = new File(DEVELOPER_DEFAULT_OVERRIDES_FILENAME);
-            if (defOver.exists()) {
-                try {
-                    Files.copy(defOver.toPath(), OVERRIDES_FILE.toPath());
-                } catch (IOException ioe) {
-                    logger.info("unable to copy default overrides file.");
-                }
-            }
         }
         if (!THETVDB_CACHE.exists()) {
             THETVDB_CACHE.mkdir();
@@ -130,7 +113,7 @@ public class UserPreferences extends Observable {
 
         if (prefs != null) {
             logger.finer("Sucessfully read preferences from: " + PREFERENCES_FILE.getAbsolutePath());
-            logger.info("Sucessfully read preferences: " + prefs.toString());
+            // logger.info("Sucessfully read preferences: " + prefs.toString());
         } else {
             prefs = new UserPreferences();
         }
@@ -143,7 +126,6 @@ public class UserPreferences extends Observable {
         prefs.ensurePath();
 
         // add observer
-        // TODO: why do we do this?
         prefs.addObserver(new UpdateListener());
 
         return prefs;
@@ -155,7 +137,6 @@ public class UserPreferences extends Observable {
     }
 
     private void preferenceChanged(UserPreference preference, Object newValue) {
-        setChanged();
         notifyObservers(preference);
     }
 
@@ -164,11 +145,12 @@ public class UserPreferences extends Observable {
      *
      * @param dir the directory to use as destination
      */
-    public void setDestinationDirectory(File dir) throws TVRenamerIOException {
-        if (hasChanged(this.destDir, dir)) {
-            this.destDir = dir;
+    public void setDestinationDirectory(File dir) throws GenericException {
+        if (hasChanged(this.doneDir, dir)) {
+            this.doneDir = dir;
             ensurePath();
 
+            setChanged();
             preferenceChanged(UserPreference.DEST_DIR, dir);
         }
     }
@@ -179,11 +161,12 @@ public class UserPreferences extends Observable {
      *
      * @param dir the path to the directory
      */
-    public void setDestinationDirectory(String dir) throws TVRenamerIOException {
-        if (hasChanged(this.destDir.getAbsolutePath(), dir)) {
-            this.destDir = new File(dir);
+    public void setDestinationDirectory(String dir) throws GenericException {
+        if (hasChanged(this.doneDir.getAbsolutePath(), dir)) {
+            this.doneDir = new File(dir);
             ensurePath();
 
+            setChanged();
             preferenceChanged(UserPreference.DEST_DIR, dir);
         }
     }
@@ -203,13 +186,14 @@ public class UserPreferences extends Observable {
      * @return File object representing the directory.
      */
     public File getDestinationDirectory() {
-        return this.destDir;
+        return this.doneDir;
     }
 
     public void setMoveEnabled(boolean moveEnabled) {
         if (hasChanged(this.moveEnabled, moveEnabled)) {
             this.moveEnabled = moveEnabled;
 
+            setChanged();
             preferenceChanged(UserPreference.MOVE_ENABLED, moveEnabled);
         }
     }
@@ -227,7 +211,9 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.recursivelyAddFolders, recursivelyAddFolders)) {
             this.recursivelyAddFolders = recursivelyAddFolders;
 
-            preferenceChanged(UserPreference.ADD_SUBDIRS, recursivelyAddFolders);
+            setChanged();
+            preferenceChanged(UserPreference.ADD_SUBDIRS,
+                                 recursivelyAddFolders);
         }
     }
 
@@ -242,19 +228,12 @@ public class UserPreferences extends Observable {
 
     public void setIgnoreKeywords(List<String> ignoreKeywords) {
         if (hasChanged(this.ignoreKeywords, ignoreKeywords)) {
-            this.ignoreKeywords.clear();
-            for (String ignorable : ignoreKeywords) {
-                // Be careful not to allow empty string as a "keyword."
-                if (ignorable.length() > 1) {
-                    // TODO: Convert commas into pipes for proper regex, remove periods
-                    this.ignoreKeywords.add(ignorable);
-                } else {
-                    logger.warning("keywords to ignore must be at least two characters.");
-                    logger.warning("not adding \"" + ignorable + "\"");
-                }
-            }
+            // Convert commas into pipes for proper regex, remove periods
+            this.ignoreKeywords = ignoreKeywords;
 
+            setChanged();
             preferenceChanged(UserPreference.IGNORE_REGEX, ignoreKeywords);
+
         }
     }
 
@@ -269,6 +248,7 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.seasonPrefix, prefix)) {
             this.seasonPrefix = StringUtils.sanitiseTitle(prefix);
 
+            setChanged();
             preferenceChanged(UserPreference.SEASON_PREFIX, prefix);
         }
     }
@@ -289,7 +269,9 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.seasonPrefixLeadingZero, seasonPrefixLeadingZero)) {
             this.seasonPrefixLeadingZero = seasonPrefixLeadingZero;
 
-            preferenceChanged(UserPreference.LEADING_ZERO, seasonPrefixLeadingZero);
+            setChanged();
+            preferenceChanged(UserPreference.LEADING_ZERO,
+                                 seasonPrefixLeadingZero);
 
         }
     }
@@ -298,7 +280,9 @@ public class UserPreferences extends Observable {
         if (hasChanged(this.renameReplacementMask, renameReplacementMask)) {
             this.renameReplacementMask = renameReplacementMask;
 
-            preferenceChanged(UserPreference.REPLACEMENT_MASK, renameReplacementMask);
+            setChanged();
+            preferenceChanged(UserPreference.REPLACEMENT_MASK,
+                                 renameReplacementMask);
         }
     }
 
@@ -315,25 +299,8 @@ public class UserPreferences extends Observable {
             this.proxy = proxy;
             proxy.apply();
 
+            setChanged();
             preferenceChanged(UserPreference.PROXY, proxy);
-        }
-    }
-
-    /**
-     * @return the checkForUpdates
-     */
-    public boolean checkForUpdates() {
-        return checkForUpdates;
-    }
-
-    /**
-     * @param checkForUpdates the checkForUpdates to set
-     */
-    public void setCheckForUpdates(boolean checkForUpdates) {
-        if (hasChanged(this.checkForUpdates, checkForUpdates)) {
-            this.checkForUpdates = checkForUpdates;
-
-            preferenceChanged(UserPreference.UPDATE_CHECK, checkForUpdates);
         }
     }
 
@@ -341,10 +308,12 @@ public class UserPreferences extends Observable {
      * Create the directory if it doesn't exist.
      */
     public void ensurePath() {
-        if (this.moveEnabled && !this.destDir.mkdirs()) {
-            if (!this.destDir.exists()) {
+        if (this.moveEnabled && !this.doneDir.mkdirs()) {
+            if (!this.doneDir.exists()) {
                 this.moveEnabled = false;
-                String message = "Couldn't create path: '" + this.destDir.getAbsolutePath() + "'. Move is now disabled";
+                String message = "Couldn't create path: '"
+                    + this.doneDir.getAbsolutePath()
+                    + "'. Move is now disabled";
                 logger.warning(message);
                 UIStarter.showMessageBox(SWTMessageBoxType.ERROR, "Error", message);
             }
@@ -353,9 +322,19 @@ public class UserPreferences extends Observable {
 
     @Override
     public String toString() {
-        return "UserPreferences [destDir=" + destDir + ", seasonPrefix=" + seasonPrefix + ", moveEnabled="
-            + moveEnabled + ", renameReplacementMask=" + renameReplacementMask + ", proxy=" + proxy
-            + ", checkForUpdates=" + checkForUpdates + ", setRecursivelyAddFolders=" + recursivelyAddFolders + "]";
+        return "UserPreferences [doneDir="
+                + doneDir
+                + ", seasonPrefix="
+                + seasonPrefix
+                + ", moveEnabled="
+                + moveEnabled
+                + ", renameReplacementMask="
+                + renameReplacementMask
+                + ", proxy="
+                + proxy
+                + ", setRecursivelyAddFolders="
+                + recursivelyAddFolders
+                + "]";
     }
 
     private boolean hasChanged(Object originalValue, Object newValue) {

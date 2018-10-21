@@ -1,6 +1,7 @@
 package org.tvrenamer.view;
 
 import static org.tvrenamer.model.util.Constants.*;
+
 import static org.tvrenamer.view.UIStarter.getDefaultSystemFont;
 
 import org.eclipse.swt.SWT;
@@ -18,9 +19,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Shell;
 
-import org.tvrenamer.controller.UpdateChecker;
-import org.tvrenamer.model.SWTMessageBoxType;
-
 import java.io.InputStream;
 import java.util.logging.Logger;
 
@@ -30,11 +28,7 @@ import java.util.logging.Logger;
 public class AboutDialog extends Dialog {
     private static Logger logger = Logger.getLogger(AboutDialog.class.getName());
 
-    private static final String TVRENAMER_REPOSITORY_URL = "http://tvrenamer.org/source";
-    private static final String TVRENAMER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
-    private static final String TVRENAMER_SUPPORT_EMAIL = "support@tvrenamer.org";
-    public static final String TVRENAMER_PROJECT_URL = "http://tvrenamer.org";
-    private static final String TVRENAMER_PROJECT_ISSUES_URL = TVRENAMER_PROJECT_URL + "/issues";
+    private static final String SHOWFINDER_LICENSE_URL = "http://www.gnu.org/licenses/gpl-2.0.html";
     private static Shell aboutShell;
 
     /**
@@ -50,7 +44,7 @@ public class AboutDialog extends Dialog {
     public void open() {
         // Create the dialog window
         aboutShell = new Shell(getParent(), getStyle());
-        aboutShell.setText("About TVRenamer");
+        aboutShell.setText("About " + APPLICATION_NAME);
 
         // Add the contents of the dialog window
         createContents();
@@ -94,113 +88,72 @@ public class AboutDialog extends Dialog {
         }
 
         Label applicationLabel = new Label(aboutShell, SWT.NONE);
-        applicationLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(),
-            getDefaultSystemFont().getHeight() + 4, SWT.BOLD));
+        applicationLabel.setFont(
+                new Font(
+                        aboutShell.getDisplay(),
+                        getDefaultSystemFont().getName(),
+                        getDefaultSystemFont().getHeight() + 4,
+                        SWT.BOLD));
         applicationLabel.setText(APPLICATION_NAME);
-        applicationLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
+        applicationLabel.setLayoutData(
+                new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         Label versionLabel = new Label(aboutShell, SWT.NONE);
-        versionLabel.setFont(new Font(aboutShell.getDisplay(), getDefaultSystemFont().getName(), getDefaultSystemFont()
-            .getHeight() + 2, SWT.BOLD));
+        versionLabel.setFont(
+                new Font(
+                        aboutShell.getDisplay(),
+                        getDefaultSystemFont().getName(),
+                        getDefaultSystemFont().getHeight() + 2,
+                        SWT.BOLD));
         versionLabel.setText("Version: " + VERSION_NUMBER);
         versionLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
         Label descriptionLabel = new Label(aboutShell, SWT.NONE);
-        descriptionLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
-        descriptionLabel.setText("TVRenamer is a Java GUI utility to rename TV episodes from TV listings");
+        descriptionLabel.setLayoutData(
+                new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
+        descriptionLabel.setText(
+                "TV Show Finder is a Java GUI utility to identify TV series from TV listings");
 
         final Link licenseLink = new Link(aboutShell, SWT.NONE);
-        licenseLink.setText("Licensed under the <a href=\"" + TVRENAMER_LICENSE_URL
-            + "\">GNU General Public License v2</a>");
+        licenseLink.setText(
+                "Licensed under the <a href=\""
+                        + SHOWFINDER_LICENSE_URL
+                        + "\">GNU General Public License v2</a>");
         licenseLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
-        licenseLink.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent arg0) {
-                Program.launch(TVRENAMER_LICENSE_URL);
-            }
-        });
+        licenseLink.addSelectionListener(
+                new SelectionAdapter() {
+                    @Override
+                    public void widgetSelected(SelectionEvent arg0) {
+                        Program.launch(SHOWFINDER_LICENSE_URL);
+                    }
+                });
 
         final Link projectPageLink = new Link(aboutShell, SWT.NONE);
-        projectPageLink.setText("<a href=\"" + TVRENAMER_PROJECT_URL + "\">Project Page</a>");
-        projectPageLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
+        projectPageLink.setText("<a href=\"" + SHOWFINDER_PROJECT_URL + "\">Project Page</a>");
+        projectPageLink.setLayoutData(
+                new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
-        projectPageLink.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent arg0) {
-                Program.launch(TVRENAMER_PROJECT_URL);
-            }
-        });
-
-        final Link issuesLink = new Link(aboutShell, SWT.NONE);
-        issuesLink.setText("<a href=\"" + TVRENAMER_PROJECT_ISSUES_URL + "\">Issue Tracker</a>");
-        issuesLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
-
-        issuesLink.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent arg0) {
-                Program.launch(TVRENAMER_PROJECT_ISSUES_URL);
-            }
-        });
-
-        final Link supportEmailLink = new Link(aboutShell, SWT.NONE);
-        supportEmailLink.setText("<a href=\"mailto:" + TVRENAMER_SUPPORT_EMAIL + "\">Send support email</a>");
-        supportEmailLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
-        supportEmailLink.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent arg0) {
-                    Program.launch("mailto:" + TVRENAMER_SUPPORT_EMAIL);
-                }
-            });
+        projectPageLink.addSelectionListener(
+                new SelectionAdapter() {
+                    @Override
+                    public void widgetSelected(SelectionEvent arg0) {
+                        Program.launch(SHOWFINDER_PROJECT_URL);
+                    }
+                });
 
         final Link sourceCodeLink = new Link(aboutShell, SWT.NONE);
-        sourceCodeLink.setText("<a href=\"" + TVRENAMER_REPOSITORY_URL + "\">Source Code</a>");
+        sourceCodeLink.setText("<a href=\"" + SHOWFINDER_PROJECT_URL + "\">Source Code</a>");
         sourceCodeLink.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, true, true));
 
-        sourceCodeLink.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent arg0) {
-                Program.launch(TVRENAMER_REPOSITORY_URL);
-            }
-        });
+        sourceCodeLink.addSelectionListener(
+                new SelectionAdapter() {
+                    @Override
+                    public void widgetSelected(SelectionEvent arg0) {
+                        Program.launch(SHOWFINDER_PROJECT_URL);
+                    }
+                });
 
-        Button updateCheckButton = new Button(aboutShell, SWT.PUSH);
-        updateCheckButton.setText("Check for Updates...");
-        GridData gridDataUpdateCheck = new GridData();
-        gridDataUpdateCheck.widthHint = 160;
-        gridDataUpdateCheck.horizontalAlignment = GridData.END;
-        updateCheckButton.setLayoutData(gridDataUpdateCheck);
-
-        updateCheckButton.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent event) {
-                Boolean updateAvailable = UpdateChecker.isUpdateAvailable();
-
-                if (updateAvailable == null) {
-                    // Don't need to do anything here as the error message has been displayed already
-                } else if (updateAvailable) {
-                    StringBuilder messageBuilder = new StringBuilder();
-                    messageBuilder.append("There is a new version available!\n\n");
-                    messageBuilder.append("You are currently running ");
-                    messageBuilder.append(VERSION_NUMBER);
-                    messageBuilder.append(", but there is an update available\n\n");
-                    messageBuilder.append("Please visit ");
-                    messageBuilder.append(TVRENAMER_PROJECT_URL);
-                    messageBuilder.append(" to download the new version.");
-
-                    logger.fine(messageBuilder.toString());
-                    UIStarter.showMessageBox(SWTMessageBoxType.OK, "New Version Available!", messageBuilder.toString());
-                } else {
-                    StringBuilder messageBuilder = new StringBuilder();
-                    messageBuilder.append("There is a no new version available\n\n");
-                    messageBuilder.append("Please check the website (");
-                    messageBuilder.append(TVRENAMER_PROJECT_URL);
-                    messageBuilder.append(") for any news or check back later.");
-                    UIStarter.showMessageBox(SWTMessageBoxType.WARNING, "No New Version Available",
-                                           messageBuilder.toString());
-                }
-            }
-        });
 
         Button okButton = new Button(aboutShell, SWT.PUSH);
         okButton.setText("OK");
@@ -210,12 +163,13 @@ public class AboutDialog extends Dialog {
         okButton.setLayoutData(gridDataOK);
         okButton.setFocus();
 
-        okButton.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent event) {
-                aboutShell.close();
-            }
-        });
+        okButton.addSelectionListener(
+                new SelectionAdapter() {
+                    @Override
+                    public void widgetSelected(SelectionEvent event) {
+                        aboutShell.close();
+                    }
+                });
 
         // Set the OK button as the default, so
         // user can press Enter to dismiss

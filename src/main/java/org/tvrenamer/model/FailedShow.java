@@ -13,11 +13,6 @@ public class FailedShow extends Show {
         ioe = e;
     }
 
-    public FailedShow(String id, String name, TVRenamerIOException e) {
-        super(id, name, "");
-        ioe = new GenericException(e.getMessage());
-    }
-
     public FailedShow(String message) {
         super("", message, "");
         ioe = null;

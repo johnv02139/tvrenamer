@@ -14,11 +14,13 @@
     <suppress files="src/main/java/org/tvrenamer/controller/FileMover.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/GlobalOverridesPersistence.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/HttpConnectionHandler.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/controller/Launcher.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/TheTVDBProvider.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/util/FileUtilities.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/util/StringUtils.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/controller/util/XPathUtilities.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/model/Episode.java" checks="JavadocMethod"/>
+    <suppress files="src/main/java/org/tvrenamer/model/EpisodeDb.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/model/FileEpisode.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/model/GenericException.java" checks="JavadocMethod"/>
     <suppress files="src/main/java/org/tvrenamer/model/GlobalOverrides.java" checks="JavadocMethod"/>

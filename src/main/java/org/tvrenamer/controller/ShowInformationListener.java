@@ -2,8 +2,8 @@ package org.tvrenamer.controller;
 
 import org.tvrenamer.model.Show;
 
-public interface ShowInformationListener {
-    void downloadComplete(Show show);
+import java.util.List;
 
-    void downloadFailed(Show show);
+public interface ShowInformationListener {
+    void downloadComplete(List<Show> shows);
 }

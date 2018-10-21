@@ -1,7 +1,7 @@
 package org.tvrenamer.controller;
 
 import org.tvrenamer.controller.util.StringUtils;
-import org.tvrenamer.model.TVRenamerIOException;
+import org.tvrenamer.model.GenericException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class HttpConnectionHandler {
      * @param urlString the URL as a String
      * @return String of the contents
      */
-    public String downloadUrl(String urlString) throws TVRenamerIOException {
+    public String downloadUrl(String urlString) throws GenericException {
         try {
             return downloadUrl(new URL(urlString));
         } catch (MalformedURLException e) {
@@ -42,9 +42,9 @@ public class HttpConnectionHandler {
      *
      * @param url the URL to download
      * @return String of the URL contents
-     * @throws TVRenamerIOException when there is an error connecting or reading the URL
+     * @throws GenericException when there is an error connecting or reading the URL
      */
-    public String downloadUrl(URL url) throws TVRenamerIOException {
+    public String downloadUrl(URL url) throws GenericException {
         InputStream inputStream = null;
         StringBuilder contents = new StringBuilder();
 
@@ -65,13 +65,15 @@ public class HttpConnectionHandler {
                 if (encoding != null && encoding.equalsIgnoreCase("gzip")) {
                     inputStream = new GZIPInputStream(conn.getInputStream());
                 } else if (encoding != null && encoding.equalsIgnoreCase("deflate")) {
-                    inputStream = new InflaterInputStream(conn.getInputStream(), new Inflater(true));
+                    inputStream =
+                            new InflaterInputStream(conn.getInputStream(), new Inflater(true));
                 } else {
                     inputStream = conn.getInputStream();
                 }
 
                 // always specify encoding while reading streams
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
+                BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
 
                 logger.finer("Before reading url stream");
 
@@ -88,7 +90,7 @@ public class HttpConnectionHandler {
         } catch (Exception e) {
             String message = "Exception when attempting to download and parse URL " + url;
             logger.log(Level.SEVERE, message, e);
-            throw new TVRenamerIOException(message, e);
+            throw new GenericException(message, e);
         } finally {
             try {
                 if (inputStream != null) {

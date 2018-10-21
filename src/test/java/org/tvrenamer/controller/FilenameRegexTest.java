@@ -49,8 +49,7 @@ public class FilenameRegexTest {
 
     @Test
     public void testRegex() {
-        FileEpisode result = new FileEpisode(input);
-        boolean parsed = FilenameParser.parseFilename(result);
-        assertTrue(parsed);
+        FileEpisode result = FilenameParser.parseFilename(input);
+        assertTrue(result.wasParsed());
     }
 }

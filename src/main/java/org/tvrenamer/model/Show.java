@@ -1,7 +1,5 @@
 package org.tvrenamer.model;
 
-import static org.tvrenamer.model.util.Constants.IMDB_BASE_URL;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,20 +9,16 @@ import java.util.Map;
 public class Show implements Comparable<Show> {
     private final String id;
     private final String name;
-    private final String imdb;
+    private final String url;
 
     private final Map<Integer, Season> seasons;
 
-    public Show(String id, String name, String imdb) {
+    public Show(String id, String name, String url) {
         this.id = id;
         this.name = name;
-        this.imdb = imdb;
+        this.url = url;
 
         seasons = new HashMap<>();
-    }
-
-    public Show(String id, String name) {
-        this(id, name, null);
     }
 
     public String getId() {
@@ -35,12 +29,8 @@ public class Show implements Comparable<Show> {
         return name;
     }
 
-    public String getNameKey() {
-        return name.toLowerCase();
-    }
-
     public String getUrl() {
-        return (imdb == null) ? "" : IMDB_BASE_URL + imdb;
+        return url;
     }
 
     public void setSeason(int sNum, Season season) {
@@ -48,26 +38,15 @@ public class Show implements Comparable<Show> {
     }
 
     public Season getSeason(int sNum) {
-        if (seasons.containsKey(sNum)) {
-            return seasons.get(sNum);
-        } else {
-            return null;
-        }
-    }
-
-    public boolean hasSeasons() {
-        return (seasons.size() > 0);
+        return seasons.get(sNum);
     }
 
     @Override
     public String toString() {
-        return "Show [" + name + ", id=" + id + ", imdb=" + imdb + ", " + seasons.size() + " seasons]";
+        return "Show [id=" + id + ", name=" + name + ", url=" + url + ", seasons=" + seasons + "]";
     }
 
-    public String toLongString() {
-        return "Show [id=" + id + ", name=" + name + ", imdb=" + imdb + ", seasons=" + seasons + "]";
-    }
-
+    @SuppressWarnings("NullableProblems")
     @Override
     public int compareTo(Show other) {
         return Integer.parseInt(other.id) - Integer.parseInt(this.id);
