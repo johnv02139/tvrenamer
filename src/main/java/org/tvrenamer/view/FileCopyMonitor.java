@@ -32,15 +32,15 @@ public class FileCopyMonitor implements ProgressObserver {
     }
 
     /**
-     * Set the maximum value.
+     * Update the maximum value.
      *
      * @param max the new maximum value
      */
     @Override
-    public void initializeProgress(final long max) {
+    public void initialize(final long max) {
         display.syncExec(() -> label = ui.getProgressLabel(item));
         maximum = max;
-        setProgressValue(0);
+        setValue(0);
     }
 
     /**
@@ -49,7 +49,7 @@ public class FileCopyMonitor implements ProgressObserver {
      * @param value the new value
      */
     @Override
-    public void setProgressValue(final long value) {
+    public void setValue(final long value) {
         if (loopCount++ % 500 == 0) {
             display.asyncExec(() -> {
                 if (label.isDisposed()) {
@@ -66,7 +66,7 @@ public class FileCopyMonitor implements ProgressObserver {
      * @param status the new status label
      */
     @Override
-    public void setProgressStatus(final String status) {
+    public void setStatus(final String status) {
         display.asyncExec(() -> {
             if (label.isDisposed()) {
                 return;

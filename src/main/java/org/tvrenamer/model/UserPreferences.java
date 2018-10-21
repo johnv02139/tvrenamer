@@ -4,6 +4,7 @@ import static org.tvrenamer.model.util.Constants.*;
 
 import org.tvrenamer.controller.UserPreferencesPersistence;
 import org.tvrenamer.controller.util.FileUtilities;
+import org.tvrenamer.controller.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,26 +19,20 @@ import java.util.logging.Logger;
 public class UserPreferences extends Observable {
     private static final Logger logger = Logger.getLogger(UserPreferences.class.getName());
 
-    private static final UserPreferences INSTANCE = load();
-
     private final String preloadFolder;
-    private transient Path destDirPath;
     private String destDir;
     private String seasonPrefix;
     private boolean seasonPrefixLeadingZero;
-    private boolean moveSelected;
-    private boolean renameSelected;
+    private boolean moveEnabled;
+    private boolean renameEnabled;
     private boolean removeEmptiedDirectories;
     private boolean deleteRowAfterMove;
     private String renameReplacementMask;
     private boolean checkForUpdates;
     private boolean recursivelyAddFolders;
-
-    // For the ignore keywords, we do some processing.  So we also preserve exactly what the user specified.
-    private transient String specifiedIgnoreKeywords;
     private final List<String> ignoreKeywords;
 
-    private transient boolean destDirProblem = false;
+    private static final UserPreferences INSTANCE = load();
 
     /**
      * UserPreferences constructor which uses the defaults from {@link org.tvrenamer.model.util.Constants}
@@ -46,12 +41,11 @@ public class UserPreferences extends Observable {
         super();
 
         preloadFolder = null;
-        destDirPath = DEFAULT_DESTINATION_DIRECTORY;
-        destDir = destDirPath.toString();
+        destDir = DEFAULT_DESTINATION_DIRECTORY.toString();
         seasonPrefix = DEFAULT_SEASON_PREFIX;
         seasonPrefixLeadingZero = false;
-        moveSelected = false;
-        renameSelected = true;
+        moveEnabled = false;
+        renameEnabled = true;
         removeEmptiedDirectories = true;
         deleteRowAfterMove = false;
         renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
@@ -59,8 +53,33 @@ public class UserPreferences extends Observable {
         recursivelyAddFolders = true;
         ignoreKeywords = new ArrayList<>();
         ignoreKeywords.add(DEFAULT_IGNORED_KEYWORD);
-        buildIgnoredKeywordsString();
-        destDirProblem = false;
+    }
+
+    /**
+     * UserPreferences constructor which ensures we have an ArrayList
+     *
+     * @param first the already-constructed UserPreferences object that was
+     *    created first, that the new one should be based off of
+     */
+    private UserPreferences(final UserPreferences first) {
+        super();
+
+        preloadFolder = first.preloadFolder;
+        destDir = first.destDir;
+        seasonPrefix = first.seasonPrefix;
+        seasonPrefixLeadingZero = first.seasonPrefixLeadingZero;
+        moveEnabled = first.moveEnabled;
+        renameEnabled = first.renameEnabled;
+        removeEmptiedDirectories = first.removeEmptiedDirectories;
+        renameReplacementMask = first.renameReplacementMask;
+        checkForUpdates = first.checkForUpdates;
+        recursivelyAddFolders = first.recursivelyAddFolders;
+        ignoreKeywords = new ArrayList<>();
+        if (first.ignoreKeywords != null) {
+            for (String keyword : first.ignoreKeywords) {
+                ignoreKeywords.add(keyword);
+            }
+        }
     }
 
     /**
@@ -114,7 +133,6 @@ public class UserPreferences extends Observable {
      *
      * @param prefs the instance to export to XML
      */
-    @SuppressWarnings("SameParameterValue")
     public static void store(UserPreferences prefs) {
         UserPreferencesPersistence.persist(prefs, PREFERENCES_FILE);
         logger.fine("Successfully saved/updated preferences");
@@ -169,6 +187,8 @@ public class UserPreferences extends Observable {
             }
         }
         setUpOverrides();
+        FileUtilities.ensureWritableDirectory(THE_TVDB_DL_DIR);
+        FileUtilities.ensureWritableDirectory(LEGACY_TVDB_DIR);
     }
 
     /**
@@ -182,14 +202,27 @@ public class UserPreferences extends Observable {
 
         // retrieve from file and update in-memory copy
         UserPreferences prefs = UserPreferencesPersistence.retrieve(PREFERENCES_FILE);
-
-        if (prefs != null) {
-            prefs.destDirPath = Paths.get(prefs.destDir);
-            prefs.buildIgnoredKeywordsString();
+        if (prefs == null) {
+            prefs = new UserPreferences();
+            store(prefs);
+        } else if (prefs.ignoreKeywords instanceof ArrayList) {
             logger.finer("Successfully read preferences from: " + PREFERENCES_FILE.toAbsolutePath());
             logger.fine("Successfully read preferences: " + prefs.toString());
         } else {
-            prefs = new UserPreferences();
+            // This is to fix a bug where we created UserPreferences with Arrays.asList, which
+            // created an object of a weird type that we couldn't use easily.  Recreate the
+            // UserPreferences object with an ArrayList, and write it out so that we don't
+            // have the same problem next time.
+            prefs = new UserPreferences(prefs);
+            logger.fine("Modified read preferences: " + prefs.toString());
+            store(prefs);
+        }
+        if (prefs.moveEnabled == false) {
+            if (prefs.renameEnabled == false) {
+                logger.info("if move is disabled, rename must be enabled.");
+                prefs.renameEnabled = true;
+                store(prefs);
+            }
         }
 
         return prefs;
@@ -238,19 +271,37 @@ public class UserPreferences extends Observable {
      *              directory does not exist and could not be created.
      */
     public boolean ensureDestDir() {
-        if (!moveSelected) {
-            // It doesn't matter if the directory exists or not if move is not selected.
+        if (!moveEnabled) {
+            // It doesn't matter if the directory exists or not if move is not enabled.
             return true;
         }
 
-        boolean canCreate = FileUtilities.checkForCreatableDirectory(destDirPath);
-        destDirProblem = !canCreate;
+        Path destPath = Paths.get(destDir);
 
-        if (destDirProblem) {
-            logger.warning(CANT_CREATE_DEST + destDir);
+        String errorMessage;
+        if (Files.exists(destPath)) {
+            if (Files.isDirectory(destPath)) {
+                // destPath already exists; we're all set.
+                return true;
+            }
+
+            // destDir exists but is not a directory.
+            errorMessage = "Destination path exists but is not a directory: '"
+                + destDir + "'. Move is now disabled";
+            // fall through to failure at bottom
+        } else if (FileUtilities.mkdirs(destPath)) {
+            // we have successfully created the destination directory
+            return true;
+        } else {
+            errorMessage = "Couldn't create path: '"
+                + destDir + "'. Move is now disabled";
+            // fall through to failure
         }
 
-        return canCreate;
+        moveEnabled = false;
+        logger.warning(errorMessage);
+
+        return false;
     }
 
     /**
@@ -265,7 +316,6 @@ public class UserPreferences extends Observable {
         // then compare?  Also, what happens if ensureDestDir fails?
         if (valuesAreDifferent(destDir, dir)) {
             destDir = dir;
-            destDirPath = Paths.get(destDir);
 
             preferenceChanged(UserPreference.DEST_DIR);
         }
@@ -276,7 +326,7 @@ public class UserPreferences extends Observable {
      *
      * Note that this returns a directory name even if "move" is disabled.
      * Therefore, this is NOT necessarily "where files should be moved to".
-     * Callers need to check isMoveSelected() separately.
+     * Callers need to check isMoveEnabled() separately.
      *
      * @return name of the directory.
      */
@@ -289,68 +339,60 @@ public class UserPreferences extends Observable {
     }
 
     /**
-     * Gets the directory that files should be moved into; if "move" is
-     * disabled, returns null.
-     *
-     * @return the directory if move is enabled, null if not.
-     */
-    public Path getDestinationDirectory() {
-        if (moveSelected) {
-            return destDirPath;
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * Sets whether or not we want the FileMover to move files to a destination directory
      *
-     * @param moveSelected whether or not we want the FileMover to move files to a
+     * @param moveEnabled whether or not we want the FileMover to move files to a
      *           destination directory
      */
-    public void setMoveSelected(boolean moveSelected) {
-        if (valuesAreDifferent(this.moveSelected, moveSelected)) {
-            this.moveSelected = moveSelected;
-            ensureDestDir();
-            preferenceChanged(UserPreference.MOVE_SELECTED);
+    public void setMoveEnabled(boolean moveEnabled) {
+        if (valuesAreDifferent(this.moveEnabled, moveEnabled)) {
+            if ((moveEnabled == false) && (renameEnabled == false)) {
+                // This should never happen.  The UI should prevent it.
+                // In the erroneous case where it does happen, we're going to reject it.
+                logger.warning("cannot disable move while reame is disabled.");
+                return;
+            }
+            this.moveEnabled = moveEnabled;
+            // We might be in a situation where move was disabled at startup, and so,
+            // ensureDestDir did nothing.  And then, the user enabled "move", causing
+            // this method to be called.  In that case, we should run ensureDestDir now.
+            // Except, we know that the implementation is, the PreferencesDialog is
+            // going to call setDestinationDirectory() after this method, no matter what.
+            // So, rather than call it twice, we'll rely on inside implementation
+            // knowledge.  If the PreferencesDialog should ever change in a way that no
+            // longer calls setDestinationDirectory() every time, this method might need
+            // to be changed.
+
+            preferenceChanged(UserPreference.MOVE_ENABLED);
         }
     }
 
     /**
-     * Get whether or not the user has requested that the FileMover move files to
-     * a destination directory.  This can be true even if the destination directory
-     * is invalid.
+     * Get whether or not we want the FileMover to move files to a destination directory
      *
-     * @return true if the user requested that the FileMover move files to a
-     *    destination directory
-     */
-    public boolean isMoveSelected() {
-        return moveSelected;
-    }
-
-    /**
-     * Get whether or the FileMover should try to move files to a destination directory.
-     * For this to be true, the following BOTH must be true:
-     *  - the user has requested we move files
-     *  - the user has supplied a valid place to move them to.
-     *
-     * @return true if the FileMover should try to move files to a destination directory.
+     * @return true if we want the FileMover to move files to a destination directory
      */
     public boolean isMoveEnabled() {
-        return moveSelected && !destDirProblem;
+        return moveEnabled;
     }
 
     /**
      * Sets whether or not we want the FileMover to rename files based on the show,
      * season, and episode we find.
      *
-     * @param renameSelected whether or not we want the FileMover to rename files
+     * @param renameEnabled whether or not we want the FileMover to rename files
      */
-    public void setRenameSelected(boolean renameSelected) {
-        if (valuesAreDifferent(this.renameSelected, renameSelected)) {
-            this.renameSelected = renameSelected;
+    public void setRenameEnabled(boolean renameEnabled) {
+        if (valuesAreDifferent(this.renameEnabled, renameEnabled)) {
+            if ((renameEnabled == false) && (moveEnabled == false)) {
+                // This should never happen.  The UI should prevent it.
+                // In the erroneous case where it does happen, we're going to reject it.
+                logger.warning("cannot disable rename while move is disabled.");
+                return;
+            }
+            this.renameEnabled = renameEnabled;
 
-            preferenceChanged(UserPreference.RENAME_SELECTED);
+            preferenceChanged(UserPreference.RENAME_ENABLED);
         }
     }
 
@@ -360,8 +402,8 @@ public class UserPreferences extends Observable {
      *
      * @return true if we want the FileMover to rename files
      */
-    public boolean isRenameSelected() {
-        return renameSelected;
+    public boolean isRenameEnabled() {
+        return renameEnabled;
     }
 
     /**
@@ -453,16 +495,6 @@ public class UserPreferences extends Observable {
      * @return a string containing the list of ignored keywords, separated by commas
      */
     public String getIgnoredKeywordsString() {
-        return specifiedIgnoreKeywords;
-    }
-
-    /**
-     * Turn the "ignore keywords" list into a String.  This is only necessary when we are restoring
-     * the user preferences from XML.  When the keywords are modified by the user via the preferences
-     * dialog, we maintain the actual string the user entered.
-     *
-     */
-    private void buildIgnoredKeywordsString() {
         StringBuilder ignoreWords = new StringBuilder();
         String sep = "";
         for (String s : ignoreKeywords) {
@@ -470,7 +502,7 @@ public class UserPreferences extends Observable {
             ignoreWords.append(s);
             sep = ",";
         }
-        specifiedIgnoreKeywords = ignoreWords.toString();
+        return ignoreWords.toString();
     }
 
     /**
@@ -481,8 +513,7 @@ public class UserPreferences extends Observable {
      *           a string must be at least two characters long.
      */
     public void setIgnoreKeywords(String ignoreWordsString) {
-        if (valuesAreDifferent(specifiedIgnoreKeywords, ignoreWordsString)) {
-            specifiedIgnoreKeywords = ignoreWordsString;
+        if (valuesAreDifferent(getIgnoredKeywordsString(), ignoreWordsString)) {
             ignoreKeywords.clear();
             String[] ignoreWords = ignoreWordsString.split(IGNORE_WORDS_SPLIT_REGEX);
             for (String ignorable : ignoreWords) {
@@ -496,9 +527,6 @@ public class UserPreferences extends Observable {
                 }
             }
 
-            // Technically, we could end up with an identical array of strings despite the
-            // fact that the input was not precisely identical to the previous input.  But
-            // not worth it to check.
             preferenceChanged(UserPreference.IGNORE_REGEX);
         }
     }
@@ -510,8 +538,13 @@ public class UserPreferences extends Observable {
      *         seasons of a show
      */
     public void setSeasonPrefix(String prefix) {
+        // Remove the displayed "
+        prefix = prefix.replaceAll("\"", "");
+
         if (valuesAreDifferent(seasonPrefix, prefix)) {
-            seasonPrefix = prefix;
+            // TODO: rather than silently sanitising, we should probably
+            // reject any text that has an illegal character in it.
+            seasonPrefix = StringUtils.sanitiseTitle(prefix);
 
             preferenceChanged(UserPreference.SEASON_PREFIX);
         }
@@ -523,6 +556,13 @@ public class UserPreferences extends Observable {
      */
     public String getSeasonPrefix() {
         return seasonPrefix;
+    }
+
+    /**
+     * @return the season prefix, suitable for displaying in the Preferences dialog
+     */
+    public String getSeasonPrefixForDisplay() {
+        return ("\"" + seasonPrefix + "\"");
     }
 
     /**
@@ -596,10 +636,9 @@ public class UserPreferences extends Observable {
     @Override
     public String toString() {
         return "UserPreferences\n [destDir=" + destDir + ",\n  seasonPrefix=" + seasonPrefix
-            + ",\n  moveSelected=" + moveSelected + ",\n  renameSelected=" + renameSelected
+            + ",\n  moveEnabled=" + moveEnabled + ",\n  renameEnabled=" + renameEnabled
             + ",\n  renameReplacementMask=" + renameReplacementMask
             + ",\n  checkForUpdates=" + checkForUpdates
-            + ",\n  deleteRowAfterMove=" + deleteRowAfterMove
             + ",\n  setRecursivelyAddFolders=" + recursivelyAddFolders + "]";
     }
 }

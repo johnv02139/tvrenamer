@@ -8,39 +8,31 @@
       <w>antlib</w>
       <w>antlr</w>
       <w>appbundler</w>
-      <w>appdata</w>
       <w>aspx</w>
       <w>awesom</w>
-      <w>backquote</w>
       <w>basenames</w>
       <w>beanutils</w>
-      <w>beavis</w>
       <w>berne</w>
       <w>buggalo</w>
       <w>bundleapp</w>
       <w>bundler</w>
-      <w>butthead</w>
       <w>californication</w>
       <w>caulfield</w>
       <w>ccpl</w>
       <w>codehaus</w>
       <w>craftfirefox</w>
-      <w>ctgate</w>
       <w>dirpath</w>
       <w>distinguisher</w>
       <w>dramatico</w>
-      <w>dropin</w>
       <w>dvdrip</w>
       <w>ebbtide</w>
       <w>emassment</w>
       <w>embarassment</w>
       <w>epdata</w>
       <w>episodenumber</w>
-      <w>epview</w>
       <w>ettv</w>
       <w>everyone's</w>
       <w>fanmail</w>
-      <w>foo's</w>
       <w>futurama</w>
       <w>github</w>
       <w>gnomovision</w>
@@ -48,8 +40,6 @@
       <w>hashmap</w>
       <w>hoberman</w>
       <w>hughley</w>
-      <w>iconfile</w>
-      <w>indir</w>
       <w>infos</w>
       <w>inhu</w>
       <w>javase</w>
@@ -60,7 +50,6 @@
       <w>levenshtein</w>
       <w>lgpl</w>
       <w>licensor's</w>
-      <w>macosx</w>
       <w>macrodef's</w>
       <w>mailto</w>
       <w>marvel's</w>
@@ -68,7 +57,6 @@
       <w>merchantibility</w>
       <w>mergewithoutmain</w>
       <w>metacharacters</w>
-      <w>movetest</w>
       <w>musso</w>
       <w>ncis</w>
       <w>ne'w</w>
@@ -79,14 +67,12 @@
       <w>nsmenu</w>
       <w>nsmenuitem</w>
       <w>nsstring</w>
-      <w>ntfs</w>
       <w>numlz</w>
       <w>oldschool</w>
       <w>oneals</w>
       <w>opensource</w>
       <w>oraclejdk</w>
       <w>pathstring</w>
-      <w>pdtv</w>
       <w>phonogram</w>
       <w>phonograms</w>
       <w>pringfield</w>
@@ -98,7 +84,6 @@
       <w>renamer</w>
       <w>retval</w>
       <w>rmdirs</w>
-      <w>rtable</w>
       <w>schmar</w>
       <w>seagal</w>
       <w>segal</w>
@@ -112,20 +97,14 @@
       <w>spacetime</w>
       <w>spacewalker</w>
       <w>sqlj</w>
-      <w>squareup</w>
       <w>starfighter</w>
       <w>subdirs</w>
       <w>subfolders</w>
       <w>subfunction</w>
-      <w>sublink</w>
-      <w>substrings</w>
       <w>sudo</w>
-      <w>swtid</w>
       <w>sxxexx</w>
       <w>sxxyy</w>
       <w>synching</w>
-      <w>tcol</w>
-      <w>tgate</w>
       <w>thefloweringash</w>
       <w>thetvdb</w>
       <w>thoughtworks</w>
@@ -136,21 +115,17 @@
       <w>tvrenamer</w>
       <w>tvrenameroverrides</w>
       <w>ui's</w>
-      <w>uncheck</w>
-      <w>uncreatable</w>
       <w>unfound</w>
       <w>unparsable</w>
       <w>unparsed</w>
       <w>unpermitted</w>
       <w>unported</w>
-      <w>usurs</w>
       <w>ving</w>
       <w>waivable</w>
       <w>whitespace</w>
       <w>widescreen</w>
       <w>wipo</w>
       <w>writability</w>
-      <w>wrkg</w>
       <w>xmlpull</w>
       <w>xstart</w>
       <w>xstream</w>

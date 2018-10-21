@@ -1,6 +1,5 @@
 package org.tvrenamer.view;
 
-import static org.tvrenamer.model.ReplacementToken.*;
 import static org.tvrenamer.model.util.Constants.*;
 
 import org.eclipse.swt.SWT;
@@ -15,7 +14,6 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -31,7 +29,6 @@ import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
-import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.ReplacementToken;
 import org.tvrenamer.model.UserPreferences;
 
@@ -44,7 +41,6 @@ class PreferencesDialog extends Dialog {
     private static final UserPreferences prefs = UserPreferences.getInstance();
 
     private static final int DND_OPERATIONS = DND.DROP_MOVE;
-    private static final char DOUBLE_QUOTE = '"';
 
     private static class PreferencesDragSourceListener implements DragSourceListener {
 
@@ -122,8 +118,8 @@ class PreferencesDialog extends Dialog {
     }
 
     // The controls to save
-    private Button moveSelectedCheckbox;
-    private Button renameSelectedCheckbox;
+    private Button moveEnabledCheckbox;
+    private Button renameEnabledCheckbox;
     private Text destDirText;
     private Button destDirButton;
     private Text seasonPrefixText;
@@ -134,16 +130,38 @@ class PreferencesDialog extends Dialog {
     private Button recurseFoldersCheckbox;
     private Button rmdirEmptyCheckbox;
     private Button deleteRowsCheckbox;
-    private TabFolder tabFolder;
     private Shell preferencesShell;
 
-    private final Shell parent;
-    private final StatusLabel statusLabel;
+    /**
+     * PreferencesDialog constructor
+     *
+     * @param parent
+     *            the parent {@link Shell}
+     */
+    public PreferencesDialog(Shell parent) {
+        super(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
+    }
 
-    private String seasonPrefixString;
+    public void open() {
+        // Create the dialog window
+        preferencesShell = new Shell(getParent(), getStyle());
+        preferencesShell.setText(PREFERENCES_LABEL);
+
+        // Add the contents of the dialog window
+        createContents();
+
+        preferencesShell.pack();
+        preferencesShell.open();
+        Display display = getParent().getDisplay();
+        while (!preferencesShell.isDisposed()) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
+    }
 
     private void createContents() {
-        GridLayout shellGridLayout = new GridLayout(4, false);
+        GridLayout shellGridLayout = new GridLayout(3, false);
         preferencesShell.setLayout(shellGridLayout);
 
         Label helpLabel = new Label(preferencesShell, SWT.NONE);
@@ -151,14 +169,12 @@ class PreferencesDialog extends Dialog {
         helpLabel.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, true,
                                              shellGridLayout.numColumns, 1));
 
-        tabFolder = new TabFolder(preferencesShell, getStyle());
+        TabFolder tabFolder = new TabFolder(preferencesShell, getStyle());
         tabFolder.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, true,
                                              shellGridLayout.numColumns, 1));
 
-        createGeneralTab();
-        createRenameTab();
-
-        statusLabel.open(preferencesShell, shellGridLayout.numColumns);
+        createGeneralTab(tabFolder);
+        createRenameTab(tabFolder);
 
         createActionButtonGroup();
     }
@@ -175,6 +191,38 @@ class PreferencesDialog extends Dialog {
             control.setEnabled(state);
         }
         preferencesShell.redraw();
+    }
+
+    private void handleMoveCheckbox(final boolean moveEnabled) {
+        // The terminology here gets confusing.  These are checkboxes which enable or disable
+        // specific functionality.  But we also can enable or disable the checkboxes themselves!
+        // That's what we're doing here.  Because it does not make sense to have "move" and
+        // "rename" both disabled, when one functionality is disabled, we disable the other
+        // check box, so that the user cannot disable the other functionality.
+        if (moveEnabled) {
+            renameEnabledCheckbox.setEnabled(true);
+        } else {
+            // If we are here, the user has disabled move functionality, but unchecking the
+            // "move" checkbox.  Therefore, we need to make sure "rename' stays selected,
+            // unless or until "move" is re-enabled.  The very fact that we got here means,
+            // if things are working properly, that rename is *already* selected.  If it
+            // weren't, the user shouldn't have been able to uncheck "move".  So, the first
+            // line here should be redundant.  But, do it anyway, just in case somehow
+            // there's a bug.
+            renameEnabledCheckbox.setSelection(true);
+            renameEnabledCheckbox.setEnabled(false);
+        }
+        toggleEnableControls(moveEnabled, destDirText, destDirButton, seasonPrefixText);
+    }
+
+    private void handleRenameCheckbox(final boolean renameEnabled) {
+        // See comments in handleMoveCheckbox; all the same logic applies here, as well.
+        if (renameEnabled) {
+            moveEnabledCheckbox.setEnabled(true);
+        } else {
+            moveEnabledCheckbox.setSelection(true);
+            moveEnabledCheckbox.setEnabled(false);
+        }
     }
 
     private void createLabel(final String label, final String tooltip, final Composite group) {
@@ -231,187 +279,27 @@ class PreferencesDialog extends Dialog {
         return button;
     }
 
-    /*
-     * Return true if the parameters indicate a double-quote character
-     * is being inserted as the first or last character of the text.
-     *
-     * The purpose of this method is that the double-quote is an illegal
-     * character in file paths, but it is allowed in the text box where
-     * the user enters the prefix -- but only as surrounding characters,
-     * to show the limits of the text being entered (i.e., to help display
-     * whitespace).
-     *
-     * Note this test is not sufficient on its own.  If the text is quoted
-     * already, and then the user tries to add a double-quote in front of
-     * the existing quote, that should not be allowed.  It's assumed that
-     * situation is caught by other code; this method just detects if it's
-     * the first or last character.
-     */
-    private boolean quoteAtBeginningOrEnd(final char c, final int pos,
-                                          final int start, final int end,
-                                          final int originalLength,
-                                          final int insertLength)
-    {
-        // The user has entered a character that is not a double quote.
-        if (c != DOUBLE_QUOTE) {
-            return false;
-        }
-        // If start is 0, that means we're inserting at the beginning of the text box;
-        // but this may be the result of a paste, so we may be inserting multiple
-        // characters.  Checking (pos == 0) makes sure we're looking at the first
-        // character of the text that's being inserted.
-        if ((start == 0) && (pos == 0)) {
-            return true;
-        }
-        // This is the same idea.  "end == originalLength" means we're inserting at
-        // the end of the text box, but we only want to allow the double quote if
-        // it's the LAST character of the text being inserted.
-        if ((end == originalLength) && (pos == (insertLength - 1))) {
-            return true;
-        }
-        // The user has tried to insert a double quote somewhere other than the first
-        // or last character.
-        return false;
-    }
-
-    /*
-     * A sub-method to be called once it's been determined that the user has tried to insert
-     * text into the "season prefix" text box, in a legal position (i.e., not before the
-     * opening quote, and not after the closing quote.)  Not all edits are insertions; some
-     * just delete text.
-     *
-     * Constructs a string with any illegal characters removed.  If the text is the same
-     * length as what we got from the event, then all characters were legal.  If the new text
-     * is zero length, then all characters were illegal, and we reject the insertion.  If the
-     * length is neither zero, nor the full length of the inserted text, then the user has
-     * pasted in some mix of legal and illegal characters.  We strip away the illegal ones,
-     * and insert the legal ones, with a warning given to the user.
-     */
-    private void filterEnteredSeasonPrefixText(VerifyEvent e, final int previousTextLength) {
-        String textToInsert = e.text;
-        int insertLength = textToInsert.length();
-        StringBuilder acceptedText = new StringBuilder(insertLength);
-        for (int i = 0; i < insertLength; i++) {
-            char c = textToInsert.charAt(i);
-            boolean isLegal = StringUtils.isLegalFilenameCharacter(c)
-                || quoteAtBeginningOrEnd(c, i, e.start, e.end,
-                                         previousTextLength, insertLength);
-            if (isLegal) {
-                acceptedText.append(c);
-            }
-        }
-        if (acceptedText.length() == insertLength) {
-            statusLabel.clear(ILLEGAL_CHARACTERS_WARNING);
-        } else {
-            statusLabel.add(ILLEGAL_CHARACTERS_WARNING);
-            if (acceptedText.length() == 0) {
-                e.doit = false;
-            } else {
-                e.text = acceptedText.toString();
-            }
-        }
-    }
-
-    /*
-     * The main verifier method for the "season prefix" text box.  The basic idea is
-     * that we want to prohibit characters that are illegal in filenames.  But we
-     * added a complication by deciding to display (and accept) the text with or without
-     * surrounding double quotes.
-     *
-     * Double quotes are, of course, illegal in filenames (on the filesystems we care
-     * about, anyway).  So they are generally prohibited.  And we put the surrounding
-     * quotes up by default, so the user never needs to type them.  But it's very possible
-     * they might delete the quotes, and then try to re-enter them, and that should be
-     * supported.  And we also support them deleting the quotes and NOT reinstating them.
-     *
-     * A really stringent application might insist the quotes be either absent or balanced.
-     * But that makes it impossible to delete a quote, unless you delete the entire text.
-     * That's very annoying.  So we allow them to be unbalanced.  The StringUtils method
-     * unquoteString will remove the quote from the front and from the back, whether they
-     * are balanced or not.
-     *
-     * In order to avoid having the illegal quote character in the middle of the text, we
-     * cannot allow the user to insert any text before the opening quote, or any text after
-     * the closing quote.  Doing so would change them from delimiters to part of the text.
-     *
-     * Edits might not be inserting text at all.  They could be deleting text.  This method
-     * checks that the user is trying to insert text, and that it's not before the opening
-     * quote or after the closing quote.  If that's the case, it calls the next method,
-     * filterEnteredSeasonPrefixText, to ensure no illegal characters are being entered.
-     */
-    private void verifySeasonPrefixText(VerifyEvent e) {
-        if (e.text.length() > 0) {
-            String previousText = seasonPrefixText.getText();
-            int originalLength = previousText.length();
-
-            if ((e.end < (originalLength - 1))
-                && (previousText.charAt(e.end) == DOUBLE_QUOTE))
-            {
-                statusLabel.add(NO_TEXT_BEFORE_OPENING_QUOTE);
-                e.doit = false;
-            } else if ((e.start > 1)
-                       && (previousText.charAt(e.start - 1) == DOUBLE_QUOTE))
-            {
-                statusLabel.add(NO_TEXT_AFTER_CLOSING_QUOTE);
-                e.doit = false;
-            } else {
-                filterEnteredSeasonPrefixText(e, originalLength);
-            }
-        }
-    }
-
-    /*
-     * Makes sure the text entered as season prefix is valid in a pathname.
-     */
-    private void ensureValidPrefixText() {
-        String prefixText = seasonPrefixText.getText();
-
-        // Remove the surrounding double quotes, if present;
-        // any other double quotes should not be removed.
-        String unquoted = StringUtils.unquoteString(prefixText);
-        // The verifier should have prevented any illegal characters from
-        // being entered.  This is just to check.
-        seasonPrefixString = StringUtils.replaceIllegalCharacters(unquoted);
-
-        if (!seasonPrefixString.equals(unquoted)) {
-            // Somehow, illegal characters got through.
-            logger.severe("Illegal characters recognized in season prefix");
-            logger.severe("Instead of \"" + unquoted + "\", will use \""
-                          + seasonPrefixString + "\"");
-        }
-    }
-
-    /*
-     * Create the controls that regard the naming of the season prefix folder.
-     * The text box gets both a verify listener and a modify listener.
-     */
-    private void createSeasonPrefixControls(final Composite generalGroup) {
-        createLabel(SEASON_PREFIX_TEXT, PREFIX_TOOLTIP, generalGroup);
-        seasonPrefixString = prefs.getSeasonPrefix();
-        seasonPrefixText = createText(StringUtils.makeQuotedString(seasonPrefixString),
-                                      generalGroup, true);
-        seasonPrefixText.addVerifyListener(e -> {
-            statusLabel.clear(NO_TEXT_BEFORE_OPENING_QUOTE);
-            statusLabel.clear(NO_TEXT_AFTER_CLOSING_QUOTE);
-            verifySeasonPrefixText(e);
-        });
-        seasonPrefixText.addModifyListener(e -> ensureValidPrefixText());
-        seasonPrefixLeadingZeroCheckbox = createCheckbox(SEASON_PREFIX_ZERO_TEXT, SEASON_PREFIX_ZERO_TOOLTIP,
-                                                         prefs.isSeasonPrefixLeadingZero(),
-                                                         generalGroup, GridData.BEGINNING, 3);
-    }
-
     private void populateGeneralTab(final Composite generalGroup) {
-        moveSelectedCheckbox = createCheckbox(MOVE_SELECTED_TEXT, MOVE_SELECTED_TOOLTIP,
-                                              true, generalGroup, GridData.BEGINNING, 2);
-        renameSelectedCheckbox = createCheckbox(RENAME_SELECTED_TEXT, RENAME_SELECTED_TOOLTIP,
-                                                true, generalGroup, GridData.END, 1);
+        final boolean moveIsEnabled = prefs.isMoveEnabled();
+        boolean renameIsEnabled = prefs.isRenameEnabled();
+        if (!moveIsEnabled && !renameIsEnabled) {
+            renameIsEnabled = true;
+            prefs.setRenameEnabled(true);
+        }
+        moveEnabledCheckbox = createCheckbox(MOVE_ENABLED_TEXT, MOVE_ENABLED_TOOLTIP,
+                                             moveIsEnabled, generalGroup, GridData.BEGINNING, 2);
+        renameEnabledCheckbox = createCheckbox(RENAME_ENABLED_TEXT, RENAME_ENABLED_TOOLTIP,
+                                               renameIsEnabled, generalGroup, GridData.END, 1);
 
         createLabel(DEST_DIR_TEXT, DEST_DIR_TOOLTIP, generalGroup);
         destDirText = createText(prefs.getDestinationDirectoryName(), generalGroup, false);
         destDirButton = createDestDirButton(generalGroup);
 
-        createSeasonPrefixControls(generalGroup);
+        createLabel(SEASON_PREFIX_TEXT, PREFIX_TOOLTIP, generalGroup);
+        seasonPrefixText = createText(prefs.getSeasonPrefixForDisplay(), generalGroup, true);
+        seasonPrefixLeadingZeroCheckbox = createCheckbox(SEASON_PREFIX_ZERO_TEXT, SEASON_PREFIX_ZERO_TOOLTIP,
+                                                         prefs.isSeasonPrefixLeadingZero(),
+                                                         generalGroup, GridData.BEGINNING, 3);
 
         createLabel(IGNORE_LABEL_TEXT, IGNORE_LABEL_TOOLTIP, generalGroup);
         ignoreWordsText = createText(prefs.getIgnoredKeywordsString(), generalGroup, false);
@@ -423,31 +311,29 @@ class PreferencesDialog extends Dialog {
                                             prefs.isRemoveEmptiedDirectories(), generalGroup,
                                             GridData.BEGINNING, 3);
         deleteRowsCheckbox = createCheckbox(DELETE_ROWS_TEXT, DELETE_ROWS_TOOLTIP,
-                                            prefs.isDeleteRowAfterMove(), generalGroup,
+                                            prefs.isRemoveEmptiedDirectories(), generalGroup,
                                             GridData.BEGINNING, 3);
         checkForUpdatesCheckbox = createCheckbox(CHECK_UPDATES_TEXT, CHECK_UPDATES_TOOLTIP,
                                                  prefs.checkForUpdates(), generalGroup,
                                                  GridData.BEGINNING, 3);
-    }
 
-    private void initializeGeneralControls() {
-        final boolean moveIsSelected = prefs.isMoveSelected();
-        moveSelectedCheckbox.setSelection(moveIsSelected);
-        toggleEnableControls(moveIsSelected, destDirText, destDirButton,
-                             seasonPrefixText, seasonPrefixLeadingZeroCheckbox);
-        moveSelectedCheckbox.addSelectionListener(new SelectionAdapter() {
+        handleMoveCheckbox(moveIsEnabled);
+        handleRenameCheckbox(renameIsEnabled);
+        moveEnabledCheckbox.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                toggleEnableControls(moveSelectedCheckbox.getSelection(), destDirText, destDirButton,
-                                     seasonPrefixText, seasonPrefixLeadingZeroCheckbox);
+                handleMoveCheckbox(moveEnabledCheckbox.getSelection());
             }
         });
-
-        boolean renameIsSelected = prefs.isRenameSelected();
-        renameSelectedCheckbox.setSelection(renameIsSelected);
+        renameEnabledCheckbox.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                handleRenameCheckbox(renameEnabledCheckbox.getSelection());
+            }
+        });
     }
 
-    private void createGeneralTab() {
+    private void createGeneralTab(final TabFolder tabFolder) {
         final TabItem item = new TabItem(tabFolder, SWT.NULL);
         item.setText(GENERAL_LABEL);
 
@@ -457,20 +343,11 @@ class PreferencesDialog extends Dialog {
         generalGroup.setToolTipText(GENERAL_TOOLTIP);
 
         populateGeneralTab(generalGroup);
-        initializeGeneralControls();
 
         item.setControl(generalGroup);
     }
 
-    private void addStringsToList(final List guiList,
-                                  final ReplacementToken... tokens)
-    {
-        for (ReplacementToken token : tokens) {
-            guiList.add(token.toString());
-        }
-    }
-
-    private void createRenameTab() {
+    private void createRenameTab(TabFolder tabFolder) {
         TabItem item = new TabItem(tabFolder, SWT.NULL);
         item.setText(RENAMING_LABEL);
 
@@ -485,12 +362,20 @@ class PreferencesDialog extends Dialog {
         List renameTokensList = new List(replacementGroup, SWT.SINGLE);
         renameTokensList.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER,
                                                     true, true, 2, 1));
-        addStringsToList(renameTokensList,
-                         SHOW_NAME, SEASON_NUM, SEASON_NUM_LEADING_ZERO,
-                         EPISODE_NUM, EPISODE_NUM_LEADING_ZERO,
-                         EPISODE_TITLE, EPISODE_TITLE_NO_SPACES, EPISODE_RESOLUTION,
-                         DATE_DAY_NUM, DATE_DAY_NUMLZ, DATE_MONTH_NUM, DATE_MONTH_NUMLZ,
-                         DATE_YEAR_MIN, DATE_YEAR_FULL);
+        renameTokensList.add(ReplacementToken.SHOW_NAME.toString());
+        renameTokensList.add(ReplacementToken.SEASON_NUM.toString());
+        renameTokensList.add(ReplacementToken.SEASON_NUM_LEADING_ZERO.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_NUM.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_NUM_LEADING_ZERO.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_TITLE.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_TITLE_NO_SPACES.toString());
+        renameTokensList.add(ReplacementToken.EPISODE_RESOLUTION.toString());
+        renameTokensList.add(ReplacementToken.DATE_DAY_NUM.toString());
+        renameTokensList.add(ReplacementToken.DATE_DAY_NUMLZ.toString());
+        renameTokensList.add(ReplacementToken.DATE_MONTH_NUM.toString());
+        renameTokensList.add(ReplacementToken.DATE_MONTH_NUMLZ.toString());
+        renameTokensList.add(ReplacementToken.DATE_YEAR_MIN.toString());
+        renameTokensList.add(ReplacementToken.DATE_YEAR_FULL.toString());
 
         Label episodeTitleLabel = new Label(replacementGroup, SWT.NONE);
         episodeTitleLabel.setText(RENAME_FORMAT_TEXT);
@@ -520,9 +405,12 @@ class PreferencesDialog extends Dialog {
 
     private void createActionButtonGroup() {
         Composite bottomButtonsComposite = new Composite(preferencesShell, SWT.FILL);
+        bottomButtonsComposite.setLayoutData(new GridData(SWT.END, SWT.CENTER,
+                                                          true, true, 0, 1));
         bottomButtonsComposite.setLayout(new GridLayout(2, false));
-        bottomButtonsComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
-                                                          true, true, 2, 1));
+        GridData bottomButtonsCompositeGridData = new GridData(SWT.FILL, SWT.CENTER,
+                                                               true, true, 2, 1);
+        bottomButtonsComposite.setLayoutData(bottomButtonsCompositeGridData);
 
         Button cancelButton = new Button(bottomButtonsComposite, SWT.PUSH);
         GridData cancelButtonGridData = new GridData(GridData.BEGINNING, GridData.CENTER,
@@ -531,6 +419,7 @@ class PreferencesDialog extends Dialog {
         cancelButtonGridData.widthHint = 150;
         cancelButton.setLayoutData(cancelButtonGridData);
         cancelButton.setText(CANCEL_LABEL);
+
         cancelButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
@@ -545,6 +434,7 @@ class PreferencesDialog extends Dialog {
         saveButton.setLayoutData(saveButtonGridData);
         saveButton.setText(SAVE_LABEL);
         saveButton.setFocus();
+
         saveButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent event) {
@@ -563,7 +453,7 @@ class PreferencesDialog extends Dialog {
      */
     private void savePreferences() {
         // Update the preferences object from the UI control values
-        prefs.setSeasonPrefix(seasonPrefixString);
+        prefs.setSeasonPrefix(seasonPrefixText.getText());
         prefs.setSeasonPrefixLeadingZero(seasonPrefixLeadingZeroCheckbox.getSelection());
         prefs.setRenameReplacementString(replacementStringText.getText());
         prefs.setIgnoreKeywords(ignoreWordsText.getText());
@@ -573,43 +463,27 @@ class PreferencesDialog extends Dialog {
         prefs.setDeleteRowAfterMove(deleteRowsCheckbox.getSelection());
         prefs.setDestinationDirectory(destDirText.getText());
 
-        prefs.setMoveSelected(moveSelectedCheckbox.getSelection());
-        prefs.setRenameSelected(renameSelectedCheckbox.getSelection());
+        boolean isRenameEnabled = renameEnabledCheckbox.getSelection();
+        // Note, it is important to do the "enable" (true) before the "disable" (false),
+        // because we cannot disable both even momentarily.
+        if (moveEnabledCheckbox.getSelection()) {
+            prefs.setMoveEnabled(true);
+            prefs.setRenameEnabled(isRenameEnabled);
+        } else {
+            // Since move is disabled, rename needs to be enabled.  We're going to
+            // enable rename no matter what.  If that's not what the UI says to do,
+            // that's an error.
+            if (!isRenameEnabled) {
+                // The UI is supposed to prevent this situation from happening.
+                logger.severe("internal error! should not be able to disable "
+                              + "both move and rename! enabling rename");
+            }
+            prefs.setRenameEnabled(true);
+            prefs.setMoveEnabled(false);
+        }
+
+        UIUtils.checkDestinationDirectory();
 
         UserPreferences.store(prefs);
-    }
-
-    /**
-     * Creates and opens the preferences dialog, and runs the event loop.
-     *
-     */
-    public void open() {
-        // Create the dialog window
-        preferencesShell = new Shell(parent, getStyle());
-        preferencesShell.setText(PREFERENCES_LABEL);
-
-        // Add the contents of the dialog window
-        createContents();
-
-        preferencesShell.pack();
-        preferencesShell.open();
-        Display display = parent.getDisplay();
-        while (!preferencesShell.isDisposed()) {
-            if (!display.readAndDispatch()) {
-                display.sleep();
-            }
-        }
-    }
-
-    /**
-     * PreferencesDialog constructor
-     *
-     * @param parent
-     *            the parent {@link Shell}
-     */
-    public PreferencesDialog(final Shell parent) {
-        super(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
-        this.parent = parent;
-        statusLabel = new StatusLabel();
     }
 }
