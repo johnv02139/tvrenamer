@@ -11,9 +11,6 @@
             <property name="eachLine" value="true"/>
         </module>
 
-    <module name="SuppressionFilter">
-        <property name="file" value="etc/nochecks.xml"/>
-    </module>
     <module name="SuppressionCommentFilter">
         <property name="offCommentFormat" value="BEGIN IGNORE STYLE"/>
         <property name="onCommentFormat" value="END IGNORE STYLE"/>

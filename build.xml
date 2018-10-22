@@ -100,22 +100,6 @@
     </checkstyle>
   </target>
 
-  <target name="findbugs" depends="compile" description="Run findbugs on the code">
-    <ivy:cachepath pathid="findbugs.classpath" conf="findbugs"/>
-    <taskdef name="findbugs"
-             classname="edu.umd.cs.findbugs.anttask.FindBugsTask"
-             classpathref="findbugs.classpath"/>
-    <findbugs output="html"
-              reportLevel="low"
-              excludeFilter="${etc}/exclude.xml"
-              outputFile="${build}/fbugs.html" >
-      <auxClasspath refid="classpath"/>
-      <auxClasspath refid="classpath.test"/>
-      <classpath refid="findbugs.classpath"/>
-      <class location="${build}"/>
-    </findbugs>
-  </target>
-
   <target name="clean">
     <delete includeemptydirs="true" failonerror="false">
       <fileset dir="${build}" includes="**/*" />
