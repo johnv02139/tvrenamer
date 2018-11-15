@@ -76,6 +76,18 @@ public class FileMover implements Callable<Boolean> {
      *
      * @return the filename that we want to move the file to
      */
+    String getDesiredBasename() {
+        return destBasename;
+    }
+
+    /**
+     * The filename of the destination we want to move the file to.
+     * We may not be able to actually use this filename due to a conflict,
+     * in which case, we will probably add an index and use a subdirectory.
+     * But this is the name we WANT to change it to.
+     *
+     * @return the filename that we want to move the file to
+     */
     String getDesiredDestName() {
         return destBasename + destSuffix;
     }
