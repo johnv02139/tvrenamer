@@ -41,6 +41,22 @@ public class FileMover implements Callable<Boolean> {
     }
 
     /**
+     * Renders the FileMover as a string.
+     *
+     * <p>This is relatively slow, and exposes private members.  Not intended
+     * (at all) for producing messages for the end user; strictly for debugging.
+     *
+     * @return
+     *   a String version of the FileMover
+     */
+    @Override
+    public String toString() {
+        return destRoot.toString() + ", " + destBasename + ", "
+            + ((destIndex == null) ? "~" : destIndex)
+            + ", " + destSuffix;
+    }
+
+    /**
      * Sets the progress observer for this FileMover
      *
      * @param observer
