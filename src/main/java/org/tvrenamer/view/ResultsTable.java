@@ -48,6 +48,7 @@ import org.tvrenamer.controller.util.StringUtils;
 import org.tvrenamer.model.EpisodeDb;
 import org.tvrenamer.model.FailedShow;
 import org.tvrenamer.model.FileEpisode;
+import org.tvrenamer.model.Moves;
 import org.tvrenamer.model.Series;
 import org.tvrenamer.model.Show;
 import org.tvrenamer.model.ShowStore;
@@ -55,7 +56,6 @@ import org.tvrenamer.model.UserPreference;
 import org.tvrenamer.model.UserPreferences;
 
 import java.text.Collator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Observable;
@@ -370,7 +370,7 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void renameFiles() {
-        final List<FileMover> pendingMoves = new LinkedList<>();
+        final Moves pendingMoves = new Moves();
         for (final TableItem item : swtTable.getItems()) {
             if (item.getChecked()) {
                 String fileName = CURRENT_FILE_FIELD.getCellText(item);

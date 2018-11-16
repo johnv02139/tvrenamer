@@ -2,6 +2,7 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import org.tvrenamer.model.Moves;
 import org.tvrenamer.model.ProgressUpdater;
 
 import java.nio.file.Files;
@@ -10,7 +11,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -90,14 +90,14 @@ public class MoveRunner implements Runnable {
      *    it will be created and the association be made before the value is returned.
      */
     // TODO: make this a generic facility?
-    private static List<FileMover> getListValue(Map<String, List<FileMover>> table,
-                                                String key)
+    private static Moves getListValue(final Map<String, Moves> table,
+                                      final String key)
     {
         if (table.containsKey(key)) {
             return table.get(key);
         }
 
-        List<FileMover> newList = new LinkedList<>();
+        Moves newList = new Moves();
         table.put(key, newList);
         return newList;
     }
@@ -122,9 +122,11 @@ public class MoveRunner implements Runnable {
      *
      * Returns nothing; modifies the entries of "moves" in-place
      */
-    private static void addIndices(List<FileMover> moves, Set<Path> existing) {
+    private static void addIndices(final Moves moves,
+                                   final Set<Path> existing)
+    {
         int index = existing.size();
-        moves.sort((m1, m2) -> (int) (m2.getFileSize() - m1.getFileSize()));
+        moves.sortBy(FileMover::getFileSize);
         for (FileMover move : moves) {
             index++;
             if (index > 1) {
@@ -157,9 +159,9 @@ public class MoveRunner implements Runnable {
      * @return a set of paths that have conflicts; may be empty, and
      *         in fact almost always would be.
      */
-    private static Set<Path> existingConflicts(String destDirName,
-                                               String desiredFilename,
-                                               List<FileMover> moves)
+    private static Set<Path> existingConflicts(final String destDirName,
+                                               final String desiredFilename,
+                                               final Moves moves)
     {
         // Since, at this point, we are only finding EXACT matches (the
         // filename must be identical), at most one element will be added
@@ -200,13 +202,15 @@ public class MoveRunner implements Runnable {
      * @param destDir
      *   the name of the destination directory
      */
-    private static void resolveConflicts(List<FileMover> listOfMoves, String destDir) {
-        Map<String, List<FileMover>> desiredFilenames = new HashMap<>();
+    private static void resolveConflicts(final Moves listOfMoves,
+                                         final String destDir)
+    {
+        Map<String, Moves> desiredFilenames = new HashMap<>();
         for (FileMover move : listOfMoves) {
             getListValue(desiredFilenames, move.getDesiredDestName()).add(move);
         }
         for (String desiredFilename : desiredFilenames.keySet()) {
-            List<FileMover> moves = desiredFilenames.get(desiredFilename);
+            Moves moves = desiredFilenames.get(desiredFilename);
             Set<Path> existing = existingConflicts(destDir, desiredFilename, moves);
             int nFiles = existing.size() + moves.size();
             if (nFiles > 1) {
@@ -223,12 +227,12 @@ public class MoveRunner implements Runnable {
      * @return a mapping from directory names to a list of the FileMovers that will move
      *   files into the directory with that name
      */
-    private static Map<String, List<FileMover>> mapByDestDir(final List<FileMover> episodes) {
-        final Map<String, List<FileMover>> toMove = new HashMap<>();
+    private static Map<String, Moves> mapByDestDir(final Moves episodes) {
+        final Map<String, Moves> toMove = new HashMap<>();
 
         for (final FileMover pendingMove : episodes) {
             String moveToDir = pendingMove.getMoveToDirectory();
-            List<FileMover> existingDirMoves = getListValue(toMove, moveToDir);
+            Moves existingDirMoves = getListValue(toMove, moveToDir);
             existingDirMoves.add(pendingMove);
         }
 
@@ -245,7 +249,7 @@ public class MoveRunner implements Runnable {
      *
      */
     @SuppressWarnings("SameParameterValue")
-    private MoveRunner(final List<FileMover> episodes,
+    private MoveRunner(final Moves episodes,
                        final ProgressUpdater updater,
                        final int timeout)
     {
@@ -255,13 +259,13 @@ public class MoveRunner implements Runnable {
         progressThread.setName(FILE_MOVE_THREAD_LABEL);
         progressThread.setDaemon(true);
 
-        final Map<String, List<FileMover>> mappings = mapByDestDir(episodes);
+        final Map<String, Moves> mappings = mapByDestDir(episodes);
         for (String destDir : mappings.keySet()) {
             resolveConflicts(mappings.get(destDir), destDir);
         }
 
         int count = 0;
-        for (List<FileMover> moves : mappings.values()) {
+        for (Moves moves : mappings.values()) {
             for (FileMover move : moves) {
                 futures.add(EXECUTOR.submit(move));
                 count++;
@@ -277,7 +281,7 @@ public class MoveRunner implements Runnable {
      * @param episodes a list of FileMovers to execute
      *
      */
-    public MoveRunner(final List<FileMover> episodes) {
+    public MoveRunner(final Moves episodes) {
         this(episodes, null, DEFAULT_TIMEOUT);
     }
 

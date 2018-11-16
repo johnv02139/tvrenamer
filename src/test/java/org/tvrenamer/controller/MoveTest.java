@@ -13,14 +13,13 @@ import org.junit.rules.TemporaryFolder;
 import org.tvrenamer.model.EpisodeTestData;
 import org.tvrenamer.model.FileEpisode;
 import org.tvrenamer.model.MoveObserver;
+import org.tvrenamer.model.Moves;
 import org.tvrenamer.model.util.Environment;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -230,7 +229,7 @@ public class MoveTest {
         FileMover mover = new FileMover(episode);
         mover.addObserver(new FutureCompleter(future));
 
-        List<FileMover> moveList = new ArrayList<>();
+        Moves moveList = new Moves();
         moveList.add(mover);
 
         MoveRunner runner = new MoveRunner(moveList);
@@ -270,7 +269,7 @@ public class MoveTest {
         FileMover mover = new FileMover(episode);
         mover.addObserver(new FutureCompleter(future));
 
-        List<FileMover> moveList = new ArrayList<>();
+        Moves moveList = new Moves();
         moveList.add(mover);
 
         MoveRunner runner = new MoveRunner(moveList);
