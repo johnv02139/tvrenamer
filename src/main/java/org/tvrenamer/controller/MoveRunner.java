@@ -2,17 +2,16 @@ package org.tvrenamer.controller;
 
 import static org.tvrenamer.model.util.Constants.*;
 
+import org.tvrenamer.model.GroupedMoveList;
 import org.tvrenamer.model.Moves;
 import org.tvrenamer.model.ProgressUpdater;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -75,32 +74,6 @@ public class MoveRunner implements Runnable {
      */
     public void runThread() {
         progressThread.start();
-    }
-
-    /**
-     * If the given key is not present in the map, returns a new, empty list.
-     * Otherwise, returns the value mapped to the key.
-     *
-     * @param table
-     *    a mapping from a String to a list of FileMovers.  There is no assumption
-     *    about the meaning of the String key; it could be anything
-     * @param key
-     *    the key to look up in the table
-     * @return a List of (zero or more) StringMovers that is associated with the key,
-     *    in the table.  If no such list existed at the time this method was invoked,
-     *    it will be created and the association be made before the value is returned.
-     */
-    // TODO: make this a generic facility?
-    private static Moves getListValue(final Map<String, Moves> table,
-                                      final String key)
-    {
-        if (table.containsKey(key)) {
-            return table.get(key);
-        }
-
-        Moves newList = new Moves();
-        table.put(key, newList);
-        return newList;
     }
 
     /**
@@ -198,46 +171,21 @@ public class MoveRunner implements Runnable {
      * - can we integrate with a library that gives us information about the
      *   content (actual video quality, length, etc.)?
      *
-     * @param listOfMoves
-     *   a list of FileMover tasks to be done
-     * @param destDir
-     *   the name of the destination directory
+     * @param desiredFilenames
+     *   a mapping of desired destination to a group of FileMovers that all want
+     *   to move a file to that destination; in the normal case, this "group"
+     *   will have just one element, but it is possible to have more
      */
-    private static void resolveConflicts(final Moves listOfMoves,
-                                         final String destDir)
-    {
-        Map<String, Moves> desiredFilenames = new HashMap<>();
-        for (FileMover move : listOfMoves) {
-            getListValue(desiredFilenames, move.getDesiredDestName()).add(move);
-        }
-        for (String desiredFilename : desiredFilenames.keySet()) {
-            Moves moves = desiredFilenames.get(desiredFilename);
+    private static void resolveConflicts(final GroupedMoveList desiredFilenames) {
+        final String destDir = desiredFilenames.getUserData();
+        for (String desiredFilename : desiredFilenames.keys()) {
+            Moves moves = desiredFilenames.getMoves(desiredFilename);
             Set<Path> existing = existingConflicts(destDir, desiredFilename, moves);
             int nFiles = existing.size() + moves.size();
             if (nFiles > 1) {
                 addIndices(moves, existing);
             }
         }
-    }
-
-    /**
-     * Turns a flat list of file moves into a hash map keyed on destination directory;
-     *
-     * @param episodes
-     *   a list of FileMovers -- the move tasks to be done
-     * @return a mapping from directory names to a list of the FileMovers that will move
-     *   files into the directory with that name
-     */
-    private static Map<String, Moves> mapByDestDir(final Moves episodes) {
-        final Map<String, Moves> toMove = new HashMap<>();
-
-        for (final FileMover pendingMove : episodes) {
-            Path moveToDir = pendingMove.getMoveToDirectory();
-            Moves existingDirMoves = getListValue(toMove, moveToDir.toString());
-            existingDirMoves.add(pendingMove);
-        }
-
-        return toMove;
     }
 
     /**
@@ -260,13 +208,15 @@ public class MoveRunner implements Runnable {
         progressThread.setName(FILE_MOVE_THREAD_LABEL);
         progressThread.setDaemon(true);
 
-        final Map<String, Moves> mappings = mapByDestDir(episodes);
-        for (String destDir : mappings.keySet()) {
-            resolveConflicts(mappings.get(destDir), destDir);
+        final GroupedMoveList mappings
+            = new GroupedMoveList((m) -> m.getMoveToDirectory().toString(),
+                                  episodes);
+        for (String destDir : mappings.keys()) {
+            resolveConflicts(mappings.subGroup(FileMover::getDesiredDestName, destDir));
         }
 
         int count = 0;
-        for (Moves moves : mappings.values()) {
+        for (Moves moves : mappings.moveLists()) {
             for (FileMover move : moves) {
                 futures.add(EXECUTOR.submit(move));
                 count++;
