@@ -176,6 +176,9 @@ public class MoveRunner implements Runnable {
         String glob = basename.replaceAll("\\[", "\\\\[") + "*";
         Path destDir = Paths.get(destDirName);
         addPathMatchesToSet(hits, glob, destDir);
+        Path dupsDir = destDir.resolve(DUPLICATES_DIRECTORY);
+        addPathMatchesToSet(hits, glob, dupsDir);
+
         if (!hits.isEmpty()) {
             Set<Path> toMove = moves.stream()
                 .map(FileMover::getCurrentPath)
@@ -226,11 +229,14 @@ public class MoveRunner implements Runnable {
     private static void resolveConflicts(final GroupedMoveList basenames) {
         final String destDir = basenames.getUserData();
         for (String basename : basenames.keys()) {
-            Moves moves = basenames.getMoves(basename);
-            Set<Path> existing = existingConflicts(destDir, basename, moves);
-            int nFiles = existing.size() + moves.size();
-            if (nFiles > 1) {
-                addIndices(moves, existing);
+            GroupedMoveList destNames = basenames.subGroup(FileMover::getDesiredDestName, basename);
+            for (String destName : destNames.keys()) {
+                Moves moves = destNames.getMoves(destName);
+                Set<Path> existing = existingConflicts(destDir, basename, moves);
+                int nFiles = existing.size() + moves.size();
+                if (nFiles > 1) {
+                    addIndices(moves, existing);
+                }
             }
         }
     }
@@ -259,7 +265,7 @@ public class MoveRunner implements Runnable {
             = new GroupedMoveList((m) -> m.getMoveToDirectory().toString(),
                                   episodes);
         for (String destDir : mappings.keys()) {
-            resolveConflicts(mappings.subGroup(FileMover::getDesiredDestName, destDir));
+            resolveConflicts(mappings.subGroup(FileMover::getDesiredBasename, destDir));
         }
 
         int count = 0;
