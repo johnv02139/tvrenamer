@@ -3,9 +3,11 @@ package org.tvrenamer.controller;
 import org.junit.Test;
 
 import org.tvrenamer.model.EpisodeTestData;
+import org.tvrenamer.model.Moves;
 import org.tvrenamer.model.util.Constants;
 
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * ConflictTest -- test file moving functionality when there is a conflict.
@@ -71,5 +73,22 @@ public class ConflictTest extends MoveTest {
 
         assertMoved();
         assertTimestamp(now);
+    }
+
+    @Test
+    public void testMoveRunnerWithConflict() {
+        final CompletableFuture<Boolean> future = new CompletableFuture<>();
+
+        setValues(bigBang0322);
+        assertReady();
+
+        FileMover mover = new FileMover(episode);
+        makeConflict(bigBang0322, mover);
+        mover.addObserver(new FutureCompleter(future));
+
+        Moves moveList = new Moves();
+        moveList.add(mover);
+
+        executeMoveRunnerTest(moveList, future);
     }
 }
