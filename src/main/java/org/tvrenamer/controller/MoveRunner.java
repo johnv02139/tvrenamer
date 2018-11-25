@@ -208,7 +208,7 @@ public class MoveRunner implements Runnable {
         progressThread.setDaemon(true);
 
         final GroupedMoveList mappings
-            = new GroupedMoveList(FileMover::getMoveToDirectory,
+            = new GroupedMoveList((m) -> m.getMoveToDirectory().toString(),
                                   episodes);
         for (String destDir : mappings.keys()) {
             resolveConflicts(mappings.subGroup(FileMover::getDesiredDestName, destDir));
