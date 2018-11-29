@@ -560,6 +560,9 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void deleteTableItem(final TableItem item) {
+        if (item.isDisposed()) {
+            return;
+        }
         deleteItemCombo(item);
         episodeMap.remove(CURRENT_FILE_FIELD.getCellText(item));
         item.dispose();
