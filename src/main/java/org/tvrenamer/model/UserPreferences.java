@@ -29,6 +29,7 @@ public class UserPreferences extends Observable {
     private boolean renameSelected;
     private boolean removeEmptiedDirectories;
     private boolean deleteRowAfterMove;
+    private boolean includeFailedItems;
     private String renameReplacementMask;
     private boolean checkForUpdates;
     private boolean recursivelyAddFolders;
@@ -54,6 +55,7 @@ public class UserPreferences extends Observable {
         renameSelected = true;
         removeEmptiedDirectories = true;
         deleteRowAfterMove = false;
+        includeFailedItems = true;
         renameReplacementMask = DEFAULT_REPLACEMENT_MASK;
         checkForUpdates = true;
         recursivelyAddFolders = true;
@@ -414,6 +416,32 @@ public class UserPreferences extends Observable {
      */
     public boolean isDeleteRowAfterMove() {
         return deleteRowAfterMove;
+    }
+
+    /**
+     * Sets whether or not we want the UI to automatically include rows after the
+     * files have been successfully moved/renamed.
+     *
+     * @param includeFailedItems whether or not we want the UI to automatically
+     *     include rows after the files have been successfully moved/renamed.
+     */
+    public void setIncludeFailedItems(boolean includeFailedItems) {
+        if (valuesAreDifferent(this.includeFailedItems, includeFailedItems)) {
+            this.includeFailedItems = includeFailedItems;
+
+            preferenceChanged(UserPreference.INCLUDE_FAILURES);
+        }
+    }
+
+    /**
+     * Get whether or not we want the UI to automatically include rows after the
+     * files have been successfully moved/renamed.
+     *
+     * @return true if we want the UI to automatically include rows after the
+     *     files have been successfully moved/renamed.
+     */
+    public boolean isIncludeFailedItems() {
+        return includeFailedItems;
     }
 
     /**

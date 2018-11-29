@@ -200,8 +200,12 @@ public final class ResultsTable implements Observer, AddEpisodeListener {
     }
 
     private void failTableItem(final TableItem item) {
-        STATUS_FIELD.setCellImage(item, FAIL);
-        item.setChecked(false);
+        if (prefs.isIncludeFailedItems()) {
+            STATUS_FIELD.setCellImage(item, FAIL);
+            item.setChecked(false);
+        } else {
+            deleteTableItem(item);
+        }
     }
 
     private void setTableItemStatus(final TableItem item, final int epsFound) {

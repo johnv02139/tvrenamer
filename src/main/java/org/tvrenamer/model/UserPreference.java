@@ -6,6 +6,7 @@ public enum UserPreference {
     RENAME_SELECTED,
     REMOVE_EMPTY,
     DELETE_ROWS,
+    INCLUDE_FAILURES,
     DEST_DIR,
     SEASON_PREFIX,
     LEADING_ZERO,
